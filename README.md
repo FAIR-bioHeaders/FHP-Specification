@@ -1,3 +1,18 @@
+# FHP-Specification (FHP development)
+
+> **This repository is where the FHP (FAIR Header for protein FASTA) header is
+> developed.** FHP is a draft. The released specifications of every FAIR-bioHeaders
+> header type live in
+> [FAIR-bioHeaders-Specification](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification)
+> ([#108](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/issues/108)).
+>
+> - Develop on branches and open issues here for FHP-specific work.
+> - Finished changes go to FAIR-bioHeaders-Specification by pull request.
+> - This repository starts as a copy of the specification repository; trimming it
+>   to FHP content is tracked in [#2](https://github.com/FAIR-bioHeaders/FHP-Specification/issues/2).
+>
+> The rest of this README is a copy of the specification repository's README.
+
 # FAIR-bioHeaders Specification
 
 [![Specification checks](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/actions/workflows/validate-specification.yml/badge.svg?branch=main)](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/actions/workflows/validate-specification.yml)
