@@ -140,6 +140,24 @@ comment saying so, with its canonical URL and the release alias pattern; JSON ca
 comments, so the context and `terms.jsonld` have none. `scripts/build_pages.py` builds the Pages
 site from them and from every release tag (`.github/workflows/jsonld-pages.yml`).
 
+## FHP (draft)
+
+FHP has its own JSON-LD context, [`jsonld/fhp.context.jsonld`](../jsonld/fhp.context.jsonld),
+and FHP vocabulary additions, [`jsonld/fhp.terms.ttl`](../jsonld/fhp.terms.ttl) and
+[`jsonld/fhp.terms.jsonld`](../jsonld/fhp.terms.jsonld), generated from `fhp_linkml.yml`
+by `scripts/make_jsonld.py`. FHP is a draft: the toolkit reader and writer are not
+implemented yet ([FAIR-bioHeaders-Tools#58](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/issues/58)),
+and the files are published through
+[FAIR-bioHeaders-Specification#107](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/issues/107).
+The FHR context, vocabulary and writer above are unchanged.
+
+FHP reuses the shared terms with their FHR IRIs and adds only its own, which stay
+separate from the FHR meanings. The canonical FHP form is loss-preserving, like the FHR
+one; it carries no export terms. Reading rules and the term table are in
+[FHP.md](FHP.md#json-ld-draft), the fixtures are `examples/fhp/*.fhp.jsonld`, and
+`tests/test_fhp_jsonld.py` checks the typed round trip, ordered authors, nested objects,
+unknown-context and unsupported-`@version` rejection, and offline operation.
+
 ## The schema.org export
 
 The [schema.org export](SCHEMAORG-EXPORT.md) is a separate, one-way profile (feature 013). It

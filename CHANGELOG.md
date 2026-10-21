@@ -22,6 +22,29 @@
   website consumer (fair-bioheaders.github.io#21) and family builder (#15) are
   coordinated, not shipped. FHP HTML microdata output is still unsupported.
 
+- **Draft/proposal**: add a draft JSON-LD context and vocabulary additions for FHP
+  (issue #4, follow-up F-01 of specs/006-protein-header). **No schema change**:
+  `fhr.json`, `fhp.json`, `fhgff3.json`, `schemas/versions.json`, the FHR context and
+  the FHR vocabulary are untouched, and every existing FHR output is byte-identical.
+  The new files are:
+  - `jsonld/fhp.context.jsonld`, mapping every FHP property to a term. Shared fields
+    keep their FHR IRIs (owned by `jsonld/terms.ttl`); FHP-specific fields
+    (`proteome`, `sourceType`, `source`, `derivedFrom`, `geneticCode`,
+    `isoformPolicy`, `predictionSoftware`, `predictionProtocol`, `sequenceStats`,
+    `completeness` and their objects) get clearly marked FHP additions;
+  - `jsonld/fhp.terms.ttl` and `jsonld/fhp.terms.jsonld`, the FHP additions only,
+    with a provenance header naming the reused shared terms;
+  - `examples/fhp/*.fhp.jsonld`, the canonical form of each `examples/fhp` record.
+
+  `scripts/make_jsonld.py` gains FHP generation (the FHR code paths and outputs are
+  unchanged; `--check` covers the new files), and the reference FHP writer/canonical
+  reader. `tests/test_fhp_jsonld.py` checks typed round trips, ordered authors, nested
+  `source`/`derivedFrom`, scalar types, absent optional fields, unknown-context and
+  unsupported-`@version` rejection, offline operation and the vocabulary ownership
+  split. `docs/FHP.md` and `docs/JSONLD.md` state the draft status, that the runtime
+  reader/writer is coordinated with FAIR-bioHeaders-Tools#58, and that canonical
+  JSON-LD is loss-preserving while the schema.org export is one-way. FHP 1.0 is released; the context and terms are published through
+  FAIR-bioHeaders-Specification#107. No toolkit support or adoption is claimed.
 - Rename the repository from `FHR-Specification` to `FAIR-bioHeaders-Specification`
   (#108). It holds the released specifications for every header type; each type is
   developed in its own repository (a new `FHR-Specification` for FHR). Links and

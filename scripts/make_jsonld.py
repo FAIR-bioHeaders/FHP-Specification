@@ -17,12 +17,21 @@ script writes:
 - ``examples/example.fhr.export.jsonld`` and ``tests/fixtures/schemaorg-export/*/expected.jsonld``:
   the one-way schema.org export profile (specs/013-schemaorg-export, ``to_export``);
 - the summary table in ``docs/MAPPINGS.md`` and the DCMI line of each term in
-  ``docs/TERMS.md``, from the curated ``mappings/fhr-jsonld-dcmi.yml``.
+  ``docs/TERMS.md``, from the curated ``mappings/fhr-jsonld-dcmi.yml``;
+- the **draft** FHP context ``jsonld/fhp.context.jsonld``, the FHP vocabulary
+  additions ``jsonld/fhp.terms.ttl``/``jsonld/fhp.terms.jsonld`` and the
+  ``examples/fhp/*.fhp.jsonld`` fixtures (issue #4, follow-up F-01 of
+  specs/006-protein-header). FHP reuses the shared terms with their FHR IRIs and
+  adds its own, which stay separate from the FHR meanings; the FHP context does
+  not carry the schema.org export terms.
 
 It is also the reference JSON-LD writer (``to_jsonld``, contracts/cli.md
 "Writing") and canonical reader (``canonical_record``, rule J1) that the tests,
-the conformance vectors and docs/JSONLD.md follow. These need only the standard
-library; generating the context needs LinkML.
+the conformance vectors and docs/JSONLD.md follow. The draft FHP writer and
+canonical reader (``fhp_to_jsonld``, ``fhp_canonical_record``) are the same for
+FHP, and reject an unknown context or an unsupported JSON-LD version without
+fetching anything. These need only the standard library; generating the context
+needs LinkML.
 
 ``--check`` regenerates everything in memory and exits 1 with a unified diff if
 a committed file differs; ``--examples`` writes only the JSON-LD examples;
@@ -63,6 +72,30 @@ CANONICAL_CONTEXT_URL = (
 # Contexts a canonical document may reference by URL (rule J1). Release URLs
 # are added once a FAIR-bioHeaders-Specification release contains jsonld/.
 KNOWN_CONTEXT_URLS = (RAW_MAIN_CONTEXT_URL, CANONICAL_CONTEXT_URL)
+
+# The FHP (protein header) JSON-LD context and vocabulary additions (issue #4,
+# specs/006-protein-header follow-up F-01). FHP is a draft, so these files are a
+# draft too: runtime reader/writer support is coordinated with
+# FAIR-bioHeaders-Tools#58 and publication with FAIR-bioHeaders-Specification#107.
+FHP_LINKML = ROOT / "fhp_linkml.yml"
+FHP_SCHEMA = ROOT / "fhp.json"
+FHP_CONTEXT_PATH = ROOT / "jsonld" / "fhp.context.jsonld"
+FHP_TERMS_PATH = ROOT / "jsonld" / "fhp.terms.ttl"
+FHP_TERMS_JSONLD_PATH = ROOT / "jsonld" / "fhp.terms.jsonld"
+FHP_ROOT_CLASS = "FHP"
+# The draft context's canonical raw-main URL is this development repository. The
+# shared publication repository is the supported URL once the coordinating PR
+# publishes the file there (rule J1 for FHP). The pre-rename name is not a known
+# FHP context URL: the file never lived under it.
+FHP_RAW_MAIN_CONTEXT_URL = (
+    "https://raw.githubusercontent.com/FAIR-bioHeaders/FHP-Specification/main/"
+    "jsonld/fhp.context.jsonld"
+)
+FHP_SHARED_RAW_MAIN_CONTEXT_URL = (
+    "https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/main/"
+    "jsonld/fhp.context.jsonld"
+)
+FHP_KNOWN_CONTEXT_URLS = (FHP_RAW_MAIN_CONTEXT_URL, FHP_SHARED_RAW_MAIN_CONTEXT_URL)
 
 SDO = "http://schema.org/"
 FHR = "https://w3id.org/fair-bioheaders/terms#"
@@ -121,13 +154,13 @@ def local_name(curie):
 class Model:
     """The LinkML classes reachable from FHR, with keys in fhr.json order."""
 
-    def __init__(self):
+    def __init__(self, linkml=LINKML, schema=SCHEMA):
         from linkml_runtime import SchemaView
 
-        self.view = SchemaView(str(LINKML))
-        self.schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+        self.view = SchemaView(str(linkml))
+        self.schema = json.loads(Path(schema).read_text(encoding="utf-8"))
         if self.view.schema.default_prefix != "fhr":
-            raise ValueError("fhr_linkml.yml must set default_prefix: fhr")
+            raise ValueError(f"{Path(linkml).name} must set default_prefix: fhr")
 
     def resolve(self, node):
         while "$ref" in node:
@@ -249,35 +282,36 @@ def check_injective(name, body):
         seen[iri] = key
 
 
-def build_context(model):
+def build_context(model, root_class=ROOT_CLASS, export_terms=True):
     root = {"@version": 1.1, "@protected": True, **PREFIXES, "xsd": XSD, "dct": DCT}
-    root.update(type_terms(model, ROOT_CLASS))
+    root.update(type_terms(model, root_class))
     # The nested node types are defined in their property-scoped contexts, a
     # JSON-LD 1.1 feature. Defining them at the root as well lets 1.0-only
     # tools, such as validator.schema.org, recognise the types (quickstart V8);
     # 1.1 processors use the scoped definitions, which are the same IRIs.
-    for class_name, _, _ in model.walk():
-        if class_name != ROOT_CLASS:
+    for class_name, _, _ in model.walk(root_class):
+        if class_name != root_class:
             root.update(type_terms(model, class_name))
     url_terms = {}
-    for slot in model.slots(ROOT_CLASS, model.schema):
+    for slot in model.slots(root_class, model.schema):
         root[slot.name] = term_definition(model, slot, model.schema["properties"][slot.name])
         alternative = annotations(slot).get("jsonld_slot_uri_if_url")
         if alternative:
             url_terms[local_name(alternative)] = {"@id": alternative, "@type": "@id"}
     root.update(url_terms)
-    root.update(EXPORT_TERMS)
-    check_injective(ROOT_CLASS, root)
+    if export_terms:
+        root.update(EXPORT_TERMS)
+    check_injective(root_class, root)
     return {"@context": root}
 
 
 # The vocabulary.
 
 
-def collect_terms(model):
-    """FHR-namespace classes and properties reachable from FHR (vocabulary.md)."""
+def collect_terms(model, root_class=ROOT_CLASS):
+    """fhr-namespace classes and properties reachable from ``root_class``."""
     classes, properties = {}, {}
-    for class_name, _, slots in model.walk():
+    for class_name, _, slots in model.walk(root_class):
         class_iri = model.class_iri(class_name)
         cls = model.view.get_class(class_name)
         extra = annotations(cls)
@@ -317,7 +351,12 @@ def collect_terms(model):
                 else:
                     base = kind
                     linkml_type = model.view.get_type(kind)
-                    if kind not in RANGE_IRIS and linkml_type is not None:
+                    if model.view.get_enum(kind) is not None:
+                        # An enum is a string value; the permissible values stay in
+                        # the model, not the vocabulary (FHP sourceType, isoformPolicy,
+                        # completeness.mode). FHR has no enum-valued slot.
+                        base = "string"
+                    elif kind not in RANGE_IRIS and linkml_type is not None:
                         base = {"str": "string"}.get(linkml_type.base, linkml_type.typeof)
                     value = RANGE_IRIS[base]
                 if value not in entry["range"]:
@@ -361,8 +400,8 @@ Generated from the FAIR-bioHeaders-Specification LinkML model; do not edit."@en 
 """
 
 
-def build_turtle(classes, properties):
-    blocks = [TURTLE_HEADER]
+def build_turtle(classes, properties, header=TURTLE_HEADER):
+    blocks = [header]
     for name in ordered(classes):
         entry = classes[name]
         lines = [f"fhr:{name} a rdfs:Class ;",
@@ -407,19 +446,29 @@ def _text(value):
     return {"@value": value, "@language": "en"}
 
 
-def build_terms_jsonld(classes, properties):
+# The ontology node of the FHR vocabulary as JSON-LD (the default of
+# ``build_terms_jsonld``). The FHP additions supply their own label, comment and
+# ``seeAlso`` without changing the FHR output.
+FHR_ONTOLOGY = {
+    "label": "FAIR-bioHeaders vocabulary",
+    "comment": "Terms for FAIR-bioHeaders metadata that have no schema.org "
+               "equivalent. Generated from the FAIR-bioHeaders-Specification LinkML "
+               "model; do not edit.",
+    "see_also": "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/blob/"
+                "main/docs/TERMS.md",
+}
+
+
+def build_terms_jsonld(classes, properties, ontology=FHR_ONTOLOGY):
     """The vocabulary as JSON-LD, with the same triples as ``build_turtle``."""
     defined_by = {"@id": VOCABULARY}
     graph = [{
         "@id": VOCABULARY,
         "@type": "owl:Ontology",
-        "rdfs:label": _text("FAIR-bioHeaders vocabulary"),
-        "rdfs:comment": _text("Terms for FAIR-bioHeaders metadata that have no schema.org "
-                              "equivalent. Generated from the FAIR-bioHeaders-Specification LinkML "
-                              "model; do not edit."),
+        "rdfs:label": _text(ontology["label"]),
+        "rdfs:comment": _text(ontology["comment"]),
         "dcterms:license": {"@id": "https://www.mozilla.org/en-US/MPL/2.0/"},
-        "rdfs:seeAlso": {"@id": "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/blob/"
-                                "main/docs/TERMS.md"},
+        "rdfs:seeAlso": {"@id": ontology["see_also"]},
     }]
     for name in ordered(classes):
         entry = classes[name]
@@ -888,13 +937,13 @@ def unmapped_keys(record, context=None):
     return found
 
 
-def is_canonical(document, context=None):
+def is_canonical(document, context=None, known_urls=KNOWN_CONTEXT_URLS, loader=load_context):
     """Rule J1: a bundled context, and no keyword but @type (and a root @id)."""
     if not isinstance(document, dict) or "@context" not in document:
         return False
-    bundled = (load_context() if context is None else context)["@context"]
+    bundled = (loader() if context is None else context)["@context"]
     value = document["@context"]
-    if not (value == bundled or (isinstance(value, str) and value in KNOWN_CONTEXT_URLS)):
+    if not (value == bundled or (isinstance(value, str) and value in known_urls)):
         return False
     if "@id" in document and not isinstance(document["@id"], str):
         return False
@@ -949,6 +998,192 @@ def canonical_record(document, warn=None, context=None):
             key = "documentation"
         record[key] = _without_types(value)
     return record
+
+
+# The FHP context, vocabulary additions, writer and canonical reader (issue #4,
+# follow-up F-01 of specs/006-protein-header). FHP is a draft, so this is a draft
+# contract: the runtime reader and writer live in FAIR-bioHeaders-Tools (#58), and
+# the files are published through FAIR-bioHeaders-Specification#107. The FHR
+# context, terms and writer above are unchanged.
+
+# Writer @type for each inlined FHP object (the scoped contexts define the same).
+FHP_NODE_TYPES = {"taxon": "Taxon", "accessionID": "PropertyValue",
+                  "sequenceStats": "SequenceStats", "completeness": "Completeness"}
+# Writer @type for each item of an FHP array of objects.
+FHP_LIST_TYPES = {"source": "Source", "derivedFrom": "DerivedFrom",
+                  "predictionSoftware": "SoftwareApplication"}
+# Root keys that are not FHP fields (the writer never emits a root @id; a reader
+# sets one aside rather than silently keeping it).
+FHP_RESERVED_ROOT = ("@id",)
+FHP_NOT_CANONICAL = (
+    "this JSON-LD is not in the canonical FHP form (FHP-Specification docs/FHP.md); "
+    "the root @context must be the embedded draft FHP context or a known FHP context URL"
+)
+FHP_BAD_VERSION = (
+    "this JSON-LD declares a JSON-LD @version other than 1.1; the draft FHP context is 1.1"
+)
+FHP_EXAMPLES = ("minimal-predicted", "minimal-database", "minimal-mixed",
+                "rich-predicted", "rich-database", "rich-mixed")
+FHP_RELEASE_ALIAS = "https://w3id.org/fair-bioheaders/fhp/vX.Y.Z/jsonld/"
+
+
+def load_fhp_context():
+    return json.loads(FHP_CONTEXT_PATH.read_text(encoding="utf-8"))
+
+
+def fhp_load_context(url):
+    """Serve a known FHP context URL from the bundled file. Never fetches."""
+    if url in FHP_KNOWN_CONTEXT_URLS:
+        return load_fhp_context()
+    raise ValueError(f"unknown FHP JSON-LD context URL (nothing is fetched): {url}")
+
+
+def fhp_is_canonical(document, context=None):
+    """Rule J1 for FHP: the bundled FHP context, and no keyword but @type."""
+    return is_canonical(document, context, FHP_KNOWN_CONTEXT_URLS, load_fhp_context)
+
+
+def _fhp_typed(key, value):
+    if key in FHP_NODE_TYPES and isinstance(value, dict):
+        return {"@type": FHP_NODE_TYPES[key], **copy.deepcopy(value)}
+    if key in AUTHOR_KEYS and isinstance(value, list):
+        return [{"@type": author_type(item), **copy.deepcopy(item)}
+                if isinstance(item, dict) else copy.deepcopy(item) for item in value]
+    if key in FHP_LIST_TYPES and isinstance(value, list):
+        return [{"@type": FHP_LIST_TYPES[key], **copy.deepcopy(item)}
+                if isinstance(item, dict) else copy.deepcopy(item) for item in value]
+    return copy.deepcopy(value)
+
+
+def fhp_to_jsonld(record, context=None):
+    """The canonical JSON-LD document for an FHP record (loss-preserving)."""
+    _reserved_keys(record, "")
+    for key in (URL_TERM, *FHP_RESERVED_ROOT):
+        if key in record:
+            raise ValueError(f"JSON-LD: the root key {key} is reserved for JSON-LD output")
+    context = load_fhp_context() if context is None else context
+    document = {"@context": context["@context"], "@type": "Dataset"}
+    for key, value in record.items():
+        if key == "documentation" and is_absolute_url(value):
+            document[URL_TERM] = value
+        else:
+            document[key] = _fhp_typed(key, value)
+    return document
+
+
+def fhp_jsonld_text(record, context=None):
+    return json.dumps(fhp_to_jsonld(record, context), ensure_ascii=False, indent=2) + "\n"
+
+
+def fhp_canonical_record(document, warn=None, context=None):
+    """Read a canonical FHP JSON-LD document back to FHP metadata.
+
+    Rejects an unknown context, an unsupported JSON-LD @version, and a document
+    that is not canonical. Nothing is fetched: a known context URL is served from
+    the bundled file. The FHP objects are closed, so an unknown key is left for
+    validation against fhp.json rather than dropped.
+    """
+    if not isinstance(document, dict) or "@context" not in document:
+        raise ValueError(FHP_NOT_CANONICAL)
+    value = document["@context"]
+    if isinstance(value, dict) and "@version" in value and value["@version"] != 1.1:
+        raise ValueError(FHP_BAD_VERSION)
+    if isinstance(value, str) and value not in FHP_KNOWN_CONTEXT_URLS:
+        raise ValueError(f"unknown FHP JSON-LD context (nothing is fetched): {value}")
+    if not fhp_is_canonical(document, context):
+        raise ValueError(FHP_NOT_CANONICAL)
+    record = {}
+    for key, item in document.items():
+        if key in ("@context", "@type"):
+            continue
+        if key in FHP_RESERVED_ROOT:
+            if warn is not None:
+                warn(f"JSON-LD: {key} is not an FHP field; it was not kept")
+            continue
+        if key == URL_TERM:
+            if "documentation" in document:
+                raise ValueError("JSON-LD gives both documentation and subjectOf")
+            if not isinstance(item, str):
+                raise ValueError("JSON-LD subjectOf must be a string")
+            key = "documentation"
+        record[key] = _without_types(item)
+    return record
+
+
+def fhp_term_additions(model, fhr_classes, fhr_properties):
+    """The FHP vocabulary terms that the shared FHR vocabulary does not define.
+
+    Shared terms keep their FHR IRI and definition (explicit ownership); only the
+    additions are written to ``jsonld/fhp.terms.*``.
+    """
+    classes, properties = collect_terms(model, FHP_ROOT_CLASS)
+    return (classes, properties,
+            {name: entry for name, entry in classes.items() if name not in fhr_classes},
+            {name: entry for name, entry in properties.items() if name not in fhr_properties})
+
+
+def fhp_turtle_header(shared):
+    """The provenance header of ``jsonld/fhp.terms.ttl`` (FHP-owned additions)."""
+    names = "".join(f"#   fhr:{name}\n" for name in shared)
+    return f"""# Generated by scripts/make_jsonld.py from fhp_linkml.yml; do not edit.
+# Draft FHP vocabulary additions (FHP-Specification issue #4, follow-up F-01 of
+# specs/006-protein-header). Runtime reader/writer support is coordinated with
+# FAIR-bioHeaders-Tools#58; publication with FAIR-bioHeaders-Specification#107.
+# Canonical URL: {FHP_RAW_MAIN_CONTEXT_URL.replace("fhp.context.jsonld", "fhp.terms.ttl")}
+# Release copies: {FHP_RELEASE_ALIAS}fhp.terms.ttl
+# These terms are owned by FHP development until they are published in the shared
+# vocabulary. Shared terms are not redefined here: they are owned by the
+# FAIR-bioHeaders vocabulary (jsonld/terms.ttl) and reused with the same IRIs:
+{names}# Shared vocabulary, canonical and release:
+#   https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/main/jsonld/terms.ttl
+#   https://w3id.org/fair-bioheaders/fhr/vX.Y.Z/jsonld/terms.ttl
+# Term IRIs never change and are never reused with another meaning.
+
+@prefix fhr:     <{FHR}> .
+@prefix sdo:     <{SDO}> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms: <{DCT}> .
+
+<{VOCABULARY}> a owl:Ontology ;
+    rdfs:label "FAIR-bioHeaders vocabulary (draft FHP additions)"@en ;
+    rdfs:comment "Draft FHP vocabulary additions, generated from fhp_linkml.yml. The shared \
+FAIR-bioHeaders terms are owned by jsonld/terms.ttl and are reused, not redefined. Runtime \
+support is coordinated with FAIR-bioHeaders-Tools#58; publication with \
+FAIR-bioHeaders-Specification#107."@en ;
+    dcterms:license <https://www.mozilla.org/en-US/MPL/2.0/> ;
+    rdfs:seeAlso <https://github.com/FAIR-bioHeaders/FHP-Specification/blob/main/docs/FHP.md> .
+"""
+
+
+FHP_ONTOLOGY = {
+    "label": "FAIR-bioHeaders vocabulary (draft FHP additions)",
+    "comment": "Draft FHP vocabulary additions, generated from fhp_linkml.yml. The shared "
+               "FAIR-bioHeaders terms are owned by jsonld/terms.ttl and are reused, not "
+               "redefined. Runtime support is coordinated with FAIR-bioHeaders-Tools#58; "
+               "publication with FAIR-bioHeaders-Specification#107.",
+    "see_also": "https://github.com/FAIR-bioHeaders/FHP-Specification/blob/main/docs/FHP.md",
+}
+
+
+def fhp_example_outputs(context=None):
+    """The canonical JSON-LD form of every ``examples/fhp`` record (fixtures)."""
+    import yaml
+
+    context = load_fhp_context() if context is None else context
+    outputs = {}
+    for stem in FHP_EXAMPLES:
+        json_path = ROOT / "examples" / "fhp" / f"{stem}.fhp.json"
+        yaml_path = ROOT / "examples" / "fhp" / f"{stem}.fhp.yaml"
+        if json_path.exists():
+            record = json.loads(json_path.read_text(encoding="utf-8"))
+        else:
+            record = yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
+        outputs[ROOT / "examples" / "fhp" / f"{stem}.fhp.jsonld"] = \
+            fhp_jsonld_text(record, context)
+    return outputs
 
 
 # The pinned schema.org subset (research R-14, R-17).
@@ -1091,6 +1326,26 @@ def mappings_doc(table):
     return text[:start] + SUMMARY_START + "\n\n" + mappings_summary(table) + "\n" + text[end:]
 
 
+def fhp_outputs(fhr_terms=None, context=None):
+    """The FHP context, vocabulary additions and example fixtures (issue #4)."""
+    fhr_classes, fhr_properties = collect_terms(Model()) if fhr_terms is None else fhr_terms
+    fhp_model = Model(FHP_LINKML, FHP_SCHEMA)
+    context = (build_context(fhp_model, FHP_ROOT_CLASS, export_terms=False)
+               if context is None else context)
+    all_classes, all_properties, added_classes, added_properties = \
+        fhp_term_additions(fhp_model, fhr_classes, fhr_properties)
+    shared = sorted((set(all_classes) & set(fhr_classes))
+                    | (set(all_properties) & set(fhr_properties)))
+    return {
+        FHP_CONTEXT_PATH: json.dumps(context, indent=2) + "\n",
+        FHP_TERMS_PATH: build_turtle(added_classes, added_properties,
+                                     fhp_turtle_header(shared)),
+        FHP_TERMS_JSONLD_PATH: build_terms_jsonld(added_classes, added_properties,
+                                                  FHP_ONTOLOGY),
+        **fhp_example_outputs(context),
+    }
+
+
 def generate():
     """Return ``{path: text}`` for every generated file."""
     model = Model()
@@ -1105,6 +1360,7 @@ def generate():
         MAPPINGS_DOC: mappings_doc(table),
         **example_outputs(context),
         **export_outputs(),
+        **fhp_outputs((classes, properties)),
     }
 
 
@@ -1131,7 +1387,8 @@ def main(argv=None):
     parser.add_argument("--check", action="store_true",
                         help="exit 1 with a diff if a generated file is out of date")
     parser.add_argument("--examples", action="store_true",
-                        help="write only examples/*.fhr.jsonld from the committed context")
+                        help="write only the examples/*.fhr.jsonld and examples/fhp/*.fhp.jsonld "
+                             "files from the committed contexts")
     parser.add_argument("--mappings-summary", action="store_true",
                         help="print the mapping table summary (Markdown) and exit")
     parser.add_argument("--schemaorg-subset", metavar="SOURCE",
@@ -1146,7 +1403,8 @@ def main(argv=None):
             subset = schemaorg_subset(args.schemaorg_subset)
             outputs = {SCHEMAORG_SUBSET: json.dumps(subset, indent=2) + "\n"}
         elif args.examples:
-            outputs = {**example_outputs(load_context()), **export_outputs()}
+            outputs = {**example_outputs(load_context()), **export_outputs(),
+                       **fhp_example_outputs()}
         else:
             outputs = generate()
     except ValueError as error:

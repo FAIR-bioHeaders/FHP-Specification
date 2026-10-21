@@ -98,16 +98,77 @@ ordinary bytes, hashed and preserved exactly. In addition:
 The bracketed ids are stable labels used by the [conformance vectors](../conformance/README.md).
 They add no requirements.
 
+## JSON-LD (draft)
+
+FHP has a JSON-LD form, like FHR: the record itself, with an `@context` and `@type`.
+It is a **draft**, because the runtime reader and writer live in the toolkit and are
+not implemented yet
+([FAIR-bioHeaders-Tools#58](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/issues/58));
+publication of the context and terms is coordinated through
+[FAIR-bioHeaders-Specification#107](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/issues/107).
+The toolkit does not read or write FHP JSON-LD yet, and this draft is not a claim of
+adoption or support.
+
+- Context: [`jsonld/fhp.context.jsonld`](../jsonld/fhp.context.jsonld), generated from
+  `fhp_linkml.yml` by `scripts/make_jsonld.py`. Do not edit it by hand:
+  `python scripts/make_jsonld.py --check` fails when it is out of date.
+- FHP vocabulary additions: [`jsonld/fhp.terms.ttl`](../jsonld/fhp.terms.ttl) and
+  [`jsonld/fhp.terms.jsonld`](../jsonld/fhp.terms.jsonld). They define only the terms
+  FHP adds. The shared terms are owned by the FAIR-bioHeaders vocabulary
+  ([`jsonld/terms.ttl`](../jsonld/terms.ttl)) and are reused with the same IRIs, never
+  redefined.
+- Fixtures: `examples/fhp/*.fhp.jsonld`, the canonical form of each `examples/fhp`
+  record.
+- Conformance: [`tests/test_fhp_jsonld.py`](../tests/test_fhp_jsonld.py).
+
+The canonical JSON-LD is **loss-preserving**: reading it back gives the identical FHP
+record. Ordered `metadataAuthor` items, nested `source`, `derivedFrom`,
+`predictionSoftware`, `sequenceStats` and `completeness` objects, scalar types and
+absent optional fields are all preserved. It is distinct from the FHR
+[schema.org export](SCHEMAORG-EXPORT.md), which is one-way; FHP has no export profile,
+and the FHP context carries no export terms.
+
+The writer emits `@context`, `@type: Dataset`, then every record key in order, adding a
+first `@type` to each nested object: `Taxon`, `Person`/`Organization`/`Agent` (by ORCID
+or ROR), `PropertyValue`, `DerivedFrom`, `Source`, `SoftwareApplication`,
+`SequenceStats` or `Completeness`. A `documentation` value that is an absolute URL is
+written as `subjectOf` in the same position. A reader accepts the embedded context or a
+known FHP context URL and nothing else, and never fetches a remote context: an unknown
+context, an unsupported JSON-LD `@version`, or a document that is not canonical is
+rejected.
+
+### Terms
+
+`schema.org` covers some FHP fields; the rest use the family namespace
+`https://w3id.org/fair-bioheaders/terms#`. The shared fields keep their FHR term IRIs.
+The FHP additions are:
+
+| FHP field | Term | Note |
+| --- | --- | --- |
+| `proteome` | `sdo:name` | the schema.org name, as FHR's `genome` |
+| `sourceType` | `fhr:sourceType` | FHP addition; a string, not a review status |
+| `source` | `fhr:source` (`fhr:Source`) | FHP addition; nested `name`, `release`, `setIdentifier`, `url`, `assemblyAccession`, `sequenceCount`, `description` |
+| `derivedFrom` | `fhr:derivedFrom` (`fhr:DerivedFrom`) | shared core slot; FHR schemaVersion 1 has no `derivedFrom` |
+| `predictionSoftware` | `fhr:predictionSoftware` (`sdo:SoftwareApplication`) | FHP addition; the same shape as `assemblySoftware` |
+| `geneticCode` | `fhr:geneticCode` | FHP addition; an integer, never inferred |
+| `isoformPolicy` | `fhr:isoformPolicy` | FHP addition; a string, never inferred |
+| `sequenceStats` | `fhr:sequenceStats` (`fhr:SequenceStats`) | FHP addition; asserted counts |
+| `completeness` | `fhr:completeness` (`fhr:Completeness`) | FHP addition; asserted BUSCO counts |
+
+No term encodes a biological origin or a quality-control result; the values are the
+producer's assertions, exactly as in the header.
+
 ## Not yet available
 
 These are recorded as follow-ups F-01 to F-07 in the
 [plan](../specs/006-protein-header/plan.md):
 
-- JSON-LD and HTML microdata forms. The model already carries the term annotations. The
-  FHP HTML microdata **binding** is drafted in [FHP-MICRODATA.md](FHP-MICRODATA.md)
-  (#5), with examples and test-only reader checks; the runtime reader and writer, the
-  website consumer and the family builder are still follow-ups, so FHP microdata output
-  is not yet supported.
+- JSON-LD and HTML microdata forms. The model already carries the term annotations.
+  The JSON-LD context is a draft (see above), with runtime reader/writer support in
+  FAIR-bioHeaders-Tools#58. The FHP HTML microdata **binding** is drafted in
+  [FHP-MICRODATA.md](FHP-MICRODATA.md) (#5), with examples and test-only reader checks;
+  the runtime reader and writer, the website consumer and the family builder are still
+  follow-ups, so FHP microdata output is not yet supported.
 - Checking GFF3 parents (spec 007).
 - A persistent schema alias and a release.
 
