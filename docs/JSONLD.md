@@ -152,8 +152,15 @@ and the files are published through
 The FHR context, vocabulary and writer above are unchanged.
 
 FHP reuses the shared terms with their FHR IRIs and adds only its own, which stay
-separate from the FHR meanings. The canonical FHP form is loss-preserving, like the FHR
-one; it carries no export terms. Reading rules and the term table are in
+separate from the FHR meanings. The reused definitions are pinned to
+FAIR-bioHeaders-Specification v0.4.0 (release commit
+`84c2f90ab0e97c81d8afbf33eafe80ebade7a009`), audited at
+`43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4` whose `jsonld/terms.ttl` is
+byte-identical to this tree's; the immutable raw URL at that commit is a locator.
+The canonical FHP form is loss-preserving, like the FHR one; it carries no export
+terms. The writer types every inlined object recursively, so a
+`derivedFrom[].accessionID` is a `PropertyValue` just like the root
+`accessionID`. Reading rules and the term table are in
 [FHP.md](FHP.md#json-ld-draft), the fixtures are `examples/fhp/*.fhp.jsonld`, and
 `tests/test_fhp_jsonld.py` checks the typed round trip, ordered authors, nested objects,
 unknown-context and unsupported-`@version` rejection, and offline operation.

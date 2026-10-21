@@ -132,6 +132,32 @@ def examples():
     return found
 
 
+def parent_accession_record():
+    """A record whose derivedFrom items include a parent accessionID object.
+
+    The first parent has an accession and the second omits it, so the tests cover
+    both the nested PropertyValue class and an absent optional child.
+    """
+    record = copy.deepcopy(examples()["rich-mixed"])
+    record["derivedFrom"] = [
+        {
+            "headerType": "FHP",
+            "checksum": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD=",
+            "relationship": "filteredFrom",
+            "accessionID": {
+                "name": "UP000005640",
+                "url": "https://www.uniprot.org/proteomes/UP000005640",
+            },
+        },
+        {
+            "headerType": "FHR",
+            "checksum": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD=",
+            "relationship": "translatedFrom",
+        },
+    ]
+    return record
+
+
 def fhr_iris(node):
     """Every fhr: IRI used in a context document (CURIEs or full IRIs)."""
     found = set()
@@ -344,6 +370,36 @@ class VocabularyTests(unittest.TestCase):
         for name in FHP_ADDED:
             self.assertNotIn(f"#   fhr:{name}\n", head)
 
+    def test_shared_vocabulary_is_pinned(self):
+        head = self.text.split("@prefix")[0]
+        self.assertEqual(make_jsonld.FHP_SHARED_RELEASE, "v0.4.0")
+        self.assertRegex(make_jsonld.FHP_SHARED_COMMIT, r"^[0-9a-f]{40}$")
+        self.assertRegex(make_jsonld.FHP_SHARED_RELEASE_COMMIT, r"^[0-9a-f]{40}$")
+        for value in (make_jsonld.FHP_SHARED_COMMIT,
+                      make_jsonld.FHP_SHARED_RELEASE_COMMIT,
+                      f"FAIR-bioHeaders-Specification {make_jsonld.FHP_SHARED_RELEASE}",
+                      make_jsonld.FHP_SHARED_TERMS_URL,
+                      make_jsonld.FHP_SHARED_RELEASE_URL):
+            with self.subTest(value=value):
+                self.assertIn(value, head)
+        # A mutable branch or a template is not a pin.
+        self.assertNotIn("FAIR-bioHeaders-Specification/main/jsonld/terms.ttl", head)
+        self.assertNotIn("fhr/vX.Y.Z/jsonld/terms.ttl", head)
+
+    def test_pinned_shared_vocabulary_matches_the_snapshot(self):
+        import hashlib
+        from rdflib.namespace import RDF, RDFS
+        data = (ROOT / "jsonld" / "terms.ttl").read_bytes()
+        self.assertEqual(hashlib.sha256(data).hexdigest(),
+                         make_jsonld.FHP_SHARED_TERMS_SHA256)
+        defined = (self.defined(self.fhr_graph, RDFS.Class)
+                   | self.defined(self.fhr_graph, RDF.Property))
+        self.assertLessEqual(SHARED, defined)
+        document = json.loads(FHP_TERMS_JSONLD.read_text(encoding="utf-8"))
+        comment = document["@graph"][0]["rdfs:comment"]["@value"]
+        self.assertIn(make_jsonld.FHP_SHARED_COMMIT, comment)
+        self.assertIn(make_jsonld.FHP_SHARED_RELEASE, comment)
+
 
 class WriterTests(unittest.TestCase):
     @classmethod
@@ -369,6 +425,21 @@ class WriterTests(unittest.TestCase):
                 for item in document.get("metadataAuthor", []):
                     orcid = str(item.get("uri", "")).startswith("https://orcid.org/")
                     self.assertEqual(item["@type"], "Person" if orcid else "Agent")
+
+    def test_parent_accession_children_are_typed(self):
+        record = parent_accession_record()
+        document = make_jsonld.fhp_to_jsonld(record)
+        parents = document["derivedFrom"]
+        self.assertEqual([item["@type"] for item in parents],
+                         ["DerivedFrom", "DerivedFrom"])
+        self.assertEqual(parents[0]["accessionID"]["@type"], "PropertyValue")
+        self.assertEqual(parents[0]["accessionID"]["name"], "UP000005640")
+        self.assertEqual(parents[1]["@type"], "DerivedFrom")
+        self.assertNotIn("accessionID", parents[1])
+        self.assertEqual([item["accessionID"]["name"] for item in parents
+                          if "accessionID" in item], ["UP000005640"])
+        back = make_jsonld.fhp_canonical_record(json.loads(json.dumps(document)))
+        self.assertTrue(equal(back, record))
 
     def test_canonical_round_trip(self):
         for name, record in self.examples.items():
@@ -524,6 +595,30 @@ class ProcessorTests(unittest.TestCase):
                 back = make_jsonld.fhp_canonical_record(compacted, warn=lambda message: None)
                 self.assertTrue(equal(back, record), json.dumps(back, indent=1))
 
+    def test_parent_accession_round_trip(self):
+        record = parent_accession_record()
+        document = make_jsonld.fhp_to_jsonld(record)
+        expanded = pyld.expand(document, {"documentLoader": fhp_loader})
+
+        def nodes(value):
+            if isinstance(value, list):
+                for item in value:
+                    yield from nodes(item)
+            elif isinstance(value, dict):
+                yield value
+                for item in value.values():
+                    yield from nodes(item)
+
+        typed = [node for node in nodes(expanded)
+                 if node.get("@type") == [SDO + "PropertyValue"]]
+        self.assertEqual(len(typed), 1)
+        self.assertIn(SDO + "name", typed[0])
+        compacted = pyld.compact(expanded, self.context, {"documentLoader": fhp_loader})
+        back = make_jsonld.fhp_canonical_record(compacted, warn=lambda message: None)
+        self.assertTrue(equal(back, record), json.dumps(back, indent=1))
+        self.assertEqual([item["headerType"] for item in back["derivedFrom"]],
+                         [item["headerType"] for item in record["derivedFrom"]])
+
     def test_known_context_url_expands_like_the_embedded_context(self):
         record = self.examples["minimal-database"]
         embedded = make_jsonld.fhp_to_jsonld(record)
@@ -574,6 +669,10 @@ class DocumentationTests(unittest.TestCase):
                 self.assertIn("FAIR-bioHeaders-Tools#58", text)
         self.assertIn("fhp.context.jsonld", fhp)
         self.assertIn("draft", fhp.lower())
+        # The reused shared vocabulary is pinned, not linked through main.
+        for text in (fhp, jsonld, changelog):
+            self.assertIn("v0.4.0", text)
+            self.assertIn(make_jsonld.FHP_SHARED_COMMIT, text)
         # Canonical JSON-LD is loss-preserving; schema.org export is one-way.
         self.assertIn("one-way", fhp.lower())
 

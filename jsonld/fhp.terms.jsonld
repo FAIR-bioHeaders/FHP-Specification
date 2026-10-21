@@ -17,7 +17,7 @@
         "@language": "en"
       },
       "rdfs:comment": {
-        "@value": "Draft FHP vocabulary additions, generated from fhp_linkml.yml. The shared FAIR-bioHeaders terms are owned by jsonld/terms.ttl and are reused, not redefined. Runtime support is coordinated with FAIR-bioHeaders-Tools#58; publication with FAIR-bioHeaders-Specification#107.",
+        "@value": "Draft FHP vocabulary additions, generated from fhp_linkml.yml. The shared FAIR-bioHeaders terms are owned by jsonld/terms.ttl and are reused, not redefined; they are pinned to FAIR-bioHeaders-Specification v0.4.0 at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4/jsonld/terms.ttl). Runtime support is coordinated with FAIR-bioHeaders-Tools#58; publication with FAIR-bioHeaders-Specification#107.",
         "@language": "en"
       },
       "dcterms:license": {

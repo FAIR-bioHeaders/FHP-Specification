@@ -1025,6 +1025,28 @@ FHP_BAD_VERSION = (
 FHP_EXAMPLES = ("minimal-predicted", "minimal-database", "minimal-mixed",
                 "rich-predicted", "rich-database", "rich-mixed")
 FHP_RELEASE_ALIAS = "https://w3id.org/fair-bioheaders/fhp/vX.Y.Z/jsonld/"
+# The shared vocabulary snapshot whose definitions the FHP additions reuse. FHP
+# never redefines a shared term, so the inherited meanings are auditable only
+# against an immutable revision. Pinned to the v0.4.0 release line's mainline base:
+# its jsonld/terms.ttl is byte-identical to jsonld/terms.ttl in this tree
+# (SHA-256 below). The v0.4.0 tag (release commit 84c2f90) adds release-line edits
+# to the Agent and schemaVersion definitions for the v0.4 schema contract; FHP on
+# main still inherits the core's v0.3 patterns, so the base snapshot is the
+# revision that matches. The commit is the pin; the URL is a locator.
+FHP_SHARED_RELEASE = "v0.4.0"
+FHP_SHARED_COMMIT = "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4"
+FHP_SHARED_RELEASE_COMMIT = "84c2f90ab0e97c81d8afbf33eafe80ebade7a009"
+FHP_SHARED_TERMS_SHA256 = (
+    "d64916ece9410b0cd0c1e98bdbed2622a3a32b9a5a28717832fcf0e922f1525b"
+)
+FHP_SHARED_TERMS_URL = (
+    "https://raw.githubusercontent.com/FAIR-bioHeaders/"
+    f"FAIR-bioHeaders-Specification/{FHP_SHARED_COMMIT}/jsonld/terms.ttl"
+)
+FHP_SHARED_RELEASE_URL = (
+    "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/"
+    f"releases/tag/{FHP_SHARED_RELEASE}"
+)
 
 
 def load_fhp_context():
@@ -1043,14 +1065,23 @@ def fhp_is_canonical(document, context=None):
     return is_canonical(document, context, FHP_KNOWN_CONTEXT_URLS, load_fhp_context)
 
 
+def _fhp_typed_node(kind, value):
+    """A typed FHP object, recursively typing its children in the original order."""
+    node = {"@type": kind}
+    for key, item in value.items():
+        node[key] = _fhp_typed(key, item)
+    return node
+
+
 def _fhp_typed(key, value):
+    """Type an FHP field and, recursively, every inlined object below it."""
     if key in FHP_NODE_TYPES and isinstance(value, dict):
-        return {"@type": FHP_NODE_TYPES[key], **copy.deepcopy(value)}
+        return _fhp_typed_node(FHP_NODE_TYPES[key], value)
     if key in AUTHOR_KEYS and isinstance(value, list):
-        return [{"@type": author_type(item), **copy.deepcopy(item)}
+        return [_fhp_typed_node(author_type(item), item)
                 if isinstance(item, dict) else copy.deepcopy(item) for item in value]
     if key in FHP_LIST_TYPES and isinstance(value, list):
-        return [{"@type": FHP_LIST_TYPES[key], **copy.deepcopy(item)}
+        return [_fhp_typed_node(FHP_LIST_TYPES[key], item)
                 if isinstance(item, dict) else copy.deepcopy(item) for item in value]
     return copy.deepcopy(value)
 
@@ -1122,6 +1153,17 @@ def fhp_term_additions(model, fhr_classes, fhr_properties):
             {name: entry for name, entry in properties.items() if name not in fhr_properties})
 
 
+FHP_ONTOLOGY_COMMENT = (
+    "Draft FHP vocabulary additions, generated from fhp_linkml.yml. The shared "
+    "FAIR-bioHeaders terms are owned by jsonld/terms.ttl and are reused, not "
+    "redefined; they are pinned to FAIR-bioHeaders-Specification "
+    f"{FHP_SHARED_RELEASE} at commit {FHP_SHARED_COMMIT} "
+    f"({FHP_SHARED_TERMS_URL}). Runtime support is coordinated with "
+    "FAIR-bioHeaders-Tools#58; publication with "
+    "FAIR-bioHeaders-Specification#107."
+)
+
+
 def fhp_turtle_header(shared):
     """The provenance header of ``jsonld/fhp.terms.ttl`` (FHP-owned additions)."""
     names = "".join(f"#   fhr:{name}\n" for name in shared)
@@ -1133,10 +1175,14 @@ def fhp_turtle_header(shared):
 # Release copies: {FHP_RELEASE_ALIAS}fhp.terms.ttl
 # These terms are owned by FHP development until they are published in the shared
 # vocabulary. Shared terms are not redefined here: they are owned by the
-# FAIR-bioHeaders vocabulary (jsonld/terms.ttl) and reused with the same IRIs:
-{names}# Shared vocabulary, canonical and release:
-#   https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/main/jsonld/terms.ttl
-#   https://w3id.org/fair-bioheaders/fhr/vX.Y.Z/jsonld/terms.ttl
+# FAIR-bioHeaders vocabulary and reused with the same IRIs:
+{names}# Shared vocabulary pin: FAIR-bioHeaders-Specification {FHP_SHARED_RELEASE}
+#   release commit: {FHP_SHARED_RELEASE_COMMIT}
+#   definitions audited at commit: {FHP_SHARED_COMMIT}
+#   (the v0.4.0 release merge's base; its jsonld/terms.ttl is byte-identical to
+#   jsonld/terms.ttl in this tree, SHA-256 {FHP_SHARED_TERMS_SHA256}).
+# Shared vocabulary locator (immutable): {FHP_SHARED_TERMS_URL}
+# Shared vocabulary release: {FHP_SHARED_RELEASE_URL}
 # Term IRIs never change and are never reused with another meaning.
 
 @prefix fhr:     <{FHR}> .
@@ -1149,10 +1195,7 @@ def fhp_turtle_header(shared):
 
 <{VOCABULARY}> a owl:Ontology ;
     rdfs:label "FAIR-bioHeaders vocabulary (draft FHP additions)"@en ;
-    rdfs:comment "Draft FHP vocabulary additions, generated from fhp_linkml.yml. The shared \
-FAIR-bioHeaders terms are owned by jsonld/terms.ttl and are reused, not redefined. Runtime \
-support is coordinated with FAIR-bioHeaders-Tools#58; publication with \
-FAIR-bioHeaders-Specification#107."@en ;
+    rdfs:comment "{FHP_ONTOLOGY_COMMENT}"@en ;
     dcterms:license <https://www.mozilla.org/en-US/MPL/2.0/> ;
     rdfs:seeAlso <https://github.com/FAIR-bioHeaders/FHP-Specification/blob/main/docs/FHP.md> .
 """
@@ -1160,10 +1203,7 @@ FAIR-bioHeaders-Specification#107."@en ;
 
 FHP_ONTOLOGY = {
     "label": "FAIR-bioHeaders vocabulary (draft FHP additions)",
-    "comment": "Draft FHP vocabulary additions, generated from fhp_linkml.yml. The shared "
-               "FAIR-bioHeaders terms are owned by jsonld/terms.ttl and are reused, not "
-               "redefined. Runtime support is coordinated with FAIR-bioHeaders-Tools#58; "
-               "publication with FAIR-bioHeaders-Specification#107.",
+    "comment": FHP_ONTOLOGY_COMMENT,
     "see_also": "https://github.com/FAIR-bioHeaders/FHP-Specification/blob/main/docs/FHP.md",
 }
 

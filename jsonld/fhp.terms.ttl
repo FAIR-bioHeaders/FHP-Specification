@@ -6,7 +6,7 @@
 # Release copies: https://w3id.org/fair-bioheaders/fhp/vX.Y.Z/jsonld/fhp.terms.ttl
 # These terms are owned by FHP development until they are published in the shared
 # vocabulary. Shared terms are not redefined here: they are owned by the
-# FAIR-bioHeaders vocabulary (jsonld/terms.ttl) and reused with the same IRIs:
+# FAIR-bioHeaders vocabulary and reused with the same IRIs:
 #   fhr:Agent
 #   fhr:accessionID
 #   fhr:checksum
@@ -16,9 +16,13 @@
 #   fhr:schemaVersion
 #   fhr:seqcol_id
 #   fhr:voucherSpecimen
-# Shared vocabulary, canonical and release:
-#   https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/main/jsonld/terms.ttl
-#   https://w3id.org/fair-bioheaders/fhr/vX.Y.Z/jsonld/terms.ttl
+# Shared vocabulary pin: FAIR-bioHeaders-Specification v0.4.0
+#   release commit: 84c2f90ab0e97c81d8afbf33eafe80ebade7a009
+#   definitions audited at commit: 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4
+#   (the v0.4.0 release merge's base; its jsonld/terms.ttl is byte-identical to
+#   jsonld/terms.ttl in this tree, SHA-256 d64916ece9410b0cd0c1e98bdbed2622a3a32b9a5a28717832fcf0e922f1525b).
+# Shared vocabulary locator (immutable): https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4/jsonld/terms.ttl
+# Shared vocabulary release: https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/releases/tag/v0.4.0
 # Term IRIs never change and are never reused with another meaning.
 
 @prefix fhr:     <https://w3id.org/fair-bioheaders/terms#> .
@@ -31,7 +35,7 @@
 
 <https://w3id.org/fair-bioheaders/terms> a owl:Ontology ;
     rdfs:label "FAIR-bioHeaders vocabulary (draft FHP additions)"@en ;
-    rdfs:comment "Draft FHP vocabulary additions, generated from fhp_linkml.yml. The shared FAIR-bioHeaders terms are owned by jsonld/terms.ttl and are reused, not redefined. Runtime support is coordinated with FAIR-bioHeaders-Tools#58; publication with FAIR-bioHeaders-Specification#107."@en ;
+    rdfs:comment "Draft FHP vocabulary additions, generated from fhp_linkml.yml. The shared FAIR-bioHeaders terms are owned by jsonld/terms.ttl and are reused, not redefined; they are pinned to FAIR-bioHeaders-Specification v0.4.0 at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4/jsonld/terms.ttl). Runtime support is coordinated with FAIR-bioHeaders-Tools#58; publication with FAIR-bioHeaders-Specification#107."@en ;
     dcterms:license <https://www.mozilla.org/en-US/MPL/2.0/> ;
     rdfs:seeAlso <https://github.com/FAIR-bioHeaders/FHP-Specification/blob/main/docs/FHP.md> .
 

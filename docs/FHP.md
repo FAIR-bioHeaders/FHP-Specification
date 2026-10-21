@@ -121,6 +121,18 @@ adoption or support.
   record.
 - Conformance: [`tests/test_fhp_jsonld.py`](../tests/test_fhp_jsonld.py).
 
+The shared terms are reused, never redefined, so their inherited meanings are pinned to
+an immutable revision: FAIR-bioHeaders-Specification **v0.4.0** (release commit
+`84c2f90ab0e97c81d8afbf33eafe80ebade7a009`), with the definitions audited at
+`43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4`, the v0.4.0 release merge's base. That
+snapshot's `jsonld/terms.ttl` is byte-identical to this tree's `jsonld/terms.ttl`
+(SHA-256 `d64916ece9410b0cd0c1e98bdbed2622a3a32b9a5a28717832fcf0e922f1525b`). The
+v0.4.0 tag also contains release-line edits to the `Agent` and `schemaVersion`
+definitions for the v0.4 schema contract; `main` still inherits the core's v0.3
+patterns, so the base snapshot is the matching revision. The immutable raw URL at that
+commit is a locator, not the pin; the commit SHA and the file SHA-256 are what a
+consumer audits.
+
 The canonical JSON-LD is **loss-preserving**: reading it back gives the identical FHP
 record. Ordered `metadataAuthor` items, nested `source`, `derivedFrom`,
 `predictionSoftware`, `sequenceStats` and `completeness` objects, scalar types and
@@ -129,13 +141,15 @@ absent optional fields are all preserved. It is distinct from the FHR
 and the FHP context carries no export terms.
 
 The writer emits `@context`, `@type: Dataset`, then every record key in order, adding a
-first `@type` to each nested object: `Taxon`, `Person`/`Organization`/`Agent` (by ORCID
-or ROR), `PropertyValue`, `DerivedFrom`, `Source`, `SoftwareApplication`,
-`SequenceStats` or `Completeness`. A `documentation` value that is an absolute URL is
-written as `subjectOf` in the same position. A reader accepts the embedded context or a
-known FHP context URL and nothing else, and never fetches a remote context: an unknown
-context, an unsupported JSON-LD `@version`, or a document that is not canonical is
-rejected.
+first `@type` to each nested object and, recursively, to every inlined object below it:
+`Taxon`, `Person`/`Organization`/`Agent` (by ORCID or ROR), `PropertyValue`,
+`DerivedFrom`, `Source`, `SoftwareApplication`, `SequenceStats` or `Completeness`. A
+`derivedFrom` parent therefore carries `DerivedFrom` and its `accessionID` carries
+`PropertyValue`, in array order and with absent optional children still absent. A
+`documentation` value that is an absolute URL is written as `subjectOf` in the same
+position. A reader accepts the embedded context or a known FHP context URL and nothing
+else, and never fetches a remote context: an unknown context, an unsupported JSON-LD
+`@version`, or a document that is not canonical is rejected.
 
 ### Terms
 

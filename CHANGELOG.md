@@ -33,17 +33,28 @@
     `isoformPolicy`, `predictionSoftware`, `predictionProtocol`, `sequenceStats`,
     `completeness` and their objects) get clearly marked FHP additions;
   - `jsonld/fhp.terms.ttl` and `jsonld/fhp.terms.jsonld`, the FHP additions only,
-    with a provenance header naming the reused shared terms;
+    with a provenance header naming the reused shared terms and pinning their
+    definitions to FAIR-bioHeaders-Specification v0.4.0 (release commit
+    `84c2f90ab0e97c81d8afbf33eafe80ebade7a009`), audited at the release merge's
+    base `43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4` whose `jsonld/terms.ttl` is
+    byte-identical to this tree's (SHA-256 recorded); the immutable raw URL at that
+    commit is a locator;
   - `examples/fhp/*.fhp.jsonld`, the canonical form of each `examples/fhp` record.
 
   `scripts/make_jsonld.py` gains FHP generation (the FHR code paths and outputs are
   unchanged; `--check` covers the new files), and the reference FHP writer/canonical
-  reader. `tests/test_fhp_jsonld.py` checks typed round trips, ordered authors, nested
-  `source`/`derivedFrom`, scalar types, absent optional fields, unknown-context and
-  unsupported-`@version` rejection, offline operation and the vocabulary ownership
-  split. `docs/FHP.md` and `docs/JSONLD.md` state the draft status, that the runtime
-  reader/writer is coordinated with FAIR-bioHeaders-Tools#58, and that canonical
-  JSON-LD is loss-preserving while the schema.org export is one-way. FHP 1.0 is released; the context and terms are published through
+  reader. The writer types inlined objects recursively, so
+  `derivedFrom[].accessionID` gets the same `PropertyValue` class as the root
+  `accessionID`, while array order and absent optional children are preserved.
+  `tests/test_fhp_jsonld.py` checks typed round trips, ordered authors, nested
+  `source`/`derivedFrom`, a parent-accession `derivedFrom[].accessionID` case in both
+  the writer and the PyLD processor round trip, scalar types, absent optional fields,
+  unknown-context and unsupported-`@version` rejection, offline operation and the
+  vocabulary ownership split. `docs/FHP.md` and `docs/JSONLD.md` state the draft
+  status, that the runtime reader/writer is coordinated with
+  FAIR-bioHeaders-Tools#58, the pinned shared-vocabulary revision, and that canonical
+  JSON-LD is loss-preserving while the schema.org export is one-way. FHP 1.0 is
+  released; the context and terms are published through
   FAIR-bioHeaders-Specification#107. No toolkit support or adoption is claimed.
 - Rename the repository from `FHR-Specification` to `FAIR-bioHeaders-Specification`
   (#108). It holds the released specifications for every header type; each type is
