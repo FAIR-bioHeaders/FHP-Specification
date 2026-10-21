@@ -26,6 +26,16 @@ FHR_ITEMTYPE = (
     "https://raw.githubusercontent.com/FAIR-bioHeaders/"
     "FAIR-bioHeaders-Specification/main/fhr.json"
 )
+CHECKSUM = "A" * 43 + "="
+RELEASE_040 = (
+    "https://raw.githubusercontent.com/FAIR-bioHeaders/"
+    "FAIR-bioHeaders-Specification/v0.4.0/fhp.json"
+)
+RELEASE_040_W3ID = "https://w3id.org/fair-bioheaders/fhp/v0.4.0"
+RELEASE_041 = (
+    "https://raw.githubusercontent.com/FAIR-bioHeaders/"
+    "FAIR-bioHeaders-Specification/v0.4.1/fhp.json"
+)
 EXAMPLES = ROOT / "examples" / "fhp"
 SCHEMA = json.loads((ROOT / "fhp.json").read_text(encoding="utf-8"))
 VALIDATOR = Draft202012Validator(SCHEMA, format_checker=FormatChecker())
@@ -68,9 +78,11 @@ def read_fixture(name):
 
 
 def extract_page(page):
-    """Read a document and reject it unless it also matches fhp.json (M4)."""
+    """Read a document and reject it unless it also matches its selected schema (M4)."""
     record = fhp_microdata.read_page(page, SCHEMA)
-    errors = list(VALIDATOR.iter_errors(record))
+    selected = fhp_microdata.resolve_schema(record.get("schema"), SCHEMA)
+    validator = Draft202012Validator(selected, format_checker=FormatChecker())
+    errors = list(validator.iter_errors(record))
     if errors:
         raise fhp_microdata.MicrodataError(
             f"{errors[0].json_path}: {errors[0].message}")
@@ -139,16 +151,46 @@ class FHPMicrodataBindingTests(unittest.TestCase):
             fhp_microdata.read_page(page, SCHEMA)
 
     def test_schema_property_selects_an_fhp_contract(self):
-        record = dict(self.minimal(),
-                      schema="https://raw.githubusercontent.com/FAIR-bioHeaders/"
-                             "FAIR-bioHeaders-Specification/v0.4.0/fhp.json")
-        self.assertEqual(list(VALIDATOR.iter_errors(record)), [])
-        self.assertTrue(same_json(
-            fhp_microdata.read_page(fhp_microdata.write_page(record), SCHEMA), record))
-        # A w3id release URL is also an FHP selection.
-        record["schema"] = "https://w3id.org/fair-bioheaders/fhp/v0.4.0"
-        self.assertTrue(same_json(
-            fhp_microdata.read_page(fhp_microdata.write_page(record), SCHEMA), record))
+        record = dict(self.minimal(), schema=RELEASE_040, schemaVersion="1.0")
+        self.assertTrue(same_json(extract_page(fhp_microdata.write_page(record)), record))
+        # A w3id release URL selects the same release.
+        record["schema"] = RELEASE_040_W3ID
+        self.assertTrue(same_json(extract_page(fhp_microdata.write_page(record)), record))
+        # v0.4.1 carries the same FHP schema contract.
+        record["schema"] = RELEASE_041
+        self.assertTrue(same_json(extract_page(fhp_microdata.write_page(record)), record))
+
+    def test_unavailable_release_is_rejected(self):
+        record = dict(
+            self.minimal(), schema="https://raw.githubusercontent.com/FAIR-bioHeaders/"
+            "FAIR-bioHeaders-Specification/v999.0.0/fhp.json")
+        with self.assertRaises(fhp_microdata.MicrodataError):
+            fhp_microdata.read_page(fhp_microdata.write_page(record), SCHEMA)
+
+    def test_release_and_draft_contracts_are_distinct(self):
+        # The draft on main carries the number 1; released FHP 1.0 carries the
+        # string "1.0" (F2). Each selection uses its own contract.
+        self.assertEqual(extract_page(fhp_microdata.write_page(self.minimal()))["schemaVersion"], 1)
+        release = dict(self.minimal(), schema=RELEASE_040, schemaVersion="1.0")
+        self.assertEqual(extract_page(fhp_microdata.write_page(release))["schemaVersion"], "1.0")
+        with self.assertRaises(fhp_microdata.MicrodataError):
+            extract_page(fhp_microdata.write_page(dict(release, schemaVersion=1)))
+        with self.assertRaises(fhp_microdata.MicrodataError):
+            extract_page(fhp_microdata.write_page(dict(self.minimal(), schemaVersion="1.0")))
+
+    def test_selected_contract_controls_untyped_conversion(self):
+        release = dict(self.minimal(), schema=RELEASE_040, schemaVersion="1.0")
+        typed = ('<span itemprop="schemaVersion" data-fhr-type="string">'
+                 "1.0</span>")
+        page = fhp_microdata.write_page(release).replace(
+            typed, '<span itemprop="schemaVersion">1.0</span>', 1)
+        self.assertEqual(fhp_microdata.read_page(page, SCHEMA)["schemaVersion"], "1.0")
+        # The draft's numeric contract converts the same untyped text to a number.
+        draft_typed = ('<span itemprop="schemaVersion" data-fhr-type="integer">'
+                       "1</span>")
+        page = fhp_microdata.write_page(self.minimal()).replace(
+            draft_typed, '<span itemprop="schemaVersion">1</span>', 1)
+        self.assertEqual(fhp_microdata.read_page(page, SCHEMA)["schemaVersion"], 1)
 
     def test_an_fhr_schema_value_is_not_an_fhp_record(self):
         record = dict(self.minimal(), schema=FHR_ITEMTYPE)
@@ -181,6 +223,124 @@ class FHPMicrodataBindingTests(unittest.TestCase):
         self.assertEqual(extracted["proteome"],
                          [self.minimal()["proteome"], "Second"])
         self.assertTrue(list(VALIDATOR.iter_errors(extracted)))
+
+    def test_omitted_end_tags_match_explicit_end_tags(self):
+        page = fhp_microdata.write_page(self.minimal())
+        proteome = ('<span itemprop="proteome" data-fhr-type="string">'
+                    "Synthetic predicted proteome (placeholder)</span>")
+        version = '<span itemprop="version" data-fhr-type="string">1.0</span>'
+        expected_with_conditions = dict(self.minimal(), reuseConditions="public domain")
+        cases = [
+            ("p",
+             '<p itemprop="proteome" data-fhr-type="string">'
+             "Synthetic predicted proteome (placeholder)<span></span><div></div>",
+             '<p itemprop="proteome" data-fhr-type="string">'
+             "Synthetic predicted proteome (placeholder)<span></span></p><div></div>",
+             proteome, self.minimal()),
+            ("li",
+             '<ul><li itemprop="version" data-fhr-type="string">1.0'
+             '<li itemprop="reuseConditions" data-fhr-type="string">public domain</ul>',
+             '<ul><li itemprop="version" data-fhr-type="string">1.0</li>'
+             '<li itemprop="reuseConditions" data-fhr-type="string">public domain</li></ul>',
+             version, expected_with_conditions),
+            ("dt/dd",
+             '<dl><dt itemprop="version" data-fhr-type="string">1.0'
+             '<dd itemprop="reuseConditions" data-fhr-type="string">public domain</dl>',
+             '<dl><dt itemprop="version" data-fhr-type="string">1.0</dt>'
+             '<dd itemprop="reuseConditions" data-fhr-type="string">public domain</dd></dl>',
+             version, expected_with_conditions),
+            ("tr",
+             '<table><tr><td itemprop="version" data-fhr-type="string">1.0'
+             '<tr><td itemprop="reuseConditions" data-fhr-type="string">public domain</table>',
+             '<table><tr><td itemprop="version" data-fhr-type="string">1.0</td></tr>'
+             '<tr><td itemprop="reuseConditions" data-fhr-type="string">public domain'
+             "</td></tr></table>",
+             version, expected_with_conditions),
+            ("td",
+             '<table><tr><td itemprop="version" data-fhr-type="string">1.0'
+             '<td itemprop="reuseConditions" data-fhr-type="string">public domain</table>',
+             '<table><tr><td itemprop="version" data-fhr-type="string">1.0</td>'
+             '<td itemprop="reuseConditions" data-fhr-type="string">public domain'
+             "</td></tr></table>",
+             version, expected_with_conditions),
+            ("th",
+             '<table><tr><th itemprop="version" data-fhr-type="string">1.0'
+             '<th itemprop="reuseConditions" data-fhr-type="string">public domain</table>',
+             '<table><tr><th itemprop="version" data-fhr-type="string">1.0</th>'
+             '<th itemprop="reuseConditions" data-fhr-type="string">public domain'
+             "</th></tr></table>",
+             version, expected_with_conditions),
+            ("option",
+             '<select><option itemprop="version" data-fhr-type="string">1.0'
+             '<option itemprop="reuseConditions" data-fhr-type="string">public domain</select>',
+             '<select><option itemprop="version" data-fhr-type="string">1.0</option>'
+             '<option itemprop="reuseConditions" data-fhr-type="string">public domain'
+             "</option></select>",
+             version, expected_with_conditions),
+        ]
+        for label, omitted, explicit, target, expected in cases:
+            with self.subTest(tag=label):
+                self.assertIn(target, page)
+                omitted_page = fhp_microdata.write_page(self.minimal()).replace(
+                    target, omitted, 1)
+                explicit_page = fhp_microdata.write_page(self.minimal()).replace(
+                    target, explicit, 1)
+                self.assertTrue(same_json(
+                    fhp_microdata.read_page(omitted_page, SCHEMA), expected))
+                self.assertTrue(same_json(
+                    fhp_microdata.read_page(explicit_page, SCHEMA), expected))
+
+    def test_property_inside_ordinary_property_is_read(self):
+        checksum = ('<span itemprop="checksum" data-fhr-type="string">'
+                    f"{CHECKSUM}</span>")
+        page = fhp_microdata.write_page(self.minimal()).replace(
+            checksum,
+            '<span itemprop="documentation" data-fhr-type="string">'
+            f"{checksum}</span>", 1)
+        extracted = extract_page(page)
+        self.assertEqual(extracted["checksum"], CHECKSUM)
+        self.assertEqual(extracted["documentation"], CHECKSUM)
+        self.assertEqual(extracted, dict(self.minimal(), documentation=CHECKSUM))
+
+    def test_untyped_array_occurrences_use_the_item_schema(self):
+        source = ('<span itemprop="source" itemscope{typed}>'
+                  '<span itemprop="name">db</span>'
+                  '<span itemprop="sequenceCount">0</span></span>')
+        software = ('<span itemprop="predictionSoftware" itemscope{typed}>'
+                    '<span itemprop="name">tool</span>'
+                    '<span itemprop="commandLineOption">--x</span></span>')
+        for typed in ("", ' data-fhr-type="object"'):
+            with self.subTest(typed=bool(typed)):
+                page = fhp_microdata.write_page(self.minimal()).replace(
+                    "</div>", source.format(typed=typed) +
+                    software.format(typed=typed) + "</div>", 1)
+                extracted = extract_page(page)
+                self.assertEqual(extracted["source"],
+                                 [{"name": "db", "sequenceCount": 0}])
+                self.assertIs(type(extracted["source"][0]["sequenceCount"]), int)
+                self.assertEqual(extracted["predictionSoftware"],
+                                 [{"name": "tool", "commandLineOption": ["--x"]}])
+
+    def test_repeated_array_containers_are_not_flattened(self):
+        container = ('<span itemprop="metadataAuthor" data-fhr-type="array">'
+                     '<span itemprop="item" itemscope data-fhr-type="object">'
+                     '<span itemprop="name" data-fhr-type="string">Synthetic '
+                     "metadata author (placeholder)</span></span></span>")
+        page = fhp_microdata.write_page(self.minimal()).replace(
+            container, container + container, 1)
+        extracted = fhp_microdata.read_page(page, SCHEMA)
+        self.assertEqual(len(extracted["metadataAuthor"]), 2)
+        self.assertTrue(all(isinstance(item, list)
+                            for item in extracted["metadataAuthor"]))
+        with self.assertRaises(fhp_microdata.MicrodataError):
+            extract_page(page)
+
+    def test_ordinary_repeated_array_properties_form_a_flat_list(self):
+        page = fhp_microdata.write_page(self.minimal()).replace(
+            "</div>", '<span itemprop="identifier">ex:one</span>'
+            '<span itemprop="identifier">ex:two</span></div>', 1)
+        extracted = extract_page(page)
+        self.assertEqual(extracted["identifier"], ["ex:one", "ex:two"])
 
     def test_malformed_array_child_is_rejected(self):
         page = fhp_microdata.write_page(self.minimal()).replace(
@@ -261,6 +421,34 @@ class FHPMicrodataBindingTests(unittest.TestCase):
         extracted = fhp_microdata.read_page(page, SCHEMA)
         self.assertNotIn("checksum", extracted)
         self.assertTrue(list(VALIDATOR.iter_errors(extracted)))
+
+    def test_script_with_itemprop_is_not_a_property(self):
+        checksum = ('<span itemprop="checksum" data-fhr-type="string">'
+                    f"{CHECKSUM}</span>")
+        page = fhp_microdata.write_page(self.minimal()).replace(
+            checksum,
+            '<script itemprop="checksum" data-fhr-type="string">'
+            f"{CHECKSUM}</script>", 1)
+        extracted = fhp_microdata.read_page(page, SCHEMA)
+        self.assertNotIn("checksum", extracted)
+        with self.assertRaises(fhp_microdata.MicrodataError):
+            extract_page(page)
+        # A property and its descendants inside a script are still inert.
+        page = fhp_microdata.write_page(self.minimal()).replace(
+            checksum,
+            '<script itemprop="documentation"><span itemprop="checksum" '
+            f'data-fhr-type="string">{CHECKSUM}</span></script>', 1)
+        extracted = fhp_microdata.read_page(page, SCHEMA)
+        self.assertNotIn("checksum", extracted)
+        self.assertNotIn("documentation", extracted)
+
+    def test_script_text_inside_a_property_is_excluded(self):
+        page = fhp_microdata.write_page(self.minimal()).replace(
+            "</div>",
+            '<span itemprop="documentation" data-fhr-type="string">'
+            "before<script>secret</script>after</span></div>", 1)
+        self.assertEqual(fhp_microdata.read_page(page, SCHEMA)["documentation"],
+                         "beforeafter")
 
     def test_first_attribute_wins(self):
         page = fhp_microdata.write_page(self.minimal()).replace(

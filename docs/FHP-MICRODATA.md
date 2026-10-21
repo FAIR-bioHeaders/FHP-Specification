@@ -47,6 +47,11 @@ shared rules win.
   a raw-main URL selects the reader's current FHP schema, a raw release-tag URL
   (`.../vX.Y.Z/fhp.json`) or its w3id form (`https://w3id.org/fair-bioheaders/fhp/vX.Y.Z`)
   selects that release's schema. Matching is exact.
+- The reader resolves the selection **before** converting untyped values or
+  validating: `main` uses the current schema, a supported release uses that release's
+  schema, and an unavailable release is rejected. The test-only reader carries the
+  released FHP `"1.0"` contract from v0.4.0, also used by v0.4.1 (which changed only format
+  rules); `v999.0.0` and any other release it does not carry are unsupported-version.
 - A `schema` value that is not an FHP schema URL, a release the reader does not have, or
   a `schemaVersion` the selected schema does not accept is **unsupported-version**. The
   document is rejected; it is not checked against another schema. FHP `schemaVersion 1.0`
@@ -143,7 +148,11 @@ construction.
 Repeating a property is read as a list, following M4. A repeated field that takes a single
 value (`proteome`, `schemaVersion`, `taxon`, `sequenceStats`, `completeness`, `checksum`
 and the other scalars and single objects) is therefore invalid, and so is a repeated
-array container. The extracted metadata must validate against the selected FHP schema.
+array container. Only a single array container is unwrapped to its items; if the same
+container appears twice, the occurrences stay as nested lists so schema validation can
+reject them rather than silently flattening them into one list. Ordinary repeated
+properties, including repeated untyped occurrences of an array field, still form one flat
+list. The extracted metadata must validate against the selected FHP schema.
 
 ## Validity and verification
 
