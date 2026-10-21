@@ -213,7 +213,7 @@ class FHPExampleTests(unittest.TestCase):
                                            else yaml.safe_load(text))
 
     def test_examples_are_valid(self):
-        self.assertEqual(len(self.examples), 6)
+        self.assertEqual(len(self.examples), 7)
         for name, record in self.examples.items():
             with self.subTest(example=name):
                 self.assertEqual(list(self.validator.iter_errors(record)), [])

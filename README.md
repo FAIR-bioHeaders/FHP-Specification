@@ -151,7 +151,8 @@ conditions and losses ([summary](docs/MAPPINGS.md#json-ld-and-dublin-core-dcmi-t
 - `fhp_linkml.yml` and `fhp.json`: the **draft** FHP header for protein FASTA
   (proteomes and protein sets). The LinkML model imports the core, and the JSON
   Schema is generated from it. The format is described in [docs/FHP.md](docs/FHP.md),
-  with examples in [examples/fhp/](examples/fhp/). FHP is not released; see
+  with examples in [examples/fhp/](examples/fhp/) and the **draft** HTML microdata
+  binding in [docs/FHP-MICRODATA.md](docs/FHP-MICRODATA.md). FHP is not released; see
   [specs/006-protein-header](specs/006-protein-header/spec.md).
 - `fhgff3_linkml.yml` and `fhgff3.json`: the **draft** FHGFF3 header for GFF3
   annotations, placed after `##gff-version 3`. The record links the annotation to
