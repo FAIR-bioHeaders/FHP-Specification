@@ -5,6 +5,12 @@ name: Publish JSON-LD on Pages
 # Pages serves them with JSON-LD and Turtle media types and CORS, and the
 # w3id.org/fair-bioheaders redirects point here. Tags are fetched so release
 # copies are rebuilt on every run.
+#
+# The preflight job checks whether GitHub Pages is enabled for this repository
+# (FAIR-bioHeaders/FHP-Specification#10). Without a Pages site the remaining
+# jobs cannot configure or deploy Pages, so they are skipped and reported as
+# skipped instead of failing every push to main. When Pages is enabled, the
+# build and deployment are unchanged.
 
 on:
   push:
@@ -20,7 +26,49 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  preflight:
+    name: Check Pages availability
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      # Reading the Pages site also uses the documented Pages scope. If
+      # GITHUB_TOKEN cannot read Pages metadata, GitHub answers 403 instead of
+      # 404; both are treated as "not enabled" below, so a repository without
+      # Pages still has green pushes and a notice explains the skip.
+      pages: write
+    outputs:
+      enabled: ${{ steps.pages.outputs.enabled }}
+    steps:
+      - name: Check whether GitHub Pages is enabled
+        id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          # gh api prints the HTTP status line with --include even on an error
+          # response (and exits non-zero), so only the first line is inspected.
+          status=$(gh api "repos/$GH_REPO/pages" --include 2>/dev/null \
+            | head -n 1 | awk '{print $2}' || true)
+          case "$status" in
+            200)
+              echo "enabled=true" >> "$GITHUB_OUTPUT"
+              echo "GitHub Pages is enabled for $GH_REPO; building and deploying the JSON-LD site."
+              ;;
+            403|404)
+              echo "enabled=false" >> "$GITHUB_OUTPUT"
+              echo "::notice::GitHub Pages is not enabled for $GH_REPO (HTTP $status); skipping the JSON-LD build and deployment. Enable Pages with the \"GitHub Actions\" source to publish it."
+              ;;
+            *)
+              echo "::error::Could not determine whether GitHub Pages is enabled for $GH_REPO (HTTP ${status:-no response})."
+              exit 1
+              ;;
+          esac
+
   build:
+    needs: preflight
+    if: needs.preflight.outputs.enabled == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -41,7 +89,8 @@ jobs:
           path: _site
 
   deploy:
-    needs: build
+    needs: [preflight, build]
+    if: needs.preflight.outputs.enabled == 'true' && needs.build.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
