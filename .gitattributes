@@ -1,6 +1,8 @@
 # Conformance vectors and their manifest are byte-exact: never convert line endings.
 conformance/** -text
 conformance/**/*.gz binary
+# A CR before LF is part of a CRLF vector's bytes, not trailing whitespace.
+conformance/** whitespace=cr-at-eol
 # FHGFF3 examples carry checksums over their exact bytes.
 examples/fhgff3/** -text
 # Assessment fixtures are byte-exact too (specs/010-fair-header-assessment).

@@ -50,7 +50,7 @@ NESTED = {
     "sequenceStats": ("sequenceStats",),
     "completeness": ("completeness",),
 }
-COUNTS = {"record": 25, "taxon": 2, "metadataAuthor": 2, "accessionID": 2, "derivedFrom": 5,
+COUNTS = {"record": 25, "taxon": 2, "metadataAuthor": 3, "accessionID": 2, "derivedFrom": 5,
           "source": 7, "predictionSoftware": 4, "sequenceStats": 3, "completeness": 8}
 # The FHP objects whose writer @type the tests expect (data-model section 5).
 TYPES = {
@@ -62,10 +62,19 @@ TYPES = {
 }
 # The export terms are FHR-only: the FHP canonical context must not carry them.
 EXPORT_TERMS = {"keywords", "url", "conformsTo"}
-# fhr: terms the shared vocabulary already defines (owned by FHR), which FHP
-# reuses with the same IRIs. Kept as a literal so a change is a visible review.
-SHARED = {"Agent", "accessionID", "checksum", "commandLineOption", "metadataAuthor",
-          "relatedLink", "schemaVersion", "seqcol_id", "voucherSpecimen"}
+# The pinned released FHP 1.0 contract and shared vocabulary (see PROVENANCE.json).
+RELEASE = ROOT / "tests" / "fixtures" / "fhp" / "v0.4.0"
+RELEASE_SCHEMA = RELEASE / "fhp.json"
+RELEASE_TERMS = RELEASE / "terms.ttl"
+RELEASE_COMMIT = "84c2f90ab0e97c81d8afbf33eafe80ebade7a009"
+RELEASE_TERMS_SHA256 = "0c641879818a1ce02ed10348b344cb11c37fd86c8a120a9f9bfe8e618d32042c"
+# fhr: terms the pinned released vocabulary publishes. FHP reuses them and must
+# never redefine them; nameType is new in v0.4 and absent from the local v0.3 FHR
+# vocabulary, so it is listed here explicitly (a change is a visible review).
+PUBLISHED_SHARED = {"Agent", "accessionID", "checksum", "commandLineOption", "metadataAuthor",
+                    "nameType", "relatedLink", "schemaVersion", "seqcol_id", "voucherSpecimen"}
+# The terms jsonld/fhp.terms.* defines: inherited core/family terms the published
+# vocabulary does not include, plus FHP-owned additions.
 FHP_ADDED = {
     "Completeness", "DerivedFrom", "SequenceStats", "Source",
     "assemblyAccession", "buscoVersion", "completeDuplicated", "completeness",
@@ -247,8 +256,11 @@ class ContextTests(unittest.TestCase):
                 self.assertIs(value[1]["@protected"], True)
                 self.assertEqual(value[1]["sdo"], SDO)
                 self.assertEqual(value[1]["fhr"], FHR)
-        self.assertEqual(self.root["metadataAuthor"]["@context"],
-                         self.root["metadataAuthor"]["@context"])
+        author = self.root["metadataAuthor"]["@context"][1]
+        self.assertEqual(author["nameType"], {"@id": "fhr:nameType"})
+        self.assertEqual(expand(author["nameType"], author), FHR + "nameType")
+        self.assertEqual(author["uri"], "@id")
+        self.assertEqual(self.root["metadataAuthor"]["@container"], "@list")
 
     def test_injective_per_scope(self):
         for name, scope in self.scopes.items():
@@ -270,6 +282,10 @@ class ContextTests(unittest.TestCase):
             with self.subTest(key=key):
                 self.assertEqual(expand(self.root[key], self.root),
                                  expand(fhr_context[key], fhr_context))
+        # nameType is new in the released v0.4 vocabulary: the local v0.3 FHR
+        # context does not have it, so check it against the pinned release IRI.
+        author = self.root["metadataAuthor"]["@context"][1]
+        self.assertEqual(expand(author["nameType"], author), FHR + "nameType")
         self.assertEqual(expand(self.scopes["taxon"]["uri"], self.scopes["taxon"]), "@id")
         self.assertEqual(expand(self.scopes["accessionID"]["name"], self.scopes["accessionID"]),
                          SDO + "name")
@@ -322,17 +338,17 @@ class VocabularyTests(unittest.TestCase):
 
     def test_additions_do_not_redefine_shared_terms(self):
         from rdflib.namespace import RDF, RDFS
-        shared = (self.defined(self.fhr_graph, RDFS.Class)
-                  | self.defined(self.fhr_graph, RDF.Property))
-        # The shared vocabulary is broader than the subset FHP reuses.
-        self.assertLessEqual(SHARED, shared)
         fhp = self.defined(self.fhp_graph, RDFS.Class) | self.defined(self.fhp_graph, RDF.Property)
-        self.assertEqual(shared & fhp, set())
+        # Neither the local (v0.3) FHR vocabulary nor the pinned released
+        # vocabulary is redefined here.
+        local = self.defined(self.fhr_graph, RDFS.Class) | self.defined(self.fhr_graph, RDF.Property)
+        self.assertEqual(local & fhp, set())
+        self.assertEqual(PUBLISHED_SHARED & fhp, set())
 
     def test_every_fhr_iri_in_the_context_is_defined(self):
         used = fhr_iris(self.document)
         self.assertTrue(used)
-        defined = {FHR + name for name in SHARED | FHP_ADDED}
+        defined = {FHR + name for name in PUBLISHED_SHARED | FHP_ADDED}
         self.assertEqual(used - defined, set())
 
     def test_every_defined_term_is_used(self):
@@ -364,19 +380,23 @@ class VocabularyTests(unittest.TestCase):
         self.assertIn("do not edit", head)
         self.assertIn("FAIR-bioHeaders-Tools#58", head)
         self.assertIn("FAIR-bioHeaders-Specification#107", head)
-        self.assertIn("owned by FHP development", head)
-        for name in SHARED:
-            self.assertIn(f"fhr:{name}", head)
-        for name in FHP_ADDED:
-            self.assertNotIn(f"#   fhr:{name}\n", head)
+        self.assertIn("Reused published vocabulary", head)
+        self.assertIn("Inherited core terms", head)
+        self.assertIn("Inherited family terms", head)
+        self.assertIn("FHP-owned additions", head)
+        for name in PUBLISHED_SHARED:
+            self.assertIn(f"#   fhr:{name}\n", head)
+        # Core terms are classified as core, not as FHP-owned.
+        core = head.split("Inherited core terms")[1].split("Inherited family terms")[0]
+        for name in ("DerivedFrom", "derivedFrom", "headerType", "relationship"):
+            self.assertIn(f"#   fhr:{name}\n", core)
 
-    def test_shared_vocabulary_is_pinned(self):
+    def test_shared_vocabulary_is_pinned_to_the_release(self):
         head = self.text.split("@prefix")[0]
         self.assertEqual(make_jsonld.FHP_SHARED_RELEASE, "v0.4.0")
-        self.assertRegex(make_jsonld.FHP_SHARED_COMMIT, r"^[0-9a-f]{40}$")
-        self.assertRegex(make_jsonld.FHP_SHARED_RELEASE_COMMIT, r"^[0-9a-f]{40}$")
+        self.assertEqual(make_jsonld.FHP_SHARED_COMMIT, RELEASE_COMMIT)
+        self.assertEqual(make_jsonld.FHP_SHARED_TERMS_SHA256, RELEASE_TERMS_SHA256)
         for value in (make_jsonld.FHP_SHARED_COMMIT,
-                      make_jsonld.FHP_SHARED_RELEASE_COMMIT,
                       f"FAIR-bioHeaders-Specification {make_jsonld.FHP_SHARED_RELEASE}",
                       make_jsonld.FHP_SHARED_TERMS_URL,
                       make_jsonld.FHP_SHARED_RELEASE_URL):
@@ -386,19 +406,22 @@ class VocabularyTests(unittest.TestCase):
         self.assertNotIn("FAIR-bioHeaders-Specification/main/jsonld/terms.ttl", head)
         self.assertNotIn("fhr/vX.Y.Z/jsonld/terms.ttl", head)
 
-    def test_pinned_shared_vocabulary_matches_the_snapshot(self):
+    def test_pinned_shared_vocabulary_matches_the_release_bytes(self):
         import hashlib
+        from rdflib import Graph
         from rdflib.namespace import RDF, RDFS
-        data = (ROOT / "jsonld" / "terms.ttl").read_bytes()
-        self.assertEqual(hashlib.sha256(data).hexdigest(),
-                         make_jsonld.FHP_SHARED_TERMS_SHA256)
-        defined = (self.defined(self.fhr_graph, RDFS.Class)
-                   | self.defined(self.fhr_graph, RDF.Property))
-        self.assertLessEqual(SHARED, defined)
-        document = json.loads(FHP_TERMS_JSONLD.read_text(encoding="utf-8"))
-        comment = document["@graph"][0]["rdfs:comment"]["@value"]
-        self.assertIn(make_jsonld.FHP_SHARED_COMMIT, comment)
-        self.assertIn(make_jsonld.FHP_SHARED_RELEASE, comment)
+        data = RELEASE_TERMS.read_bytes()
+        self.assertEqual(hashlib.sha256(data).hexdigest(), RELEASE_TERMS_SHA256)
+        graph = Graph().parse(RELEASE_TERMS, format="turtle")
+        defined = self.defined(graph, RDFS.Class) | self.defined(graph, RDF.Property)
+        self.assertLessEqual(PUBLISHED_SHARED, defined)
+        # Audit the reused meanings: nameType is published, Agent names it, and
+        # schemaVersion is the MAJOR.MINOR contract string (not a number).
+        agent = str(next(graph.objects(self.FHR.Agent, RDFS.comment)))
+        self.assertIn("nameType", agent)
+        version = str(next(graph.objects(self.FHR.schemaVersion, RDFS.comment)))
+        self.assertIn("MAJOR.MINOR", version)
+        self.assertTrue(list(graph.objects(self.FHR.nameType, RDFS.comment)))
 
 
 class WriterTests(unittest.TestCase):
@@ -422,9 +445,26 @@ class WriterTests(unittest.TestCase):
                     for item in document.get(key, []):
                         if isinstance(item, dict):
                             self.assertEqual(item["@type"], kind)
-                for item in document.get("metadataAuthor", []):
-                    orcid = str(item.get("uri", "")).startswith("https://orcid.org/")
-                    self.assertEqual(item["@type"], "Person" if orcid else "Agent")
+                for item, written in zip(record.get("metadataAuthor", []),
+                                         document.get("metadataAuthor", [])):
+                    self.assertEqual(written["@type"], make_jsonld.author_type(item))
+
+    def test_name_type_is_written_and_preserved(self):
+        record = copy.deepcopy(self.examples["minimal-predicted"])
+        record["metadataAuthor"] = [
+            {"name": "A person (placeholder)", "nameType": "Personal"},
+            {"name": "An organization (placeholder)", "nameType": "Organizational"},
+            {"name": "Name only (placeholder)"},
+        ]
+        document = make_jsonld.fhp_to_jsonld(record)
+        self.assertEqual([item["nameType"] for item in document["metadataAuthor"][:2]],
+                         ["Personal", "Organizational"])
+        self.assertEqual([item["@type"] for item in document["metadataAuthor"]],
+                         ["Person", "Organization", "Agent"])
+        back = make_jsonld.fhp_canonical_record(json.loads(json.dumps(document)))
+        self.assertEqual([item.get("nameType") for item in back["metadataAuthor"]],
+                         ["Personal", "Organizational", None])
+        self.assertTrue(equal(back, record))
 
     def test_parent_accession_children_are_typed(self):
         record = parent_accession_record()
@@ -467,13 +507,25 @@ class WriterTests(unittest.TestCase):
     def test_scalar_types_are_preserved(self):
         record = self.examples["rich-predicted"]
         document = json.loads(json.dumps(make_jsonld.fhp_to_jsonld(record)))
-        self.assertIsInstance(document["schemaVersion"], int)
+        # FHP 1.0: schemaVersion is the string "1.0"; counts and the genetic code
+        # stay integers (never strings).
+        self.assertEqual(document["schemaVersion"], "1.0")
+        self.assertIsInstance(document["schemaVersion"], str)
         self.assertIsInstance(document["geneticCode"], int)
         self.assertIsInstance(document["sequenceStats"]["sequenceCount"], int)
         back = make_jsonld.fhp_canonical_record(document)
-        self.assertIsInstance(back["schemaVersion"], int)
+        self.assertEqual(back["schemaVersion"], "1.0")
+        self.assertIsInstance(back["schemaVersion"], str)
         self.assertIsInstance(back["geneticCode"], int)
         self.assertIsInstance(back["sequenceStats"]["totalResidues"], int)
+
+    def test_released_schema_url_is_used(self):
+        for name, record in self.examples.items():
+            with self.subTest(record=name):
+                self.assertEqual(record["schema"],
+                                 "https://w3id.org/fair-bioheaders/fhp/v0.4.0")
+                self.assertEqual(record["schemaVersion"], "1.0")
+                self.assertEqual(make_jsonld.fhp_to_jsonld(record)["schemaVersion"], "1.0")
 
     def test_absent_optional_fields_stay_absent(self):
         minimal = self.examples["minimal-predicted"]
@@ -567,6 +619,89 @@ class ReaderTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "FHP"):
             make_jsonld.fhp_canonical_record(export)
 
+    def test_wrong_nested_types_are_rejected(self):
+        document = copy.deepcopy(self.document)
+        document["@type"] = "CreativeWork"
+        with self.assertRaisesRegex(ValueError, "the record"):
+            make_jsonld.fhp_canonical_record(document)
+        document = copy.deepcopy(self.document)
+        document["taxon"]["@type"] = "Source"
+        with self.assertRaisesRegex(ValueError, "taxon"):
+            make_jsonld.fhp_canonical_record(document)
+        document = copy.deepcopy(self.document)
+        document["derivedFrom"][0]["@type"] = "Source"
+        with self.assertRaisesRegex(ValueError, r"derivedFrom\[0\]"):
+            make_jsonld.fhp_canonical_record(document)
+        document = copy.deepcopy(self.document)
+        document["metadataAuthor"][0]["@type"] = "Source"
+        with self.assertRaisesRegex(ValueError, r"metadataAuthor\[0\]"):
+            make_jsonld.fhp_canonical_record(document)
+        document = copy.deepcopy(self.document)
+        document["source"] = [{"@type": "Taxon", "name": "x"}]
+        with self.assertRaisesRegex(ValueError, r"source\[0\]"):
+            make_jsonld.fhp_canonical_record(document)
+
+    def test_missing_nested_type_is_rejected(self):
+        document = copy.deepcopy(self.document)
+        del document["taxon"]["@type"]
+        with self.assertRaisesRegex(ValueError, "taxon.*no @type"):
+            make_jsonld.fhp_canonical_record(document)
+
+    def test_parent_accession_type_is_checked(self):
+        document = copy.deepcopy(self.document)
+        document["derivedFrom"][0]["accessionID"] = {"@type": "Taxon", "name": "x"}
+        with self.assertRaisesRegex(ValueError, r"derivedFrom\[0\]\.accessionID"):
+            make_jsonld.fhp_canonical_record(document)
+
+    def test_correct_parent_accession_type_is_accepted(self):
+        document = copy.deepcopy(self.document)
+        document["derivedFrom"][0]["accessionID"] = {
+            "@type": "PropertyValue", "name": "x"}
+        back = make_jsonld.fhp_canonical_record(document)
+        self.assertEqual(back["derivedFrom"][0]["accessionID"], {"name": "x"})
+
+
+class ReleasedContractTests(unittest.TestCase):
+    """FHP 1.0 is the released contract: validate against the pinned release bytes."""
+
+    @classmethod
+    def setUpClass(cls):
+        from jsonschema import Draft202012Validator, FormatChecker
+        cls.schema = json.loads(RELEASE_SCHEMA.read_text(encoding="utf-8"))
+        cls.validator = Draft202012Validator(cls.schema, format_checker=FormatChecker())
+        cls.examples = examples()
+
+    def test_pinned_schema_is_the_released_fhp_1_0(self):
+        import hashlib
+        data = RELEASE_SCHEMA.read_bytes()
+        self.assertEqual(hashlib.sha256(data).hexdigest(),
+                         "e3f8f45260b833f931644e87ff7530cb9b4151e67094023dd96edde9a1d90366")
+        self.assertEqual(self.schema["$defs"]["FHP"]["properties"]["schemaVersion"]["enum"],
+                         ["1.0"])
+        self.assertIn("nameType",
+                      self.schema["$defs"]["Author"]["properties"])
+
+    def test_examples_validate_against_the_released_schema(self):
+        for name, record in self.examples.items():
+            with self.subTest(record=name):
+                self.assertEqual(list(self.validator.iter_errors(record)), [])
+
+    def test_canonical_round_trip_validates_against_the_released_schema(self):
+        for name, record in self.examples.items():
+            with self.subTest(record=name):
+                document = json.loads(json.dumps(make_jsonld.fhp_to_jsonld(record)))
+                back = make_jsonld.fhp_canonical_record(document)
+                self.assertEqual(list(self.validator.iter_errors(back)), [])
+                self.assertTrue(equal(back, record))
+
+    def test_name_type_survives_the_released_schema_round_trip(self):
+        record = self.examples["rich-predicted"]
+        self.assertIn("nameType", record["metadataAuthor"][0])
+        document = json.loads(json.dumps(make_jsonld.fhp_to_jsonld(record)))
+        back = make_jsonld.fhp_canonical_record(document)
+        self.assertEqual(back["metadataAuthor"][0]["nameType"], "Personal")
+        self.assertEqual(document["metadataAuthor"][0]["@type"], "Person")
+
 
 def fhp_loader(url, options=None):
     """Bundled-only FHP document loader: known context URLs, nothing else."""
@@ -616,6 +751,26 @@ class ProcessorTests(unittest.TestCase):
         compacted = pyld.compact(expanded, self.context, {"documentLoader": fhp_loader})
         back = make_jsonld.fhp_canonical_record(compacted, warn=lambda message: None)
         self.assertTrue(equal(back, record), json.dumps(back, indent=1))
+        self.assertEqual([item["headerType"] for item in back["derivedFrom"]],
+                         [item["headerType"] for item in record["derivedFrom"]])
+
+    def test_ordered_authors_survive_expand_and_compact(self):
+        record = copy.deepcopy(self.examples["rich-predicted"])
+        record["metadataAuthor"] = [
+            {"name": "First author (placeholder)"},
+            {"name": "Second author (placeholder)", "nameType": "Organizational"},
+            {"name": "Third author (placeholder)"},
+        ]
+        document = make_jsonld.fhp_to_jsonld(record)
+        expanded = pyld.expand(document, {"documentLoader": fhp_loader})
+        expanded_text = json.dumps(expanded)
+        self.assertIn("@list", expanded_text)
+        compacted = pyld.compact(expanded, self.context, {"documentLoader": fhp_loader})
+        back = make_jsonld.fhp_canonical_record(compacted, warn=lambda message: None)
+        self.assertEqual([item["name"] for item in back["metadataAuthor"]],
+                         ["First author (placeholder)", "Second author (placeholder)",
+                          "Third author (placeholder)"])
+        self.assertEqual(back["metadataAuthor"][1]["nameType"], "Organizational")
         self.assertEqual([item["headerType"] for item in back["derivedFrom"]],
                          [item["headerType"] for item in record["derivedFrom"]])
 

@@ -236,7 +236,7 @@ def type_terms(model, class_name):
     return terms
 
 
-def term_definition(model, slot, node):
+def term_definition(model, slot, node, ordered=False):
     if annotations(slot).get("jsonld_node_id") is True:
         return "@id"
     definition = {"@id": compact(model.iri(slot))}
@@ -246,7 +246,8 @@ def term_definition(model, slot, node):
     elif slot.range == "date":
         definition["@type"] = "xsd:date"
     if model.multivalued(slot):
-        definition["@container"] = "@list" if slot.list_elements_ordered else "@set"
+        definition["@container"] = (
+            "@list" if slot.list_elements_ordered or ordered else "@set")
     if child:
         definition["@context"] = [None, scope(model, child, model.object_node(node))]
     return definition
@@ -282,7 +283,7 @@ def check_injective(name, body):
         seen[iri] = key
 
 
-def build_context(model, root_class=ROOT_CLASS, export_terms=True):
+def build_context(model, root_class=ROOT_CLASS, export_terms=True, ordered_slots=()):
     root = {"@version": 1.1, "@protected": True, **PREFIXES, "xsd": XSD, "dct": DCT}
     root.update(type_terms(model, root_class))
     # The nested node types are defined in their property-scoped contexts, a
@@ -294,7 +295,9 @@ def build_context(model, root_class=ROOT_CLASS, export_terms=True):
             root.update(type_terms(model, class_name))
     url_terms = {}
     for slot in model.slots(root_class, model.schema):
-        root[slot.name] = term_definition(model, slot, model.schema["properties"][slot.name])
+        root[slot.name] = term_definition(
+            model, slot, model.schema["properties"][slot.name],
+            ordered=slot.name in ordered_slots)
         alternative = annotations(slot).get("jsonld_slot_uri_if_url")
         if alternative:
             url_terms[local_name(alternative)] = {"@id": alternative, "@type": "@id"}
@@ -587,8 +590,15 @@ def load_context():
     return json.loads(CONTEXT_PATH.read_text(encoding="utf-8"))
 
 
+# FHP 1.0 / shared v0.4: a supplied DataCite nameType wins over the identifier.
+NAME_TYPES = {"Personal": "Person", "Organizational": "Organization"}
+
+
 def author_type(item):
-    """data-model section 5: ORCID gives Person, ROR Organization, else Agent."""
+    """data-model section 5: an explicit nameType wins; otherwise ORCID gives
+    Person, ROR Organization, else Agent."""
+    if item.get("nameType") in NAME_TYPES:
+        return NAME_TYPES[item["nameType"]]
     uri = item.get("uri")
     if isinstance(uri, str) and ORCID_URI.match(uri):
         return "Person"
@@ -1025,19 +1035,14 @@ FHP_BAD_VERSION = (
 FHP_EXAMPLES = ("minimal-predicted", "minimal-database", "minimal-mixed",
                 "rich-predicted", "rich-database", "rich-mixed")
 FHP_RELEASE_ALIAS = "https://w3id.org/fair-bioheaders/fhp/vX.Y.Z/jsonld/"
-# The shared vocabulary snapshot whose definitions the FHP additions reuse. FHP
-# never redefines a shared term, so the inherited meanings are auditable only
-# against an immutable revision. Pinned to the v0.4.0 release line's mainline base:
-# its jsonld/terms.ttl is byte-identical to jsonld/terms.ttl in this tree
-# (SHA-256 below). The v0.4.0 tag (release commit 84c2f90) adds release-line edits
-# to the Agent and schemaVersion definitions for the v0.4 schema contract; FHP on
-# main still inherits the core's v0.3 patterns, so the base snapshot is the
-# revision that matches. The commit is the pin; the URL is a locator.
+# FHP 1.0 is the released contract (shared v0.4.0). FHP therefore uses the pinned
+# v0.4 core (schemas/core-v0.4.yaml), the string schemaVersion "1.0" and author
+# nameType. The shared vocabulary snapshot the additions reuse is the actual
+# v0.4.0 release commit; its jsonld/terms.ttl is the audited pin (SHA-256 below).
 FHP_SHARED_RELEASE = "v0.4.0"
-FHP_SHARED_COMMIT = "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4"
-FHP_SHARED_RELEASE_COMMIT = "84c2f90ab0e97c81d8afbf33eafe80ebade7a009"
+FHP_SHARED_COMMIT = "84c2f90ab0e97c81d8afbf33eafe80ebade7a009"
 FHP_SHARED_TERMS_SHA256 = (
-    "d64916ece9410b0cd0c1e98bdbed2622a3a32b9a5a28717832fcf0e922f1525b"
+    "0c641879818a1ce02ed10348b344cb11c37fd86c8a120a9f9bfe8e618d32042c"
 )
 FHP_SHARED_TERMS_URL = (
     "https://raw.githubusercontent.com/FAIR-bioHeaders/"
@@ -1047,6 +1052,16 @@ FHP_SHARED_RELEASE_URL = (
     "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/"
     f"releases/tag/{FHP_SHARED_RELEASE}"
 )
+# Terms the pinned v0.4.0 vocabulary already publishes. FHP reuses them and must
+# not redefine them. ``nameType`` is new in v0.4; the local FHR model (v0.3) does
+# not know it, so it is listed here explicitly rather than inferred.
+FHP_PUBLISHED_SHARED = (
+    "Agent", "accessionID", "checksum", "commandLineOption", "metadataAuthor",
+    "nameType", "relatedLink", "schemaVersion", "seqcol_id", "voucherSpecimen",
+)
+# FHP arrays whose order is meaningful (authors, provenance lists, software
+# arguments): the context uses @list, not @set, so JSON-LD processing keeps it.
+FHP_ORDERED_SLOTS = ("metadataAuthor", "source", "derivedFrom", "predictionSoftware")
 
 
 def load_fhp_context():
@@ -1106,13 +1121,79 @@ def fhp_jsonld_text(record, context=None):
     return json.dumps(fhp_to_jsonld(record, context), ensure_ascii=False, indent=2) + "\n"
 
 
+# The classes the canonical FHP form expects on the record and its objects. A
+# reader checks them instead of silently stripping any @type.
+FHP_EXPECTED_TYPES = {
+    "record": {"Dataset"},
+    "taxon": {"Taxon"},
+    "accessionID": {"PropertyValue"},
+    "sequenceStats": {"SequenceStats"},
+    "completeness": {"Completeness"},
+}
+FHP_EXPECTED_ITEM_TYPES = {
+    "metadataAuthor": {"Person", "Organization", "Agent"},
+    "source": {"Source"},
+    "derivedFrom": {"DerivedFrom"},
+    "predictionSoftware": {"SoftwareApplication"},
+}
+
+
+def _type_names(value):
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list) and all(isinstance(item, str) for item in value):
+        return value
+    raise ValueError("JSON-LD @type must be a string or an array of strings")
+
+
+def _type_local_name(value):
+    for namespace in (SDO, FHR):
+        if value.startswith(namespace):
+            return value[len(namespace):]
+    for prefix, namespace in (("sdo:", SDO), ("schema:", SDO), ("fhr:", FHR)):
+        if value.startswith(prefix):
+            return value[len(prefix):]
+    return value
+
+
+def _check_expected_type(node, allowed, path):
+    if not isinstance(node, dict):
+        raise ValueError(f"JSON-LD: {path} must be an object")
+    if "@type" not in node:
+        raise ValueError(f"JSON-LD: {path} has no @type; expected {sorted(allowed)}")
+    names = {_type_local_name(value) for value in _type_names(node["@type"])}
+    if not names & allowed:
+        raise ValueError(
+            f"JSON-LD: {path} has @type {sorted(names)}; expected one of {sorted(allowed)}")
+
+
+def fhp_validate_types(document):
+    """Reject a canonical document with a wrong or missing nested @type."""
+    _check_expected_type(document, FHP_EXPECTED_TYPES["record"], "the record")
+    for key, allowed in FHP_EXPECTED_TYPES.items():
+        if key == "record" or key not in document:
+            continue
+        _check_expected_type(document[key], allowed, key)
+    for key, allowed in FHP_EXPECTED_ITEM_TYPES.items():
+        items = document.get(key)
+        if items is None:
+            continue
+        if not isinstance(items, list):
+            raise ValueError(f"JSON-LD: {key} must be an array")
+        for index, item in enumerate(items):
+            _check_expected_type(item, allowed, f"{key}[{index}]")
+            if key == "derivedFrom" and "accessionID" in item:
+                _check_expected_type(item["accessionID"], {"PropertyValue"},
+                                     f"{key}[{index}].accessionID")
+
+
 def fhp_canonical_record(document, warn=None, context=None):
     """Read a canonical FHP JSON-LD document back to FHP metadata.
 
-    Rejects an unknown context, an unsupported JSON-LD @version, and a document
-    that is not canonical. Nothing is fetched: a known context URL is served from
-    the bundled file. The FHP objects are closed, so an unknown key is left for
-    validation against fhp.json rather than dropped.
+    Rejects an unknown context, an unsupported JSON-LD @version, a document that
+    is not canonical, and a wrong or missing nested @type. Nothing is fetched: a
+    known context URL is served from the bundled file. The FHP objects are closed,
+    so an unknown key is left for validation against fhp.json rather than dropped.
     """
     if not isinstance(document, dict) or "@context" not in document:
         raise ValueError(FHP_NOT_CANONICAL)
@@ -1123,6 +1204,7 @@ def fhp_canonical_record(document, warn=None, context=None):
         raise ValueError(f"unknown FHP JSON-LD context (nothing is fetched): {value}")
     if not fhp_is_canonical(document, context):
         raise ValueError(FHP_NOT_CANONICAL)
+    fhp_validate_types(document)
     record = {}
     for key, item in document.items():
         if key in ("@context", "@type"):
@@ -1141,49 +1223,96 @@ def fhp_canonical_record(document, warn=None, context=None):
     return record
 
 
-def fhp_term_additions(model, fhr_classes, fhr_properties):
-    """The FHP vocabulary terms that the shared FHR vocabulary does not define.
+def model_term_names(path):
+    """The fhr: local names a LinkML model file defines on its slots and classes."""
+    import yaml
 
-    Shared terms keep their FHR IRI and definition (explicit ownership); only the
-    additions are written to ``jsonld/fhp.terms.*``.
+    data = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
+
+    def add_slots(slots):
+        for name, slot in (slots or {}).items():
+            uri = slot.get("slot_uri") if isinstance(slot, dict) else None
+            if uri and uri.startswith("fhr:"):
+                names.add(uri.split(":", 1)[1])
+            elif not uri:
+                names.add(name)
+
+    names = set()
+    add_slots(data.get("slots"))
+    for name, cls in (data.get("classes") or {}).items():
+        uri = cls.get("class_uri") if isinstance(cls, dict) else None
+        if uri and uri.startswith("fhr:"):
+            names.add(uri.split(":", 1)[1])
+        elif not uri:
+            names.add(name)
+        if isinstance(cls, dict):
+            add_slots(cls.get("attributes"))
+    return names
+
+
+def fhp_term_origins():
+    """Where each inherited term is owned: core, the shared family, or FHP.
+
+    FHP 1.0 imports the pinned v0.4 core (schemas/core-v0.4.yaml) and the shared
+    family objects (schemas/shared.yaml). A term keeps the meaning of the file
+    that defines it; only terms unique to fhp_linkml.yml are FHP-owned.
+    """
+    return (model_term_names(ROOT / "schemas" / "core-v0.4.yaml"),
+            model_term_names(ROOT / "schemas" / "shared.yaml"),
+            model_term_names(FHP_LINKML))
+
+
+def fhp_term_additions(model, fhr_classes, fhr_properties):
+    """The FHP vocabulary terms that the pinned shared vocabulary does not define.
+
+    Shared terms keep their shared IRI and definition (explicit ownership); only
+    the additions are written to ``jsonld/fhp.terms.*``. ``nameType`` is published
+    in v0.4.0 but absent from this tree's v0.3 FHR model, so it is excluded
+    explicitly.
     """
     classes, properties = collect_terms(model, FHP_ROOT_CLASS)
+    excluded = set(FHP_PUBLISHED_SHARED)
     return (classes, properties,
-            {name: entry for name, entry in classes.items() if name not in fhr_classes},
-            {name: entry for name, entry in properties.items() if name not in fhr_properties})
+            {name: entry for name, entry in classes.items()
+             if name not in fhr_classes and name not in excluded},
+            {name: entry for name, entry in properties.items()
+             if name not in fhr_properties and name not in excluded})
 
 
 FHP_ONTOLOGY_COMMENT = (
-    "Draft FHP vocabulary additions, generated from fhp_linkml.yml. The shared "
-    "FAIR-bioHeaders terms are owned by jsonld/terms.ttl and are reused, not "
-    "redefined; they are pinned to FAIR-bioHeaders-Specification "
+    "Draft FHP vocabulary for released FHP 1.0, generated from fhp_linkml.yml. "
+    "The published FAIR-bioHeaders terms are owned by jsonld/terms.ttl and are "
+    "reused, not redefined; they are pinned to FAIR-bioHeaders-Specification "
     f"{FHP_SHARED_RELEASE} at commit {FHP_SHARED_COMMIT} "
-    f"({FHP_SHARED_TERMS_URL}). Runtime support is coordinated with "
+    f"({FHP_SHARED_TERMS_URL}). Inherited core terms are owned by "
+    "schemas/core-v0.4.yaml and family terms by schemas/shared.yaml; only terms "
+    "unique to FHP are FHP-owned. Runtime support is coordinated with "
     "FAIR-bioHeaders-Tools#58; publication with "
     "FAIR-bioHeaders-Specification#107."
 )
 
 
-def fhp_turtle_header(shared):
-    """The provenance header of ``jsonld/fhp.terms.ttl`` (FHP-owned additions)."""
-    names = "".join(f"#   fhr:{name}\n" for name in shared)
+def _group_lines(label, names):
+    if not names:
+        return ""
+    return f"# {label}\n" + "".join(f"#   fhr:{name}\n" for name in names)
+
+
+def fhp_turtle_header(groups):
+    """The provenance header of ``jsonld/fhp.terms.ttl`` (owned-term groups)."""
     return f"""# Generated by scripts/make_jsonld.py from fhp_linkml.yml; do not edit.
-# Draft FHP vocabulary additions (FHP-Specification issue #4, follow-up F-01 of
-# specs/006-protein-header). Runtime reader/writer support is coordinated with
-# FAIR-bioHeaders-Tools#58; publication with FAIR-bioHeaders-Specification#107.
+# Draft FHP vocabulary for released FHP 1.0 (FHP-Specification issue #4, follow-up
+# F-01 of specs/006-protein-header). Runtime reader/writer support is coordinated
+# with FAIR-bioHeaders-Tools#58; publication with
+# FAIR-bioHeaders-Specification#107.
 # Canonical URL: {FHP_RAW_MAIN_CONTEXT_URL.replace("fhp.context.jsonld", "fhp.terms.ttl")}
 # Release copies: {FHP_RELEASE_ALIAS}fhp.terms.ttl
-# These terms are owned by FHP development until they are published in the shared
-# vocabulary. Shared terms are not redefined here: they are owned by the
-# FAIR-bioHeaders vocabulary and reused with the same IRIs:
-{names}# Shared vocabulary pin: FAIR-bioHeaders-Specification {FHP_SHARED_RELEASE}
-#   release commit: {FHP_SHARED_RELEASE_COMMIT}
-#   definitions audited at commit: {FHP_SHARED_COMMIT}
-#   (the v0.4.0 release merge's base; its jsonld/terms.ttl is byte-identical to
-#   jsonld/terms.ttl in this tree, SHA-256 {FHP_SHARED_TERMS_SHA256}).
-# Shared vocabulary locator (immutable): {FHP_SHARED_TERMS_URL}
-# Shared vocabulary release: {FHP_SHARED_RELEASE_URL}
-# Term IRIs never change and are never reused with another meaning.
+# Shared vocabulary pin: FAIR-bioHeaders-Specification {FHP_SHARED_RELEASE}
+#   release commit: {FHP_SHARED_COMMIT}
+#   jsonld/terms.ttl SHA-256 {FHP_SHARED_TERMS_SHA256}
+#   locator: {FHP_SHARED_TERMS_URL}
+#   release: {FHP_SHARED_RELEASE_URL}
+{_group_lines("Reused published vocabulary; owned by jsonld/terms.ttl, never redefined here:", groups["published"])}{_group_lines("Inherited core terms; owned by schemas/core-v0.4.yaml, defined here because the published vocabulary does not yet include them:", groups["core"])}{_group_lines("Inherited family terms; owned by schemas/shared.yaml:", groups["family"])}{_group_lines("FHP-owned additions from fhp_linkml.yml:", groups["fhp"])}# Term IRIs never change and are never reused with another meaning.
 
 @prefix fhr:     <{FHR}> .
 @prefix sdo:     <{SDO}> .
@@ -1370,16 +1499,25 @@ def fhp_outputs(fhr_terms=None, context=None):
     """The FHP context, vocabulary additions and example fixtures (issue #4)."""
     fhr_classes, fhr_properties = collect_terms(Model()) if fhr_terms is None else fhr_terms
     fhp_model = Model(FHP_LINKML, FHP_SCHEMA)
-    context = (build_context(fhp_model, FHP_ROOT_CLASS, export_terms=False)
+    context = (build_context(fhp_model, FHP_ROOT_CLASS, export_terms=False,
+                             ordered_slots=FHP_ORDERED_SLOTS)
                if context is None else context)
     all_classes, all_properties, added_classes, added_properties = \
         fhp_term_additions(fhp_model, fhr_classes, fhr_properties)
-    shared = sorted((set(all_classes) & set(fhr_classes))
-                    | (set(all_properties) & set(fhr_properties)))
+    core, family, fhp_owned = fhp_term_origins()
+    terms = set(all_classes) | set(all_properties)
+    published = set(FHP_PUBLISHED_SHARED)
+    groups = {
+        "published": sorted(published & terms),
+        "core": sorted((core & terms) - published),
+        "family": sorted((family & terms) - published - core),
+        "fhp": sorted((terms - set(fhr_classes) - set(fhr_properties) - published
+                       - core - family)),
+    }
     return {
         FHP_CONTEXT_PATH: json.dumps(context, indent=2) + "\n",
         FHP_TERMS_PATH: build_turtle(added_classes, added_properties,
-                                     fhp_turtle_header(shared)),
+                                     fhp_turtle_header(groups)),
         FHP_TERMS_JSONLD_PATH: build_terms_jsonld(added_classes, added_properties,
                                                   FHP_ONTOLOGY),
         **fhp_example_outputs(context),

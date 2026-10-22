@@ -533,14 +533,15 @@ def build():
 # FHP vectors (specs/006-protein-header contracts/conformance.md): the shared
 # rules on amino-acid FASTA, and the FHP schema rules P1 and P2.
 
-FHP_SCHEMA = "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhp.json"
+# Released FHP 1.0 cites its persistent schema URL (docs/SCHEMA-VERSIONS.md).
+FHP_SCHEMA = "https://w3id.org/fair-bioheaders/fhp/v0.4.0"
 PROTEOME = "Synthetic FHP conformance protein set"
 PARENT_CHECKSUM = "B" * 43 + "="  # Placeholder for a parent genome's checksum.
 # The FHP record as data, so the expected metadata of every vector is exact; the
 # header lines are written from it by ``yaml_lines`` (standard library only).
 FHP_RECORD = {
     "schema": FHP_SCHEMA,
-    "schemaVersion": 1,
+    "schemaVersion": "1.0",
     "proteome": PROTEOME,
     "sourceType": "predicted",
     "taxon": {"name": "Homo sapiens", "uri": "https://identifiers.org/taxonomy:9606"},
@@ -660,6 +661,9 @@ def build_fhp():
         completeness={"lineageDataset": "primates_odb10", "mode": "proteins",
                       "completeSingle": 1, "completeDuplicated": 0, "fragmented": 0,
                       "missing": 1, "total": 2},
+        # FHP 1.0 (shared v0.4.0): an explicit Datacite nameType wins over the IRI.
+        metadataAuthor=[{"name": "Synthetic metadata author (placeholder)",
+                         "nameType": "Personal"}],
     )
     fhp_valid("fhp-fasta-rich", fhp_lines(rich), ["P1"], "Every optional FHP field.")
 
@@ -702,6 +706,10 @@ def build_fhp():
                 "P1", "A source entry without a name.")
     fhp_invalid("fhp-fasta-unused-genetic-code", fhp_record(geneticCode=7),
                 "P1", "geneticCode 7 is not an NCBI translation table.")
+    fhp_invalid("fhp-fasta-author-bad-name-type",
+                fhp_record(metadataAuthor=[{"name": "Synthetic metadata author (placeholder)",
+                                            "nameType": "Company"}]),
+                "P1", "nameType outside the DataCite Personal/Organizational values.")
     fhp_invalid("fhp-fasta-busco-no-lineage-version",
                 fhp_record(completeness={"lineageDataset": "primates", "completeSingle": 1,
                                          "completeDuplicated": 0, "fragmented": 0,

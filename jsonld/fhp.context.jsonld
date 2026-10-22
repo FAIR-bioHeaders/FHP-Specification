@@ -81,7 +81,7 @@
     },
     "derivedFrom": {
       "@id": "fhr:derivedFrom",
-      "@container": "@set",
+      "@container": "@list",
       "@context": [
         null,
         {
@@ -141,7 +141,7 @@
     },
     "metadataAuthor": {
       "@id": "fhr:metadataAuthor",
-      "@container": "@set",
+      "@container": "@list",
       "@context": [
         null,
         {
@@ -154,6 +154,9 @@
           "name": {
             "@id": "sdo:name"
           },
+          "nameType": {
+            "@id": "fhr:nameType"
+          },
           "uri": "@id"
         }
       ]
@@ -164,7 +167,7 @@
     },
     "predictionSoftware": {
       "@id": "fhr:predictionSoftware",
-      "@container": "@set",
+      "@container": "@list",
       "@context": [
         null,
         {
@@ -233,7 +236,7 @@
     },
     "source": {
       "@id": "fhr:source",
-      "@container": "@set",
+      "@container": "@list",
       "@context": [
         null,
         {

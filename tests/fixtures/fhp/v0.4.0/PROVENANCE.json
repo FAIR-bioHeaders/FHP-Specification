@@ -1,0 +1,30 @@
+{
+  "description": "Pinned released FHP 1.0 contract and shared vocabulary used by the FHP JSON-LD tests.",
+  "repository": "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification",
+  "release": "v0.4.0",
+  "release_commit": "84c2f90ab0e97c81d8afbf33eafe80ebade7a009",
+  "files": {
+    "fhp.json": {
+      "source": "https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/84c2f90ab0e97c81d8afbf33eafe80ebade7a009/fhp.json",
+      "sha256": "e3f8f45260b833f931644e87ff7530cb9b4151e67094023dd96edde9a1d90366",
+      "notes": "Released FHP 1.0: schemaVersion is the string \"1.0\" and metadataAuthor items accept nameType."
+    },
+    "terms.ttl": {
+      "source": "https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/84c2f90ab0e97c81d8afbf33eafe80ebade7a009/jsonld/terms.ttl",
+      "sha256": "0c641879818a1ce02ed10348b344cb11c37fd86c8a120a9f9bfe8e618d32042c",
+      "notes": "The shared vocabulary at the release. fhr:Agent mentions nameType; fhr:schemaVersion is the MAJOR.MINOR contract string; fhr:nameType is defined."
+    }
+  },
+  "reused_terms_audit": {
+    "Agent": "Class; comment names nameType and ORCID/ROR; subclass of sdo:Thing.",
+    "accessionID": "Property; subproperty of sdo:identifier.",
+    "checksum": "Property; sha2-512/256 text.",
+    "commandLineOption": "Property; on sdo:SoftwareApplication.",
+    "metadataAuthor": "Property; range Person, Organization or fhr:Agent.",
+    "nameType": "Property; on fhr:Agent, range sdo:Text (Personal/Organizational).",
+    "relatedLink": "Property; URL values.",
+    "schemaVersion": "Property; MAJOR.MINOR contract text, not a number.",
+    "seqcol_id": "Property; subproperty of sdo:identifier.",
+    "voucherSpecimen": "Property; text."
+  }
+}

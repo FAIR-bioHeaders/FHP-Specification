@@ -33,11 +33,12 @@ Required are the core's required fields (`schema`, `schemaVersion`, `taxon`, `ve
 | `proteome` | Name of the protein set |
 | `sourceType` | `predicted`, `database` or `mixed` (see below) |
 
-`schema` must be the raw GitHub URL of `fhp.json` in FAIR-bioHeaders-Specification, for example
-`https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/main/fhp.json`.
-The same URL under the repository's former name, `FHR-Specification`, is also
-recognised (#108): existing files cite it, and it serves the same file.
-`schemaVersion` is `1`.
+`schema` must cite `fhp.json`: the persistent URL
+`https://w3id.org/fair-bioheaders/fhp/v0.4.0` (what released FHP 1.0 records use), or a
+raw GitHub URL under `FAIR-bioHeaders/(FHR|FAIR-bioHeaders)-Specification` for `main` or
+a release tag. The former name, `FHR-Specification`, is also recognised (#108): existing
+files cite it, and it serves the same file.
+`schemaVersion` is the string `"1.0"` (the FHP 1.0 contract), not the number `1`.
 
 The following fields are optional. Leave a field out when you do not know its value; tools never
 infer these values from the sequences.
@@ -54,9 +55,12 @@ infer these values from the sequences.
 | `completeness` | BUSCO counts: `lineageDataset` with its version suffix (for example `primates_odb10`), `completeSingle`, `completeDuplicated`, `fragmented`, `missing`, `total`, and optional `buscoVersion` and `mode` |
 
 The optional core fields (`voucherSpecimen`, `accessionID`, `scholarlyArticle`, `documentation`,
-`identifier`, `relatedLink`, `funding`, `reuseConditions`) mean the same as in FHR. Genome-only
-FHR fields (`genome`, `assemblyAuthor`, `masking`, `vitalStats`, `assemblySoftware` and the
-others) are not FHP fields. Every object rejects unknown keys and `null`.
+`identifier`, `relatedLink`, `funding`, `reuseConditions`) mean the same as in FHR. A
+`metadataAuthor` item may also carry `nameType` (`Personal` or `Organizational`), the DataCite
+author kind added by the v0.4 core; without it, a tool classifies the author from its ORCID or
+ROR identifier and otherwise leaves it unclassified. Genome-only FHR fields (`genome`,
+`assemblyAuthor`, `masking`, `vitalStats`, `assemblySoftware` and the others) are not FHP
+fields. Every object rejects unknown keys and `null`.
 
 Quote release names such as `'2026_03'` in YAML. Unquoted, YAML 1.1 reads `2026_03` as the
 number 202603.
@@ -121,35 +125,40 @@ adoption or support.
   record.
 - Conformance: [`tests/test_fhp_jsonld.py`](../tests/test_fhp_jsonld.py).
 
+The context and fixtures describe the **released FHP 1.0 contract** (shared v0.4.0):
+the string `schemaVersion` `"1.0"` and the optional author `nameType`. FHP imports a
+pinned snapshot of the v0.4 core, [`schemas/core-v0.4.yaml`](../schemas/core-v0.4.yaml),
+so its schema is the released `fhp.json`; FHR and FHGFF3 in this development tree still
+use the v0.3 core and are synced separately.
+
 The shared terms are reused, never redefined, so their inherited meanings are pinned to
-an immutable revision: FAIR-bioHeaders-Specification **v0.4.0** (release commit
-`84c2f90ab0e97c81d8afbf33eafe80ebade7a009`), with the definitions audited at
-`43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4`, the v0.4.0 release merge's base. That
-snapshot's `jsonld/terms.ttl` is byte-identical to this tree's `jsonld/terms.ttl`
-(SHA-256 `d64916ece9410b0cd0c1e98bdbed2622a3a32b9a5a28717832fcf0e922f1525b`). The
-v0.4.0 tag also contains release-line edits to the `Agent` and `schemaVersion`
-definitions for the v0.4 schema contract; `main` still inherits the core's v0.3
-patterns, so the base snapshot is the matching revision. The immutable raw URL at that
-commit is a locator, not the pin; the commit SHA and the file SHA-256 are what a
-consumer audits.
+the actual release: FAIR-bioHeaders-Specification **v0.4.0**, release commit
+`84c2f90ab0e97c81d8afbf33eafe80ebade7a009`. That release's `jsonld/terms.ttl` has
+SHA-256 `0c641879818a1ce02ed10348b344cb11c37fd86c8a120a9f9bfe8e618d32042c` and is
+copied under `tests/fixtures/fhp/v0.4.0/` for audit; `fhr:Agent` names `nameType`,
+`fhr:schemaVersion` is the `"MAJOR.MINOR"` contract string and `fhr:nameType` is
+defined. Terms inherited from the shared core or family models are labelled as such in
+the vocabulary header, so `fhr:DerivedFrom`, `fhr:derivedFrom`, `fhr:headerType` and
+`fhr:relationship` are not presented as FHP-owned.
 
 The canonical JSON-LD is **loss-preserving**: reading it back gives the identical FHP
 record. Ordered `metadataAuthor` items, nested `source`, `derivedFrom`,
 `predictionSoftware`, `sequenceStats` and `completeness` objects, scalar types and
-absent optional fields are all preserved. It is distinct from the FHR
-[schema.org export](SCHEMAORG-EXPORT.md), which is one-way; FHP has no export profile,
-and the FHP context carries no export terms.
+absent optional fields are all preserved. Order-sensitive arrays use `@list`, not
+`@set`. It is distinct from the FHR [schema.org export](SCHEMAORG-EXPORT.md), which is
+one-way; FHP has no export profile, and the FHP context carries no export terms.
 
 The writer emits `@context`, `@type: Dataset`, then every record key in order, adding a
 first `@type` to each nested object and, recursively, to every inlined object below it:
-`Taxon`, `Person`/`Organization`/`Agent` (by ORCID or ROR), `PropertyValue`,
-`DerivedFrom`, `Source`, `SoftwareApplication`, `SequenceStats` or `Completeness`. A
-`derivedFrom` parent therefore carries `DerivedFrom` and its `accessionID` carries
-`PropertyValue`, in array order and with absent optional children still absent. A
-`documentation` value that is an absolute URL is written as `subjectOf` in the same
-position. A reader accepts the embedded context or a known FHP context URL and nothing
-else, and never fetches a remote context: an unknown context, an unsupported JSON-LD
-`@version`, or a document that is not canonical is rejected.
+`Taxon`, `Person`/`Organization`/`Agent` (an explicit `nameType`, else ORCID or ROR),
+`PropertyValue`, `DerivedFrom`, `Source`, `SoftwareApplication`, `SequenceStats` or
+`Completeness`. A `derivedFrom` parent therefore carries `DerivedFrom` and its
+`accessionID` carries `PropertyValue`, in array order and with absent optional children
+still absent. A `documentation` value that is an absolute URL is written as `subjectOf`
+in the same position. A reader accepts the embedded context or a known FHP context URL
+and nothing else, and never fetches a remote context. It rejects an unknown context, an
+unsupported JSON-LD `@version`, a document that is not canonical, and a wrong or
+missing nested `@type` rather than silently stripping it.
 
 ### Terms
 
@@ -162,15 +171,18 @@ The FHP additions are:
 | `proteome` | `sdo:name` | the schema.org name, as FHR's `genome` |
 | `sourceType` | `fhr:sourceType` | FHP addition; a string, not a review status |
 | `source` | `fhr:source` (`fhr:Source`) | FHP addition; nested `name`, `release`, `setIdentifier`, `url`, `assemblyAccession`, `sequenceCount`, `description` |
-| `derivedFrom` | `fhr:derivedFrom` (`fhr:DerivedFrom`) | shared core slot; FHR schemaVersion 1 has no `derivedFrom` |
+| `derivedFrom` | `fhr:derivedFrom` (`fhr:DerivedFrom`) | inherited core slot; FHR does not include `derivedFrom` |
 | `predictionSoftware` | `fhr:predictionSoftware` (`sdo:SoftwareApplication`) | FHP addition; the same shape as `assemblySoftware` |
 | `geneticCode` | `fhr:geneticCode` | FHP addition; an integer, never inferred |
 | `isoformPolicy` | `fhr:isoformPolicy` | FHP addition; a string, never inferred |
 | `sequenceStats` | `fhr:sequenceStats` (`fhr:SequenceStats`) | FHP addition; asserted counts |
 | `completeness` | `fhr:completeness` (`fhr:Completeness`) | FHP addition; asserted BUSCO counts |
 
-No term encodes a biological origin or a quality-control result; the values are the
-producer's assertions, exactly as in the header.
+Shared terms are not redefined: `metadataAuthor`, `nameType`, `schemaVersion`,
+`accessionID`, `checksum`, `relatedLink`, `voucherSpecimen`, `seqcol_id` and
+`commandLineOption` keep the pinned v0.4.0 IRIs. No term encodes a biological origin or a
+quality-control result; the values are the producer's assertions, exactly as in the
+header.
 
 ## Not yet available
 
@@ -178,16 +190,18 @@ These are recorded as follow-ups F-01 to F-07 in the
 [plan](../specs/006-protein-header/plan.md):
 
 - JSON-LD and HTML microdata forms. The model already carries the term annotations.
-  The JSON-LD context is a draft (see above), with runtime reader/writer support in
+  The JSON-LD context targets released FHP 1.0 (see above), with runtime reader/writer support in
   FAIR-bioHeaders-Tools#58. The FHP HTML microdata **binding** is drafted in
   [FHP-MICRODATA.md](FHP-MICRODATA.md) (#5), with examples and test-only reader checks;
   the runtime reader and writer, the website consumer and the family builder are still
   follow-ups, so FHP microdata output is not yet supported.
 - Checking GFF3 parents (spec 007).
-- A persistent schema alias and a release.
+- A persistent schema alias for future releases.
 
 **Release line (maintainer decision, 2026-10-11).** FHP v0.1 is released from the
 `release-v0.4` line, with FAIR-bioHeaders-Specification v0.4.0, so it starts with the tightened core
-patterns and the optional author `nameType`. Its persistent schema URL is
-`https://w3id.org/fair-bioheaders/fhp/vX.Y.Z` (the FAIR-bioHeaders-Specification release tag;
-registered in perma-id/w3id.org#6868; it resolves once v0.4.0 is tagged). On `main`, FHP still inherits the core's v0.3 patterns.
+patterns and the optional author `nameType`, with `schemaVersion` `"1.0"`. Its persistent schema URL
+is `https://w3id.org/fair-bioheaders/fhp/vX.Y.Z` (the FAIR-bioHeaders-Specification release tag;
+registered in perma-id/w3id.org#6868; it resolves once v0.4.0 is tagged). This development tree
+keeps FHR and FHGFF3 on the v0.3 core; FHP alone imports the pinned v0.4 core
+(`schemas/core-v0.4.yaml`) so its JSON-LD contract matches the release.

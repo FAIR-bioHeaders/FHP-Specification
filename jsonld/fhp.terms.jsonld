@@ -17,7 +17,7 @@
         "@language": "en"
       },
       "rdfs:comment": {
-        "@value": "Draft FHP vocabulary additions, generated from fhp_linkml.yml. The shared FAIR-bioHeaders terms are owned by jsonld/terms.ttl and are reused, not redefined; they are pinned to FAIR-bioHeaders-Specification v0.4.0 at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4/jsonld/terms.ttl). Runtime support is coordinated with FAIR-bioHeaders-Tools#58; publication with FAIR-bioHeaders-Specification#107.",
+        "@value": "Draft FHP vocabulary for released FHP 1.0, generated from fhp_linkml.yml. The published FAIR-bioHeaders terms are owned by jsonld/terms.ttl and are reused, not redefined; they are pinned to FAIR-bioHeaders-Specification v0.4.0 at commit 84c2f90ab0e97c81d8afbf33eafe80ebade7a009 (https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/84c2f90ab0e97c81d8afbf33eafe80ebade7a009/jsonld/terms.ttl). Inherited core terms are owned by schemas/core-v0.4.yaml and family terms by schemas/shared.yaml; only terms unique to FHP are FHP-owned. Runtime support is coordinated with FAIR-bioHeaders-Tools#58; publication with FAIR-bioHeaders-Specification#107.",
         "@language": "en"
       },
       "dcterms:license": {
