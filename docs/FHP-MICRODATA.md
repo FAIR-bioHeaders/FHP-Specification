@@ -3,9 +3,11 @@
 **Status: draft binding proposal; the FHP 1.0 contract it binds is released.** This document defines the type-specific FHP
 binding for HTML microdata. It is developed in FHP-Specification (#5, feature 006
 follow-up F-02) and must be published through FAIR-bioHeaders-Specification before it is
-adopted. No FHP release, tag or DOI is created here. The toolkit reader and writer are
-**not** shipped in this repository; they remain toolkit work
-([FAIR-bioHeaders-Tools#58](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/issues/58)).
+adopted. No FHP release, tag or DOI is created here. The toolkit reader and writer are not shipped
+in this repository; they are implemented in
+[FAIR-bioHeaders-Tools#98](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/pull/98)
+(for [FAIR-bioHeaders-Tools#58](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/issues/58))
+and ship in the first toolkit release that includes that change.
 The website consumer
 ([fair-bioheaders.github.io#21](https://github.com/FAIR-bioHeaders/fair-bioheaders.github.io/issues/21))
 and the family builder
@@ -208,8 +210,11 @@ the R, M, J, P and G rules.
 
 ## What remains outside this document
 
-- **Toolkit reader and writer**: FAIR-bioHeaders-Tools#58. FHP microdata output is still
-  refused until that work lands.
+- **Toolkit reader and writer**: implemented in
+  [FAIR-bioHeaders-Tools#98](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/pull/98)
+  (for [FAIR-bioHeaders-Tools#58](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/issues/58)),
+  shipping in the first toolkit release that includes it. Until then, released toolkits
+  still refuse FHP microdata output.
 - **Website binding**: fair-bioheaders.github.io#21, with the family builder in #15. The
   released FHP form and readable tables added by website PR #27 stay microdata-free until
   this contract is published and the toolkit reader exists.

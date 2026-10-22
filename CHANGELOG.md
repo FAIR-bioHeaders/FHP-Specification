@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Record that the toolkit implementation of the FHP JSON-LD and HTML microdata
+  contracts is in [FAIR-bioHeaders-Tools#98](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/pull/98)
+  for [FAIR-bioHeaders-Tools#58](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/issues/58);
+  it ships in the first toolkit release that includes that change. The contracts in this
+  repository are unchanged, and released toolkits still refuse both formats until then.
+
 - **Draft/proposal.** Specify the FHP HTML microdata binding (#5, feature 006
   follow-up F-02). `docs/FHP-MICRODATA.md` defines the FHP item scope and itemtype
   (the raw-main `fhp.json` URL), fixed-version schema selection, and a binding for
