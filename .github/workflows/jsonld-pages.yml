@@ -7,10 +7,12 @@ name: Publish JSON-LD on Pages
 # copies are rebuilt on every run.
 #
 # The preflight job checks whether GitHub Pages is enabled for this repository
-# (FAIR-bioHeaders/FHP-Specification#10). Without a Pages site the remaining
-# jobs cannot configure or deploy Pages, so they are skipped and reported as
-# skipped instead of failing every push to main. When Pages is enabled, the
-# build and deployment are unchanged.
+# (FAIR-bioHeaders/FHP-Specification#10). A 404 means Pages is not configured:
+# the remaining jobs cannot configure or deploy Pages, so they are skipped and
+# reported as skipped instead of failing every push to main. A 403 means the
+# token cannot read Pages metadata; the job fails instead of skipping, because
+# a Pages-enabled repository must not be silently left unpublished. When Pages
+# is enabled, the build and deployment are unchanged.
 
 on:
   push:
@@ -32,11 +34,11 @@ jobs:
     timeout-minutes: 5
     permissions:
       contents: read
-      # Reading the Pages site also uses the documented Pages scope. If
-      # GITHUB_TOKEN cannot read Pages metadata, GitHub answers 403 instead of
-      # 404; both are treated as "not enabled" below, so a repository without
-      # Pages still has green pushes and a notice explains the skip.
-      pages: write
+      # GET /repos/{owner}/{repo}/pages is read-only, so grant only the Pages
+      # read scope. actionlint accepts pages: read for the Pages permission.
+      # A 404 is the only response treated as "Pages not configured"; a 403 is
+      # an error so a Pages-enabled repository is never skipped silently.
+      pages: read
     outputs:
       enabled: ${{ steps.pages.outputs.enabled }}
     steps:
@@ -56,12 +58,16 @@ jobs:
               echo "enabled=true" >> "$GITHUB_OUTPUT"
               echo "GitHub Pages is enabled for $GH_REPO; building and deploying the JSON-LD site."
               ;;
-            403|404)
+            404)
               echo "enabled=false" >> "$GITHUB_OUTPUT"
-              echo "::notice::GitHub Pages is not enabled for $GH_REPO (HTTP $status); skipping the JSON-LD build and deployment. Enable Pages with the \"GitHub Actions\" source to publish it."
+              echo "::notice::GitHub Pages is not configured for $GH_REPO (HTTP 404); skipping the JSON-LD build and deployment. Enable Pages with the \"GitHub Actions\" source to publish it."
+              ;;
+            403)
+              echo "::error::Cannot read GitHub Pages metadata for $GH_REPO (HTTP 403). The token may lack pages: read, or repository access may be restricted. Refusing to treat this as 'Pages not configured' because that could silently skip publication on a Pages-enabled repository."
+              exit 1
               ;;
             *)
-              echo "::error::Could not determine whether GitHub Pages is enabled for $GH_REPO (HTTP ${status:-no response})."
+              echo "::error::Could not determine whether GitHub Pages is enabled for $GH_REPO (HTTP ${status:-no response}). Only a 404 is treated as 'Pages not configured'."
               exit 1
               ;;
           esac
