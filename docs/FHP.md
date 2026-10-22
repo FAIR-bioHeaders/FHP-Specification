@@ -105,13 +105,13 @@ They add no requirements.
 ## JSON-LD (draft)
 
 FHP has a JSON-LD form, like FHR: the record itself, with an `@context` and `@type`.
-It is a **draft**, because the runtime reader and writer live in the toolkit and are
-not implemented yet
-([FAIR-bioHeaders-Tools#58](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/issues/58));
-publication of the context and terms is coordinated through
+The runtime reader and writer are implemented in the toolkit
+([FAIR-bioHeaders-Tools#98](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/pull/98),
+for [FAIR-bioHeaders-Tools#58](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/issues/58));
+they ship in the first toolkit release that includes that change. Until that release is
+published, no released toolkit reads or writes FHP JSON-LD, and this draft is not a claim
+of adoption or support. Publication of the context and terms is coordinated through
 [FAIR-bioHeaders-Specification#107](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/issues/107).
-The toolkit does not read or write FHP JSON-LD yet, and this draft is not a claim of
-adoption or support.
 
 - Context: [`jsonld/fhp.context.jsonld`](../jsonld/fhp.context.jsonld), generated from
   `fhp_linkml.yml` by `scripts/make_jsonld.py`. Do not edit it by hand:
@@ -190,11 +190,15 @@ These are recorded as follow-ups F-01 to F-07 in the
 [plan](../specs/006-protein-header/plan.md):
 
 - JSON-LD and HTML microdata forms. The model already carries the term annotations.
-  The JSON-LD context targets released FHP 1.0 (see above), with runtime reader/writer support in
-  FAIR-bioHeaders-Tools#58. The FHP HTML microdata **binding** is drafted in
-  [FHP-MICRODATA.md](FHP-MICRODATA.md) (#5), with examples and test-only reader checks;
-  the runtime reader and writer, the website consumer and the family builder are still
-  follow-ups, so FHP microdata output is not yet supported.
+  The JSON-LD context targets released FHP 1.0 (see above), and runtime reader/writer support
+  is implemented in
+  [FAIR-bioHeaders-Tools#98](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/pull/98)
+  (for [FAIR-bioHeaders-Tools#58](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/issues/58)),
+  shipping in the first toolkit release that includes it. The FHP HTML microdata
+  **binding** is drafted in [FHP-MICRODATA.md](FHP-MICRODATA.md) (#5) with examples and
+  reader/writer checks. The website consumer and the family builder remain follow-ups;
+  until a toolkit release includes #98, FHP microdata output is not available from a
+  released toolkit.
 - Checking GFF3 parents (spec 007).
 - A persistent schema alias for future releases.
 
