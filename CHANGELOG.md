@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+- **Draft/proposal.** Specify the FHP HTML microdata binding (#5, feature 006
+  follow-up F-02). `docs/FHP-MICRODATA.md` defines the FHP item scope and itemtype
+  (the raw-main `fhp.json` URL), fixed-version schema selection, and a binding for
+  every FHP field on top of the shared rules M1 to M4 and R9 in
+  `docs/MICRODATA.md`: nested `source` and `derivedFrom`, ordered author and
+  software arrays, single `sequenceStats` and `completeness` objects, zero and
+  `false` versus absence, escaped Unicode and text, and the repeated-scalar rule.
+  It states that schema/structural validity is not file-backed checksum or parent
+  verification. New standalone examples `examples/fhp/minimal-predicted.microdata.fhp.html`
+  and `examples/fhp/rich-microdata.microdata.fhp.html` pair with their canonical
+  records (`rich-microdata.fhp.json` is new), with negative fixtures for the wrong
+  itemtype, an unsupported version, malformed nesting, a repeated scalar and
+  script-only content. A **test-only** reader and writer in `tests/fhp_microdata.py`
+  (standard library `html.parser`) and `tests/test_fhp_microdata.py` extract the
+  fixtures back to the canonical records and reject the negatives. This is a
+  proposal for review and publication through FAIR-bioHeaders-Specification; the
+  runtime reader and writer remain toolkit work (FAIR-bioHeaders-Tools#58), and the
+  website consumer (fair-bioheaders.github.io#21) and family builder (#15) are
+  coordinated, not shipped. FHP HTML microdata output is still unsupported.
+
 - Rename the repository from `FHR-Specification` to `FAIR-bioHeaders-Specification`
   (#108). It holds the released specifications for every header type; each type is
   developed in its own repository (a new `FHR-Specification` for FHR). Links and
