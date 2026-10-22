@@ -565,7 +565,8 @@ class WriterTests(unittest.TestCase):
 class ReaderTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.record = examples()["rich-predicted"]
+        cls.examples = examples()
+        cls.record = cls.examples["rich-predicted"]
         cls.document = make_jsonld.fhp_to_jsonld(cls.record)
 
     def test_unknown_context_is_rejected(self):
@@ -659,6 +660,72 @@ class ReaderTests(unittest.TestCase):
             "@type": "PropertyValue", "name": "x"}
         back = make_jsonld.fhp_canonical_record(document)
         self.assertEqual(back["derivedFrom"][0]["accessionID"], {"name": "x"})
+
+    def test_author_type_must_match_explicit_name_type(self):
+        cases = [
+            ("Personal", "Organization",
+             r'metadataAuthor\[0\].*nameType "Personal" derives Person'),
+            ("Organizational", "Person",
+             r'metadataAuthor\[0\].*nameType "Organizational" derives Organization'),
+        ]
+        for name_type, declared, message in cases:
+            with self.subTest(name_type=name_type, declared=declared):
+                document = copy.deepcopy(self.document)
+                document["metadataAuthor"] = [
+                    {"@type": declared, "name": "Synthetic author (placeholder)",
+                     "nameType": name_type}]
+                with self.assertRaisesRegex(ValueError, message):
+                    make_jsonld.fhp_canonical_record(document)
+
+    def test_author_type_matches_correct_explicit_name_type(self):
+        for name_type, expected in (("Personal", "Person"),
+                                    ("Organizational", "Organization")):
+            with self.subTest(name_type=name_type):
+                record = copy.deepcopy(self.examples["minimal-predicted"])
+                record["metadataAuthor"] = [
+                    {"name": "Synthetic author (placeholder)", "nameType": name_type}]
+                document = json.loads(json.dumps(make_jsonld.fhp_to_jsonld(record)))
+                self.assertEqual(document["metadataAuthor"][0]["@type"], expected)
+                back = make_jsonld.fhp_canonical_record(document)
+                self.assertTrue(equal(back, record))
+                self.assertEqual(back["metadataAuthor"][0]["nameType"], name_type)
+
+    def test_author_type_follows_the_uri_fallback(self):
+        orcid = "https://orcid.org/0000-0002-1825-0097"
+        ror = "https://ror.org/05gq02987"
+        cases = [
+            ({"name": "Person (placeholder)", "uri": orcid}, "Person", True),
+            ({"name": "Person (placeholder)", "uri": orcid}, "Organization", False),
+            ({"name": "Organization (placeholder)", "uri": ror}, "Organization", True),
+            ({"name": "Organization (placeholder)", "uri": ror}, "Person", False),
+            ({"name": "Unclassified (placeholder)"}, "Agent", True),
+            ({"name": "Unclassified (placeholder)"}, "Person", False),
+        ]
+        for author, declared, accepted in cases:
+            with self.subTest(author=author, declared=declared):
+                record = copy.deepcopy(self.examples["minimal-predicted"])
+                record["metadataAuthor"] = [dict(author)]
+                document = json.loads(json.dumps(make_jsonld.fhp_to_jsonld(record)))
+                document["metadataAuthor"][0]["@type"] = declared
+                if accepted:
+                    back = make_jsonld.fhp_canonical_record(document)
+                    self.assertTrue(equal(back, record))
+                else:
+                    expected = make_jsonld.author_type(author)
+                    with self.assertRaisesRegex(
+                            ValueError, rf"metadataAuthor\[0\].*derives {expected}"):
+                        make_jsonld.fhp_canonical_record(document)
+
+    def test_explicit_name_type_wins_over_a_contradicting_uri(self):
+        # nameType decides the writer's type, so an ORCID cannot override it.
+        record = copy.deepcopy(self.examples["minimal-predicted"])
+        record["metadataAuthor"] = [
+            {"name": "Organization (placeholder)", "nameType": "Organizational",
+             "uri": "https://orcid.org/0000-0002-1825-0097"}]
+        document = json.loads(json.dumps(make_jsonld.fhp_to_jsonld(record)))
+        self.assertEqual(document["metadataAuthor"][0]["@type"], "Organization")
+        back = make_jsonld.fhp_canonical_record(document)
+        self.assertTrue(equal(back, record))
 
 
 class ReleasedContractTests(unittest.TestCase):

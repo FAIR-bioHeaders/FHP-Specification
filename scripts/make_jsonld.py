@@ -1167,6 +1167,22 @@ def _check_expected_type(node, allowed, path):
             f"JSON-LD: {path} has @type {sorted(names)}; expected one of {sorted(allowed)}")
 
 
+def _check_author_type(item, path):
+    """An author @type must equal the type the writer derives from nameType/uri.
+
+    The same rule as ``author_type`` (explicit nameType first, then an ORCID or
+    ROR uri, else Agent) decides the expected class, so a document cannot claim an
+    author kind that contradicts its own metadata.
+    """
+    names = {_type_local_name(value) for value in _type_names(item["@type"])}
+    expected = author_type(item)
+    if names != {expected}:
+        detail = item.get("nameType")
+        detail = f'nameType "{detail}"' if detail is not None else "its nameType/uri"
+        raise ValueError(
+            f"JSON-LD: {path} has @type {sorted(names)}; {detail} derives {expected}")
+
+
 def fhp_validate_types(document):
     """Reject a canonical document with a wrong or missing nested @type."""
     _check_expected_type(document, FHP_EXPECTED_TYPES["record"], "the record")
@@ -1182,6 +1198,8 @@ def fhp_validate_types(document):
             raise ValueError(f"JSON-LD: {key} must be an array")
         for index, item in enumerate(items):
             _check_expected_type(item, allowed, f"{key}[{index}]")
+            if key in AUTHOR_KEYS:
+                _check_author_type(item, f"{key}[{index}]")
             if key == "derivedFrom" and "accessionID" in item:
                 _check_expected_type(item["accessionID"], {"PropertyValue"},
                                      f"{key}[{index}].accessionID")
