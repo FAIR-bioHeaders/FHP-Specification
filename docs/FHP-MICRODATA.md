@@ -142,6 +142,9 @@ construction.
   `<script>` block, a handler or another non-rendered place is not valid FHP microdata.
   Publishing or copying a page through another tool is not evidence that its microdata
   survives.
+- A `<template>` element's contents are inert too: they create no item scope and no
+  property, and they are excluded from text values. A record wrapped in `<template>` is
+  therefore not an FHP item at all, and a property inside one contributes nothing.
 
 ## Repeated properties
 

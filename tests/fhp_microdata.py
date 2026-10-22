@@ -106,6 +106,10 @@ _VALUE_ATTRIBUTE = {
 }
 _TYPED = {"string", "integer", "number", "boolean", "null"}
 
+# Subtrees whose contents are inert in HTML: they create no item scopes or
+# properties and contribute no scalar text (docs/FHP-MICRODATA.md F7).
+_INERT_CONTENT = {"script", "template"}
+
 
 class MicrodataError(ValueError):
     """The document is not valid FHP microdata."""
@@ -186,6 +190,8 @@ class _TreeBuilder(HTMLParser):
 def _nodes(node):
     for child in node.children:
         if isinstance(child, _Node):
+            if child.tag in _INERT_CONTENT:
+                continue
             yield child
             yield from _nodes(child)
 
@@ -195,8 +201,7 @@ def _text(node):
     for child in node.children:
         if isinstance(child, str):
             parts.append(child)
-        elif child.tag != "script":
-            # Script contents are inert data, never metadata (F7).
+        elif child.tag not in _INERT_CONTENT:
             parts.append(_text(child))
     return "".join(parts)
 
@@ -270,8 +275,8 @@ def _property_elements(scope):
         for child in node.children:
             if not isinstance(child, _Node):
                 continue
-            if child.tag == "script":
-                continue  # Script contents never contribute metadata (F7).
+            if child.tag in _INERT_CONTENT:
+                continue  # Script and template contents never contribute metadata.
             if child.datatype in ("array", "object"):
                 # A typed container's children are the container's own values,
                 # not properties of the enclosing item.

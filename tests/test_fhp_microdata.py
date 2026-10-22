@@ -450,6 +450,38 @@ class FHPMicrodataBindingTests(unittest.TestCase):
         self.assertEqual(fhp_microdata.read_page(page, SCHEMA)["documentation"],
                          "beforeafter")
 
+    def test_fhp_scope_inside_a_template_is_rejected(self):
+        page = ("<template>" + fhp_microdata.write_page(self.minimal())
+                + "</template>")
+        with self.assertRaises(fhp_microdata.MicrodataError):
+            fhp_microdata.read_page(page, SCHEMA)
+
+    def test_template_inside_a_property_contributes_nothing(self):
+        checksum = ('<span itemprop="checksum" data-fhr-type="string">'
+                    f"{CHECKSUM}</span>")
+        # A template carrying the property, and a template inside a property's
+        # text, are both inert.
+        page = fhp_microdata.write_page(self.minimal()).replace(
+            checksum,
+            '<template itemprop="checksum">' + checksum + "</template>", 1)
+        extracted = fhp_microdata.read_page(page, SCHEMA)
+        self.assertNotIn("checksum", extracted)
+        with self.assertRaises(fhp_microdata.MicrodataError):
+            extract_page(page)
+        page = fhp_microdata.write_page(self.minimal()).replace(
+            "</div>",
+            '<span itemprop="documentation" data-fhr-type="string">before'
+            '<template><span itemprop="checksum" data-fhr-type="string">'
+            f"{CHECKSUM}</span>inside</template>after</span></div>", 1)
+        extracted = extract_page(page)
+        self.assertEqual(extracted["documentation"], "beforeafter")
+        self.assertEqual(extracted["checksum"], CHECKSUM)
+
+    def test_normal_fixture_still_parses_outside_a_template(self):
+        record = self.minimal()
+        self.assertTrue(same_json(extract_page(fhp_microdata.write_page(record)),
+                                  record))
+
     def test_first_attribute_wins(self):
         page = fhp_microdata.write_page(self.minimal()).replace(
             '<span itemprop="proteome" data-fhr-type="string">',
