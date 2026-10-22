@@ -1,0 +1,719 @@
+{
+  "@context": {
+    "fhr": "https://w3id.org/fair-bioheaders/terms#",
+    "sdo": "http://schema.org/",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "dcterms": "http://purl.org/dc/terms/"
+  },
+  "@graph": [
+    {
+      "@id": "https://w3id.org/fair-bioheaders/terms",
+      "@type": "owl:Ontology",
+      "rdfs:label": {
+        "@value": "FAIR-bioHeaders vocabulary (draft FHP additions)",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "Draft FHP vocabulary for released FHP 1.0, generated from fhp_linkml.yml. The published FAIR-bioHeaders terms are owned by jsonld/terms.ttl and are reused, not redefined; they are pinned to FAIR-bioHeaders-Specification v0.4.0 at commit 84c2f90ab0e97c81d8afbf33eafe80ebade7a009 (https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/84c2f90ab0e97c81d8afbf33eafe80ebade7a009/jsonld/terms.ttl). Inherited core terms are owned by schemas/core-v0.4.yaml and family terms by schemas/shared.yaml; only terms unique to FHP are FHP-owned. Runtime support is coordinated with FAIR-bioHeaders-Tools#58; publication with FAIR-bioHeaders-Specification#107.",
+        "@language": "en"
+      },
+      "dcterms:license": {
+        "@id": "https://www.mozilla.org/en-US/MPL/2.0/"
+      },
+      "rdfs:seeAlso": {
+        "@id": "https://github.com/FAIR-bioHeaders/FHP-Specification/blob/main/docs/FHP.md"
+      }
+    },
+    {
+      "@id": "fhr:Completeness",
+      "@type": "rdfs:Class",
+      "rdfs:label": {
+        "@value": "Completeness",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "BUSCO completeness as counts, with the lineage dataset whose name gives its version (for example primates_odb10)",
+        "@language": "en"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:DerivedFrom",
+      "@type": "rdfs:Class",
+      "rdfs:label": {
+        "@value": "DerivedFrom",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "Link to a parent file by its FHR-family checksum (specs/004-shared-core-schema FR-003). Provisional until the relationship vocabulary is decided (FAIR-bioHeaders-Specification#54).",
+        "@language": "en"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:SequenceStats",
+      "@type": "rdfs:Class",
+      "rdfs:label": {
+        "@value": "SequenceStats",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "Counts describing a protein set",
+        "@language": "en"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:Source",
+      "@type": "rdfs:Class",
+      "rdfs:label": {
+        "@value": "Source",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "A source of sequences that is not a FAIR-bioHeaders file: a database release, set, annotation run or other contribution",
+        "@language": "en"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:assemblyAccession",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "assemblyAccession",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "Genome assembly accession that the source states for this set; an assertion by the source, not a checksum link",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "fhr:Source"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "sdo:Text"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:buscoVersion",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "buscoVersion",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "Version of BUSCO",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "fhr:Completeness"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "sdo:Text"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:completeDuplicated",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "completeDuplicated",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "Complete duplicated BUSCOs (D)",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "fhr:Completeness"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "sdo:Integer"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:completeness",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "completeness",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "BUSCO completeness of the protein set, as counts",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "sdo:Dataset"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "fhr:Completeness"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:completeSingle",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "completeSingle",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "Complete single-copy BUSCOs (S)",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "fhr:Completeness"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "sdo:Integer"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:derivedFrom",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "derivedFrom",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "Parent files this file was derived from, identified by their FHR-family checksum. Header types opt in by listing this slot; FHR schemaVersion 1 does not include it.",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "sdo:Dataset"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "fhr:DerivedFrom"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:fragmented",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "fragmented",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "Fragmented BUSCOs (F)",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "fhr:Completeness"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "sdo:Integer"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:geneCount",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "geneCount",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "Number of genes the sequences represent",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "fhr:SequenceStats"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "sdo:Integer"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:geneticCode",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "geneticCode",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "NCBI translation table ID used to translate the sequences (1-6, 9-16 or 21-33); omitted when unknown or when the file mixes tables",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "sdo:Dataset"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "sdo:Integer"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:headerType",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "headerType",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "FAIR-bioHeaders type of the parent file",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "fhr:DerivedFrom"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "sdo:Text"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:isoformPolicy",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "isoformPolicy",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "Which protein isoforms of each gene the set contains",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "sdo:Dataset"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "sdo:Text"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:lineageDataset",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "lineageDataset",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "BUSCO lineage dataset, including its version suffix",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "fhr:Completeness"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "sdo:Text"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:missing",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "missing",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "Missing BUSCOs (M)",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "fhr:Completeness"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "sdo:Integer"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:mode",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "mode",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "BUSCO mode",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "fhr:Completeness"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "sdo:Text"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:predictionProtocol",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "predictionProtocol",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "Prediction or annotation protocol or workflow reference URI",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "sdo:Dataset"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "sdo:URL"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:predictionSoftware",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "predictionSoftware",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "Software that produced the gene models or translations",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "sdo:Dataset"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "sdo:SoftwareApplication"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:relationship",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "relationship",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "How this file relates to the parent. Provisional vocabulary: a PROV-O or Relation Ontology mapping is pending a maintainer decision (FAIR-bioHeaders-Specification#54).",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "fhr:DerivedFrom"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "sdo:Text"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:release",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "release",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "Release or annotation run of the source, as the source names it",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "fhr:Source"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "sdo:Text"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:sequenceCount",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "sequenceCount",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "Number of protein sequences in the file",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "fhr:SequenceStats"
+        },
+        {
+          "@id": "fhr:Source"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "sdo:Integer"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:sequenceStats",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "sequenceStats",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "Counts describing the protein set, as asserted by the producer",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "sdo:Dataset"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "fhr:SequenceStats"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:setIdentifier",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "setIdentifier",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "Identifier of the set taken from the source, for example a UniProt proteome ID",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "fhr:Source"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "sdo:Text"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:source",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "source",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "Sources of the sequences that are not FAIR-bioHeaders files, as asserted by the producer; never verified by checksum",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "sdo:Dataset"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "fhr:Source"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:sourceType",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "sourceType",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "Where the sequences came from: predicted (a gene-prediction or annotation run), database (a published database release, set or annotation run) or mixed (more than one origin). Not a review status.",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "sdo:Dataset"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "sdo:Text"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:total",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "total",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "Number of BUSCO groups searched (n)",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "fhr:Completeness"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "sdo:Integer"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    },
+    {
+      "@id": "fhr:totalResidues",
+      "@type": "rdf:Property",
+      "rdfs:label": {
+        "@value": "totalResidues",
+        "@language": "en"
+      },
+      "rdfs:comment": {
+        "@value": "Total number of residues in the file",
+        "@language": "en"
+      },
+      "sdo:domainIncludes": [
+        {
+          "@id": "fhr:SequenceStats"
+        }
+      ],
+      "sdo:rangeIncludes": [
+        {
+          "@id": "sdo:Integer"
+        }
+      ],
+      "rdfs:isDefinedBy": {
+        "@id": "https://w3id.org/fair-bioheaders/terms"
+      }
+    }
+  ]
+}

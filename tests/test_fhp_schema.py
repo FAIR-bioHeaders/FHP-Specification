@@ -21,11 +21,11 @@ spec = importlib.util.spec_from_file_location("generator", ROOT / "json-schema-g
 generator = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(generator)
 
-FHP_URL = "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhp.json"
+FHP_URL = "https://w3id.org/fair-bioheaders/fhp/v0.4.0"
 CHECKSUM = "A" * 43 + "="
 MINIMAL = {
     "schema": FHP_URL,
-    "schemaVersion": 1,
+    "schemaVersion": "1.0",
     "proteome": "Synthetic protein set (placeholder)",
     "sourceType": "predicted",
     "taxon": {"name": "Homo sapiens", "uri": "https://identifiers.org/taxonomy:9606"},
@@ -80,7 +80,14 @@ REJECTED = [
     ("schema", "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json",
      "an FHR schema URL is not an FHP schema URL"),
     ("schema", "https://example.org/fhp.json", "other hosts are not FHP schema URLs"),
-    ("schemaVersion", 2, "schemaVersion is 1"),
+    ("schemaVersion", 1, "schemaVersion is the string 1.0"),
+    ("schemaVersion", 1.0, "schemaVersion is the string 1.0, not a number"),
+    ("schemaVersion", "1", "MAJOR.MINOR"),
+    ("schemaVersion", "1.1", "FHP 1.0 accepts only 1.0"),
+    ("schemaVersion", "2.0", "FHR's version is not FHP's"),
+    ("schema", "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/"
+     "0123abc/fhp.json", "only main and release tags are schema refs"),
+    ("schema", "https://w3id.org/fair-bioheaders/fhp/v0.4", "a release tag has three numbers"),
     ("genome", "A genome", "FHR-only key"),
     ("masking", "not-masked", "FHR-only key"),
     ("vitalStats", {"N50": 1}, "FHR-only key"),
@@ -119,11 +126,13 @@ ACCEPTED = [
      "main/fhp.json", "the canonical repository name since #108"),
     ("schema", "https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/"
      "v0.4.0/fhp.json", "a release tag under the canonical name"),
-    ("schemaVersion", 1.0, "1.0 equals 1"),
+    ("schema", "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhp.json",
+     "the raw-main URL"),
+    ("schema", "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/v0.4.0/fhp.json",
+     "a release's raw tag URL"),
+    ("schema", "https://w3id.org/fair-bioheaders/fhp/v0.4.0/", "w3id with a trailing slash"),
     ("sourceType", "database", "each source type"),
     ("sourceType", "mixed", "each source type"),
-    ("schema", "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/"
-     "0123abc/fhp.json", "a commit ref"),
     ("geneticCode", 6, "range edges"),
     ("geneticCode", 9, "range edges"),
     ("geneticCode", 16, "range edges"),
@@ -189,8 +198,9 @@ class FHPSchemaTests(unittest.TestCase):
         self.assertTrue(list(Draft202012Validator(fhr).iter_errors(MINIMAL)))
 
     def test_fhr_generation_is_unchanged(self):
-        # FHP must not change FHR: the generated FHR schema keeps the legacy open
-        # core objects and has no FHP keys.
+        # FHP must not change FHR: this development tree's FHR still imports the
+        # v0.3 core, so its generated schema keeps the legacy open objects and has
+        # no FHP keys. FHP 1.0 uses the pinned v0.4 core (schemas/core-v0.4.yaml).
         fhr = generator.generate()
         for name in ("Taxon", "Author", "AccessionID"):
             self.assertNotIn("additionalProperties", fhr["$defs"][name])

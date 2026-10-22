@@ -119,7 +119,8 @@ class ConformanceTests(unittest.TestCase):
         vectors = {v["id"]: v for v in self.manifest["vectors"] if v["format"] == "fhp-fasta"}
         self.assertEqual(self.manifest["fhpSpecification"], "docs/FHP.md")
         self.assertEqual(len([v for v in vectors.values() if v["expected"] == "valid"]), 9)
-        self.assertEqual(len([v for v in vectors.values() if v["expected"] == "invalid"]), 14)
+        self.assertEqual(len([v for v in vectors.values() if v["expected"] == "invalid"]), 15)
+        self.assertEqual(vectors["fhp-fasta-author-bad-name-type"]["rule"], "P1")
         for vector in vectors.values():
             self.assertTrue(vector["file"].endswith(".fhp.fasta")
                             or vector["file"].endswith(".fhp.fasta.gz"), vector["file"])

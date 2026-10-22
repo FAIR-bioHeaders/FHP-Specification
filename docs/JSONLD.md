@@ -140,6 +140,40 @@ comment saying so, with its canonical URL and the release alias pattern; JSON ca
 comments, so the context and `terms.jsonld` have none. `scripts/build_pages.py` builds the Pages
 site from them and from every release tag (`.github/workflows/jsonld-pages.yml`).
 
+## FHP (draft)
+
+FHP has its own JSON-LD context, [`jsonld/fhp.context.jsonld`](../jsonld/fhp.context.jsonld),
+and FHP vocabulary additions, [`jsonld/fhp.terms.ttl`](../jsonld/fhp.terms.ttl) and
+[`jsonld/fhp.terms.jsonld`](../jsonld/fhp.terms.jsonld), generated from `fhp_linkml.yml`
+by `scripts/make_jsonld.py`. FHP is a draft: the toolkit reader and writer are not
+implemented yet ([FAIR-bioHeaders-Tools#58](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/issues/58)),
+and the files are published through
+[FAIR-bioHeaders-Specification#107](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/issues/107).
+The FHR context, vocabulary and writer above are unchanged.
+
+The context and fixtures describe **released FHP 1.0** (shared v0.4.0): the string
+`schemaVersion` `"1.0"` and the optional author `nameType`. FHP imports a pinned v0.4
+core snapshot (`schemas/core-v0.4.yaml`) so its schema is the released `fhp.json`; FHR
+and FHGFF3 in this development tree still use the v0.3 core.
+
+FHP reuses the shared terms with their FHR IRIs and adds only its own, which stay
+separate from the FHR meanings. The reused definitions are pinned to
+FAIR-bioHeaders-Specification v0.4.0 (release commit
+`84c2f90ab0e97c81d8afbf33eafe80ebade7a009`); that release's `jsonld/terms.ttl`
+has SHA-256 `0c641879818a1ce02ed10348b344cb11c37fd86c8a120a9f9bfe8e618d32042c`
+and is copied under `tests/fixtures/fhp/v0.4.0/` for audit. Terms inherited from the
+shared core or family models are labelled as such, not presented as FHP-owned.
+
+The canonical FHP form is loss-preserving, like the FHR one; it carries no export
+terms. Order-sensitive arrays use `@list` so their order survives JSON-LD processing.
+The writer types every inlined object recursively, so a `derivedFrom[].accessionID` is
+a `PropertyValue` just like the root `accessionID`. The reader rejects a wrong or
+missing nested `@type`. Reading rules and the term table are in
+[FHP.md](FHP.md#json-ld-draft), the fixtures are `examples/fhp/*.fhp.jsonld`, and
+`tests/test_fhp_jsonld.py` checks the typed round trip against the pinned released
+schema, ordered authors, nested objects, unknown-context and unsupported-`@version`
+rejection, wrong nested types, and offline operation.
+
 ## The schema.org export
 
 The [schema.org export](SCHEMAORG-EXPORT.md) is a separate, one-way profile (feature 013). It

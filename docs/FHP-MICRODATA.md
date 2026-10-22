@@ -1,6 +1,6 @@
 # FHP HTML microdata (draft binding)
 
-**Status: draft proposal, not released.** This document defines the type-specific FHP
+**Status: draft binding proposal; the FHP 1.0 contract it binds is released.** This document defines the type-specific FHP
 binding for HTML microdata. It is developed in FHP-Specification (#5, feature 006
 follow-up F-02) and must be published through FAIR-bioHeaders-Specification before it is
 adopted. No FHP release, tag or DOI is created here. The toolkit reader and writer are
@@ -54,10 +54,11 @@ shared rules win.
   rules); `v999.0.0` and any other release it does not carry are unsupported-version.
 - A `schema` value that is not an FHP schema URL, a release the reader does not have, or
   a `schemaVersion` the selected schema does not accept is **unsupported-version**. The
-  document is rejected; it is not checked against another schema. FHP `schemaVersion 1.0`
-  is released in shared v0.4.0 as the string `"1.0"`; the draft on `main` carries the
-  number `1`. A reader uses the selected schema's own `schemaVersion` rule, and a writer
-  copies the value the record already has.
+  document is rejected; it is not checked against another schema. FHP 1.0 is released
+  in shared v0.4.0 as the string `"1.0"`, and this development tree now carries that
+  released contract; a numeric `1` is not a released FHP contract. A reader uses the
+  selected schema's own `schemaVersion` rule, and a writer copies the value the record
+  already has.
 - The `schema` and `schemaVersion` properties are ordinary properties; they are the same
   values the YAML and JSON forms carry.
 
@@ -71,7 +72,7 @@ gives the FHP shape; the shared rules (M1 to M4, R7, R9) apply unchanged.
 | Field | JSON type | Microdata shape | Notes |
 | --- | --- | --- | --- |
 | `schema` | string | string | An FHP schema URL; selects the version (F2). |
-| `schemaVersion` | number (draft) / string `"1.0"` (released) | typed scalar | The value the selected schema accepts. |
+| `schemaVersion` | string `"1.0"` | typed scalar | The value the selected schema accepts. |
 | `proteome` | string | string | Required. The protein set name. |
 | `sourceType` | enum string | string | Required: `predicted`, `database` or `mixed`. |
 | `taxon` | object | one item scope | `name` and `uri` strings. |
@@ -131,7 +132,7 @@ construction.
 - [F7] A property that is present with the value `0` is a value, and is kept. It is not
   the same as an omitted property, and a reader must not drop it or rewrite it as absent.
   The same holds for an empty array: `identifier: []` is present.
-- FHP `schemaVersion 1` defines no boolean property. If one is added, `false` is a value
+- FHP 1.0 defines no boolean property. If one is added, `false` is a value
   and `data-fhr-type="boolean"` keeps it; absence is omission only.
 - Text and attribute values are escaped and decoded once, exactly as M2 and M3 require.
   Unicode, whitespace and character references round-trip unchanged. `data-fhr-type`

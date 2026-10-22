@@ -1,7 +1,7 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
-"""The draft FHP HTML microdata binding (docs/FHP-MICRODATA.md).
+"""The FHP HTML microdata binding (docs/FHP-MICRODATA.md).
 
 The reader and writer live in ``tests/fhp_microdata.py``: they are test-only.
 The runtime reader and writer remain toolkit work (FAIR-bioHeaders-Tools#58),
@@ -167,16 +167,18 @@ class FHPMicrodataBindingTests(unittest.TestCase):
         with self.assertRaises(fhp_microdata.MicrodataError):
             fhp_microdata.read_page(fhp_microdata.write_page(record), SCHEMA)
 
-    def test_release_and_draft_contracts_are_distinct(self):
-        # The draft on main carries the number 1; released FHP 1.0 carries the
-        # string "1.0" (F2). Each selection uses its own contract.
-        self.assertEqual(extract_page(fhp_microdata.write_page(self.minimal()))["schemaVersion"], 1)
+    def test_contract_is_the_released_fhp_1_0(self):
+        # This tree now carries released FHP 1.0, so the raw-main contract and
+        # the v0.4.0/v0.4.1 releases all select the string "1.0" contract (F2).
+        self.assertEqual(
+            extract_page(fhp_microdata.write_page(self.minimal()))["schemaVersion"],
+            "1.0")
         release = dict(self.minimal(), schema=RELEASE_040, schemaVersion="1.0")
         self.assertEqual(extract_page(fhp_microdata.write_page(release))["schemaVersion"], "1.0")
         with self.assertRaises(fhp_microdata.MicrodataError):
             extract_page(fhp_microdata.write_page(dict(release, schemaVersion=1)))
         with self.assertRaises(fhp_microdata.MicrodataError):
-            extract_page(fhp_microdata.write_page(dict(self.minimal(), schemaVersion="1.0")))
+            extract_page(fhp_microdata.write_page(dict(self.minimal(), schemaVersion=1)))
 
     def test_selected_contract_controls_untyped_conversion(self):
         release = dict(self.minimal(), schema=RELEASE_040, schemaVersion="1.0")
@@ -185,12 +187,13 @@ class FHPMicrodataBindingTests(unittest.TestCase):
         page = fhp_microdata.write_page(release).replace(
             typed, '<span itemprop="schemaVersion">1.0</span>', 1)
         self.assertEqual(fhp_microdata.read_page(page, SCHEMA)["schemaVersion"], "1.0")
-        # The draft's numeric contract converts the same untyped text to a number.
-        draft_typed = ('<span itemprop="schemaVersion" data-fhr-type="integer">'
-                       "1</span>")
-        page = fhp_microdata.write_page(self.minimal()).replace(
-            draft_typed, '<span itemprop="schemaVersion">1</span>', 1)
-        self.assertEqual(fhp_microdata.read_page(page, SCHEMA)["schemaVersion"], 1)
+        # Untyped text follows the released string contract, so a numeric 1 is
+        # read as the string "1" and rejected instead of becoming a number.
+        page = fhp_microdata.write_page(release).replace(
+            typed, '<span itemprop="schemaVersion">1</span>', 1)
+        self.assertEqual(fhp_microdata.read_page(page, SCHEMA)["schemaVersion"], "1")
+        with self.assertRaises(fhp_microdata.MicrodataError):
+            extract_page(page)
 
     def test_an_fhr_schema_value_is_not_an_fhp_record(self):
         record = dict(self.minimal(), schema=FHR_ITEMTYPE)
