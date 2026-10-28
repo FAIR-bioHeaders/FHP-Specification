@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Bring the JSON-LD hardening of FAIR-bioHeaders-Specification v0.4.2 into
+  docs/JSONLD.md: J3 accepts only the FHR JSON-LD context (and no `@nest`), J5/J7
+  follow the link-scheme rule R14 of the canonical FORMAT.md, and new rule J8 escapes
+  `<`, `>` and `&` in JSON-LD embedded in HTML script elements. The conformance
+  manifest gains the J8 rule summary; no vectors change.
+
 - Record that the toolkit implementation of the FHP JSON-LD and HTML microdata
   contracts is in [FAIR-bioHeaders-Tools#98](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/pull/98)
   for [FAIR-bioHeaders-Tools#58](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/issues/58);

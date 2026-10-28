@@ -67,7 +67,9 @@ RULES = {
           "subjectOf is documentation, and export terms are set aside.",
     "J2": "JSON-LD: duplicate object keys are invalid.",
     "J3": "JSON-LD: any other form is read by JSON-LD 1.1 expansion with bundled contexts "
-          "only; a context that is not bundled, remote or unknown, is invalid.",
+          "only. The only context allowed is the FHR context (a known URL or an embedded copy "
+          "equal as parsed JSON, alone or as the only item of an array) on a top-level object; "
+          "any other context, remote, unknown, embedded, extended or nested, is invalid.",
     "J4": "JSON-LD: exactly one top-level node (directly or the only item of @graph); every "
           "property must map to an FHR field in its scope, and unknown terms or a root @id "
           "make the document invalid.",
@@ -77,6 +79,9 @@ RULES = {
     "J6": "JSON-LD: the resulting metadata must validate against fhr.json.",
     "J7": "JSON-LD: writers emit the record with an embedded context and typed nodes, "
           "byte for byte as docs/JSONLD.md describes.",
+    "J8": "JSON-LD in HTML: inside <script type=\"application/ld+json\">, '<', '>' and '&' "
+          "in the JSON text are written as \\u003c, \\u003e and \\u0026; the document "
+          "reads back to the same metadata.",
     "P1": "FHP: the metadata of a protein FASTA header must validate against fhp.json.",
     "P2": "FHP: a record is read as FHP only when its schema is an FHP schema URL; any "
           "other header is validated as FHR.",
@@ -91,6 +96,8 @@ RULES = {
 NOT_APPLICABLE = {
     "J7": "J7 constrains writers; a reader has no invalid input for it. The valid vectors "
           "that cite J7 are writer output.",
+    "J8": "J8 constrains writers that embed JSON-LD in HTML; the escaped text is ordinary "
+          "JSON, so a reader has no invalid input for it.",
 }
 
 PREFIX = {"fasta": b";~", "gfa": b"#~", "fhp-fasta": b";~", "fhgff3": b"#~"}
