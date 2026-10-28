@@ -56,7 +56,7 @@
       "summary": "JSON-LD: duplicate object keys are invalid."
     },
     "J3": {
-      "summary": "JSON-LD: any other form is read by JSON-LD 1.1 expansion with bundled contexts only; a context that is not bundled, remote or unknown, is invalid."
+      "summary": "JSON-LD: any other form is read by JSON-LD 1.1 expansion with bundled contexts only. The only context allowed is the FHR context (a known URL or an embedded copy equal as parsed JSON, alone or as the only item of an array) on a top-level object; any other context, remote, unknown, embedded, extended or nested, is invalid."
     },
     "J4": {
       "summary": "JSON-LD: exactly one top-level node (directly or the only item of @graph); every property must map to an FHR field in its scope, and unknown terms or a root @id make the document invalid."
@@ -70,6 +70,10 @@
     "J7": {
       "summary": "JSON-LD: writers emit the record with an embedded context and typed nodes, byte for byte as docs/JSONLD.md describes.",
       "notApplicable": "J7 constrains writers; a reader has no invalid input for it. The valid vectors that cite J7 are writer output."
+    },
+    "J8": {
+      "summary": "JSON-LD in HTML: inside <script type=\"application/ld+json\">, '<', '>' and '&' in the JSON text are written as \\u003c, \\u003e and \\u0026; the document reads back to the same metadata.",
+      "notApplicable": "J8 constrains writers that embed JSON-LD in HTML; the escaped text is ordinary JSON, so a reader has no invalid input for it."
     },
     "P1": {
       "summary": "FHP: the metadata of a protein FASTA header must validate against fhp.json."
