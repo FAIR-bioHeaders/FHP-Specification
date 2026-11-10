@@ -39,14 +39,14 @@ this root tree still carries the **FHP 1.0 line** (`fhp.json`,
 draft-era `docs/FHP.md`; the released v0.5.0 text is authoritative and lives
 in the shared repository.
 
-**Canonical here:** this repository *is* the published source of the FHP
+**Canonical here:** this repository is the current raw-`main` source of the FHP
 JSON-LD context and vocabulary (`jsonld/fhp.context.jsonld`,
-`jsonld/fhp.terms.jsonld`, `jsonld/fhp.terms.ttl`, served on raw `main`, on
-GitHub Pages and under the `w3id.org/fair-bioheaders/fhp/vX.Y.Z/jsonld/`
-aliases) and of the FHP HTML-microdata binding
-([docs/FHP-MICRODATA.md](docs/FHP-MICRODATA.md)); the
+`jsonld/fhp.terms.jsonld`, `jsonld/fhp.terms.ttl`), and of the FHP HTML-microdata
+binding ([docs/FHP-MICRODATA.md](docs/FHP-MICRODATA.md)); the
 [FAIR-bioHeaders-Tools](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools)
-serializers resolve the FHP context from these paths.
+serializers resolve the FHP context from the raw-main path. The current Pages
+build publishes the vocabulary and FHR/family JSON-LD files, not FHP files or
+FHP versioned aliases; those Pages surfaces remain pending work.
 
 ## Working with FHP
 

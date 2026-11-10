@@ -22,7 +22,7 @@ Audited 2026-11-10 against:
 | Shared spec tag `v0.4.0` release commit | `84c2f90ab0e97c81d8afbf33eafe80ebade7a009` (as already recorded in `tests/fixtures/fhp/v0.4.0/PROVENANCE.json`) |
 | Schema versions (`schemas/versions.json` @ shared main) | v0.4.0–v0.4.2: FHP `"1.0"`; v0.5.0: FHP `"1.1"` (x- extension fields) |
 | w3id check | `https://w3id.org/fair-bioheaders/fhp/v0.5.0` → 200 → `.../FAIR-bioHeaders-Specification/v0.5.0/fhp.json`; `.../fhp/v0.4.0` likewise |
-| Toolkit (`fair-bioheaders` on PyPI) | `0.8.2` exists (first release with the FHP serializations, per #1); latest is `0.9.0` as of 2026-11-10. This repository's CI still pins legacy `fhr==0.3.3` |
+| Toolkit (`fair-bioheaders` on PyPI) | `0.8.2` exists (first release with FHP serializations, per #1) but bundles FHP only through v0.4.1; latest is `0.9.0` as of 2026-11-10. This repository's CI still pins legacy `fhr==0.3.3` |
 
 ## 1. Decision summary
 
@@ -50,17 +50,18 @@ Three patterns exist in the federation:
    `tests/fixtures/releases/` pin released-contract copies with a
    `PROVENANCE.json` (source repo, release, commit, per-file SHA-256).
 
-FHP must not copy FHGFF3's separate-tree layout wholesale: this repository is
-the **canonical publication surface for the FHP JSON-LD serialization**, not
-merely a development copy. `FAIR-bioHeaders-Tools/bioheaders/jsonld.py` states
-"the FHP context's canonical raw-main URL is FHP-Specification" and resolves
-`https://raw.githubusercontent.com/FAIR-bioHeaders/FHP-Specification/main/jsonld/fhp.context.jsonld`;
+FHP must not copy FHGFF3's separate-tree layout wholesale. This repository is
+the current raw-`main` source for the FHP JSON-LD context:
+`FAIR-bioHeaders-Tools/bioheaders/jsonld.py` resolves
+`https://raw.githubusercontent.com/FAIR-bioHeaders/FHP-Specification/main/jsonld/fhp.context.jsonld`.
 `docs/FHP-MICRODATA.md`, `jsonld/fhp.*` and the microdata/JSON-LD fixtures
-exist only here (they are absent from the shared repository), and
-`.github/workflows/jsonld-pages.yml` publishes this tree's `jsonld/` under the
-`w3id.org/fair-bioheaders/fhp/vX.Y.Z/jsonld/` aliases (FHP#10 preflight).
-Moving those paths would break the toolkit and the alias chain. The
-classification therefore applies **in place** (FHR pattern), while the
+exist only here (they are absent from the shared repository). However,
+`.github/workflows/jsonld-pages.yml` runs `scripts/build_pages.py`, which
+publishes the vocabulary and FHR/family JSON-LD files, not FHP files or FHP
+versioned aliases. Raw `main` is the existing FHP publication surface;
+GitHub Pages and versioned FHP aliases are pending work. Preserve the current
+paths for toolkit compatibility without claiming those Pages surfaces are live.
+The classification therefore applies **in place** (FHR pattern), while the
 pinned-upstream bookkeeping generalizes the existing `PROVENANCE.json` idea
 into one root file (FHGFF3 `header/provenance.json` pattern) so that issue #3
 has a single machine-readable pin to consume.
@@ -100,16 +101,19 @@ shared `origin/main` are byte-identical for every FHP artifact examined below
 `e1e5998` "Match the FHP rich-predicted example with its companion copies
 (#201)": an added `nameType: Personal` comment/field demonstration).
 
-### 2a. FHP-owned (canonical here)
+### 2a. FHP development-owned (canonical for development here)
 
-- `fhp_linkml.yml` — FHP development model (imports `schemas/core-v0.4`; the
-  vendored core pin, see §2d).
+- `fhp_linkml.yml` — FHP model changes are developed here on branches (currently
+  imports `schemas/core-v0.4`; see §2d). On `main`, it is the synchronized,
+  pinned v0.5.0 copy and must be included in parity checks, not excluded as
+  locally owned.
 - `docs/FHP-MICRODATA.md`, `jsonld/fhp.context.jsonld`,
   `jsonld/fhp.terms.jsonld`, `jsonld/fhp.terms.ttl` — published from here;
   toolkit- and w3id-dependent paths. Do not move or rename.
 - `scripts/make_jsonld.py` (FHP context/vocabulary generation,
   `FHP_RELEASE_ALIAS = https://w3id.org/fair-bioheaders/fhp/vX.Y.Z/jsonld/`),
-  `scripts/build_pages.py`, `.github/workflows/jsonld-pages.yml`.
+  `scripts/build_pages.py`, `.github/workflows/jsonld-pages.yml`, and the
+  checked-in `scripts/make_provenance.py` digest generator.
 - `tests/fhp_microdata.py`, `tests/test_fhp_jsonld.py`,
   `tests/test_fhp_microdata.py`, `tests/test_fhp_schema.py`,
   `tests/fixtures/fhp_stub.yaml`, `tests/fixtures/fhp/v0.4.0/` (with
@@ -197,12 +201,16 @@ citation-by-URL retention cases FHR classified in its §3b/§4.
 
 Recommended: one root machine-readable pin file `provenance.json` (schema
 mirroring FHGFF3's `header/provenance.json`: `source.repository/url/commit/
-ref` + `copied[] {local, upstream, sha256}` + `imports[]`), verified by
-`scripts/check_shared_parity.py` (local digests; `--upstream PATH` against a
-checkout of the pinned commit) and a `shared-parity.yml` workflow modeled on
-FHGFF3's `header-parity.yml` (checkout the pinned shared commit; run parity;
-then run the pinned shared tree's `scripts/check_conformance.py` with a named
-`fair-bioheaders` release, currently `0.8.2` or `0.9.0` — §4 Q1).
+ref` + `copied[] {local, upstream, sha256}` + `imports[]`). The checked-in
+`scripts/make_provenance.py --upstream PATH` deterministically generates all
+`copied[]` entries for the pin, and `scripts/check_shared_parity.py` verifies
+them (local digests; `--upstream PATH` against a checkout of the pinned
+commit). The generator emits a digest for every pinned schema, document,
+example and FHP conformance vector, including the tagged
+`rich-predicted.fhp.yaml` bytes. A `shared-parity.yml` workflow modeled on
+FHGFF3's `header-parity.yml` checks the pin and then runs the pinned shared
+tree's `scripts/check_conformance.py` with a toolkit release (or reviewed
+immutable commit) that bundles FHP v0.5.0; see §4 Q1.
 
 Pin baseline recommended: the **immutable v0.5.0 release commit**
 `170e677fbb6726a3f765373dbe1f214820000be7` (annotated tag object
@@ -223,14 +231,16 @@ computed 2026-11-10 (all also equal `origin/main` except where marked †):
 | `docs/FORMAT.md` | `482f3553963ca707c1ac2313df167abfc3f6cd100c09582c313ec9b3c5eea5e8` | `docs/FORMAT.md` |
 | `docs/SCHEMA-VERSIONS.md` | `08213b53f909977a0247836c72e4851da58da5044f03558f122cd5f8d5f7e433` | `docs/SCHEMA-VERSIONS.md` (new) |
 | `conformance/manifest.json` | `8ab8f7f4ee592573650973d30dc3e422c22b62b08c6b0b9f7839e12c5e4169ea` | `conformance/manifest.json` |
-| `conformance/valid/fhp-fasta-*.fhp.fasta` (13 files) and `conformance/invalid/fhp-fasta-*.fhp.fasta` (18 files) | per-file digests computable from the pinned commit; 22 already match locally (§2b) | same paths; 8 vectors are additions, 1 (`valid/fhp-fasta-rich`) is a content update |
-| `examples/fhp/{example.fhp.fasta,minimal-database.fhp.json,minimal-mixed.fhp.json,minimal-predicted.fhp.json,rich-database.fhp.json,rich-mixed.fhp.yaml}` | digests in §8 | same paths; `rich-predicted.fhp.yaml` † differs at `origin/main` (`b7efdbc30128…` vs `27a4d291db0a…` at the tag) |
+| `conformance/valid/fhp-fasta-*.fhp.fasta` (13 files) and `conformance/invalid/fhp-fasta-*.fhp.fasta` (18 files) | generated per-file digests from the pinned commit by `scripts/make_provenance.py`; 22 already match locally (§2b) | same paths; 8 vectors are additions, 1 (`valid/fhp-fasta-rich`) is a content update |
+| `examples/fhp/{example.fhp.fasta,minimal-database.fhp.json,minimal-mixed.fhp.json,minimal-predicted.fhp.json,rich-database.fhp.json,rich-mixed.fhp.yaml,rich-predicted.fhp.yaml}` | generated per-file digests from the pinned commit by `scripts/make_provenance.py` | same paths; `rich-predicted.fhp.yaml` † differs at `origin/main` (`b7efdbc30128…` vs `27a4d291db0a…` at the tag) |
 | vocabulary companion at the v0.4.0 release (JSON-LD test reader fixture, keep alongside a future 0.5 pin) | `tests/fixtures/fhp/v0.4.0/PROVENANCE.json` already pins `fhp.json` `e3f8f452…` + `terms.ttl` `0c641879…` @ `84c2f90a…` | unchanged — released fixtures are immutable |
 
-Local-owned canonical files (§2a) get **no upstream pin** — the parity check
-must explicitly exclude them (record them under a `owned:` key in
-`provenance.json` so an unclassified new path fails the check, as FHR's
-strictness rule does for `jsonld/` and `examples/`).
+Files canonical to this repository and not mirrored upstream get **no upstream
+pin** — the parity check must explicitly exclude them (record them under an
+`owned:` key in `provenance.json` so that an unclassified new path fails the
+check, as FHR's strictness rule does for `jsonld/` and `examples/`). Although
+`fhp_linkml.yml` is development-owned on branches, its pinned `main` copy is in
+`copied[]` and remains subject to parity.
 
 ## 4. Identity trimming and open questions
 
@@ -267,10 +277,12 @@ strictness rule does for `jsonld/` and `examples/`).
 
 ### Open questions (maintainer decisions)
 
-- **Q1 (for #3):** which named toolkit release does conformance pin —
-  `fair-bioheaders==0.8.2` (first with FHP serializations, per #1) or `0.9.0`
-  (current on PyPI at audit)? FHGFF3's parity workflow pins `0.8.1`
-  (`[jsonld]` extra); align deliberately.
+- **Q1 (for #3):** pin a toolkit release or reviewed immutable commit that
+  bundles FHP v0.5.0 and can validate its extension-field vectors. `0.8.2`
+  bundles FHP only through v0.4.1 and is not sufficient; `0.9.0` is the
+  verified candidate at this audit. FHGFF3's parity workflow pins `0.8.1`
+  (`[jsonld]` extra); align deliberately without falling back to a build that
+  lacks the v0.5.0 contract.
 - **Q2 (for #3/#2):** after the v0.5.0 sync, does FHP CI keep generating and
   drift-checking `fhr.json`/`fhgff3.json` locally (root `schemas/core.yaml`
   must then also become the published core copy, ending the v0.3-era
@@ -307,7 +319,8 @@ strictness rule does for `jsonld/` and `examples/`).
   `bioheaders/fhp_microdata.py`): raw-main `jsonld/fhp.context.jsonld` on
   *this* repository is canonical — paths there are load-bearing; the FHP
   context/vocabulary bytes themselves are FHP-owned and unchanged by this
-  branch.
+  branch. GitHub Pages and versioned FHP aliases are pending work; the current
+  Pages build publishes the vocabulary and FHR/family JSON-LD paths only.
 - **Website (fair-bioheaders.github.io):** repository-role/citation/link
   cleanup pattern per spec#158 (website#22/PR#24); consumes README identity
   and citation records.
@@ -315,19 +328,27 @@ strictness rule does for `jsonld/` and `examples/`).
   match it rather than rename registered FHR records.
 - **Shared examples/publication:** only receive coordinated PRs (#107);
   nothing in §4 renames shared paths.
-- **w3id + GitHub Pages:** `fhp/vX.Y.Z/jsonld` aliases depend on this
-  repository's `jsonld/` layout and release tags; untouched here.
+- **w3id + GitHub Pages:** the current raw-main FHP context is served from this
+  repository. FHP Pages files and `fhp/vX.Y.Z/jsonld` aliases are pending
+  publication work; this proposal does not claim that they are live.
 
 ## 5. Concrete step list (parallel PRs after this is merged)
 
 PR-A (issue #3, CI/pin):
 1. Add `provenance.json` (§3 digests, `source.commit = 170e677…`,
-   `owned:` exclusions for §2a) and `scripts/check_shared_parity.py`
+   `owned:` exclusions for §2a except the pinned main-branch
+   `fhp_linkml.yml`) and `scripts/check_shared_parity.py`
    (port of FHGFF3's `check_header_parity.py` semantics).
 2. Sync §2c bytes to the v0.5.0 pin: `fhp.json`, `fhp_linkml.yml`,
    `schemas/{core,shared,versions}`, `docs/{FHP,FORMAT,SCHEMA-VERSIONS}.md`,
-   `conformance/**` (9 new vectors, 2 updates, manifest), the 6 stable
-   `examples/fhp` files + Q3/Q4 answers; add
+   `conformance/**` (9 new vectors, 2 updates, manifest), the stable
+   `examples/fhp` files + Q3/Q4 answers; update `json-schema-generator.py`
+   to preserve the v0.5.0 `schemaVersion` enum and generate the top-level
+   `x-` extension-field rules, with generator/equivalence tests. Preserve
+   legacy FHR/FHGFF3 generation behavior according to Q2. Run
+   `scripts/make_provenance.py` against the pinned shared commit to generate
+   every `copied[]` digest, including the tagged `rich-predicted.fhp.yaml`;
+   add
    `tests/fixtures/releases/fhp-v0.5.0.json` and extend
    `tests/fhp_microdata.py` `SUPPORTED_RELEASES` (historical fixtures stay
    immutable); regenerate `.github/schema-baseline-fhp.json` via
@@ -335,7 +356,8 @@ PR-A (issue #3, CI/pin):
    .github/schema-baseline-fhp.json --update` in the same PR with an explicit
    reviewed diff (this is the contract-move, not an incidental cleanup —
    schema semantics themselves do not change; bytes come from shared).
-3. Replace `pip install fhr==0.3.3` with the Q1 toolkit release; stop skipping
+3. Replace `pip install fhr==0.3.3` with the Q1 v0.5.0-capable toolkit release
+   or reviewed immutable commit; stop skipping
    `--require-format fhp-fasta`; wire `shared-parity.yml` (pinned-commit
    checkout + parity + conformance) and update `make_conformance.py`'s
    `FHP_SCHEMA` selection tests for v0.5.0 schema URLs
@@ -377,12 +399,19 @@ after that date resolve to the type repositories.
 git -C ../FAIR-bioHeaders-Specification rev-parse origin/main        # 9db6606…
 git -C ../FAIR-bioHeaders-Specification rev-parse 'v0.5.0^{commit}'  # 170e677…
 git -C ../FAIR-bioHeaders-Specification show v0.5.0:schemas/versions.json
-# per-file comparison (cmp + shasum) of this worktree against
-#   git -C ../FAIR-bioHeaders-Specification show origin/main:<path>
-#   git -C ../FAIR-bioHeaders-Specification show 170e677:<path>
-# for fhp.json, fhp_linkml.yml, fhr/fhgff3 counterparts, schemas/*, docs/*,
-# examples/fhp/*, conformance/{valid,invalid}/*fhp*, conformance/manifest.json
-# (script: session temp pincompare.py; full digests reproduced in §3)
+# reproducible per-file digests for every pinned FHP artifact, including all
+# FHP conformance vectors and the tagged rich-predicted example:
+python scripts/make_provenance.py \
+  --upstream ../FAIR-bioHeaders-Specification \
+  --commit 170e677fbb6726a3f765373dbe1f214820000be7 \
+  --output /tmp/fhp-copied.json
+```
+
+The generated JSON array is the complete `copied[]` value for this pin; place
+it in `provenance.json` alongside the source, imports and owned-path records.
+Use `--core-target schemas/core-v0.5.yaml` if Q2 selects that local path.
+
+```sh
 cmp <(git -C ../FAIR-bioHeaders-Specification show 170e677:schemas/core.yaml) \
     <(tail -n +9 schemas/core-v0.4.yaml)   # core-v0.4.yaml == v0.4.0 core + header
 # sibling patterns (read-only):
