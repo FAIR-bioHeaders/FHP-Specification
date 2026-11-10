@@ -8,13 +8,13 @@
 # the FAIR-bioHeaders-Specification release that carries it.
 #
 # Source provenance (#6 / #2 / FAIR-bioHeaders-Specification#107 handoff): the
-# FHP contract bytes in this tree are pinned compatibility copies of the shared
-# v0.5.0 release commit 170e677fbb6726a3f765373dbe1f214820000be7 (annotated tag
-# object 7150f74cf447de5694b8938c705d5a5896eaeacd, released 2026-11-04), per
-# docs/DEVELOPMENT-TREE-PROPOSAL.md §3; machine-readable digests arrive with
-# FHP-Specification#3 (provenance.json + shared-parity CI). Any future
-# FHP-specific release record is a maintainer action coordinated through
-# FAIR-bioHeaders-Specification#107 (see also FHP-Specification#1).
+# current FHP contract remains on the FHP 1.0 line, importing the shared
+# v0.4.0 core snapshot at 84c2f90ab0e97c81d8afbf33eafe80ebade7a009.
+# docs/DEVELOPMENT-TREE-PROPOSAL.md §3 recommends shared v0.5.0 commit
+# 170e677fbb6726a3f765373dbe1f214820000be7 as the future synchronization
+# baseline; that sync, provenance.json and shared-parity CI remain pending #3.
+# Any future FHP-specific release record is a maintainer action coordinated
+# through FAIR-bioHeaders-Specification#107 (see also FHP-Specification#1).
 cff-version: 1.2.0
 title: FHP Specification (development repository)
 message: >-
