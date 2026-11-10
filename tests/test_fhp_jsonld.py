@@ -507,14 +507,14 @@ class WriterTests(unittest.TestCase):
     def test_scalar_types_are_preserved(self):
         record = self.examples["rich-predicted"]
         document = json.loads(json.dumps(make_jsonld.fhp_to_jsonld(record)))
-        # FHP 1.0: schemaVersion is the string "1.0"; counts and the genetic code
-        # stay integers (never strings).
-        self.assertEqual(document["schemaVersion"], "1.0")
+        # FHP 1.1 (shared v0.5.0): schemaVersion is the string "1.1"; counts and
+        # the genetic code stay integers (never strings).
+        self.assertEqual(document["schemaVersion"], "1.1")
         self.assertIsInstance(document["schemaVersion"], str)
         self.assertIsInstance(document["geneticCode"], int)
         self.assertIsInstance(document["sequenceStats"]["sequenceCount"], int)
         back = make_jsonld.fhp_canonical_record(document)
-        self.assertEqual(back["schemaVersion"], "1.0")
+        self.assertEqual(back["schemaVersion"], "1.1")
         self.assertIsInstance(back["schemaVersion"], str)
         self.assertIsInstance(back["geneticCode"], int)
         self.assertIsInstance(back["sequenceStats"]["totalResidues"], int)
@@ -523,9 +523,9 @@ class WriterTests(unittest.TestCase):
         for name, record in self.examples.items():
             with self.subTest(record=name):
                 self.assertEqual(record["schema"],
-                                 "https://w3id.org/fair-bioheaders/fhp/v0.4.0")
-                self.assertEqual(record["schemaVersion"], "1.0")
-                self.assertEqual(make_jsonld.fhp_to_jsonld(record)["schemaVersion"], "1.0")
+                                 "https://w3id.org/fair-bioheaders/fhp/v0.5.0")
+                self.assertEqual(record["schemaVersion"], "1.1")
+                self.assertEqual(make_jsonld.fhp_to_jsonld(record)["schemaVersion"], "1.1")
 
     def test_absent_optional_fields_stay_absent(self):
         minimal = self.examples["minimal-predicted"]
@@ -533,6 +533,26 @@ class WriterTests(unittest.TestCase):
         self.assertEqual(set(document) - {"@context", "@type"}, set(minimal))
         for key in ("source", "derivedFrom", "completeness", "sequenceStats"):
             self.assertNotIn(key, document)
+
+    def test_extension_fields_are_omitted_and_reported(self):
+        record = dict(self.examples["minimal-predicted"],
+                      **{"x-source-note": "private extension",
+                         "x-review": {"flag": True}})
+        warnings = []
+        document = make_jsonld.fhp_to_jsonld(record, warn=warnings.append)
+        self.assertNotIn("x-source-note", document)
+        self.assertNotIn("x-review", document)
+        self.assertEqual(
+            warnings,
+            ["JSON-LD: extension fields were not emitted: x-source-note, x-review"])
+        self.assertIn("x-source-note", record)
+        with self.assertWarnsRegex(
+                UserWarning, "extension fields were not emitted: x-source-note, x-review"):
+            make_jsonld.fhp_to_jsonld(record)
+        text_warnings = []
+        text = make_jsonld.fhp_jsonld_text(record, warn=text_warnings.append)
+        self.assertNotIn("x-source-note", json.loads(text))
+        self.assertEqual(text_warnings, warnings)
 
     def test_source_relationships_are_preserved(self):
         record = self.examples["rich-mixed"]
@@ -613,6 +633,13 @@ class ReaderTests(unittest.TestCase):
         back = make_jsonld.fhp_canonical_record(document, warn=warnings.append)
         self.assertTrue(equal(back, self.record))
         self.assertEqual(len(warnings), 1)
+
+    def test_extension_fields_are_rejected(self):
+        document = dict(self.document, **{"x-source-note": "private extension",
+                                          "x-review": {"flag": True}})
+        with self.assertRaisesRegex(
+                ValueError, "extension fields are not permitted: x-source-note, x-review"):
+            make_jsonld.fhp_canonical_record(document)
 
     def test_export_document_is_not_fhp_metadata(self):
         export = json.loads(
@@ -729,24 +756,39 @@ class ReaderTests(unittest.TestCase):
 
 
 class ReleasedContractTests(unittest.TestCase):
-    """FHP 1.0 is the released contract: validate against the pinned release bytes."""
+    """The released contract line (FHP 1.1 at shared v0.5.0): validate the
+    examples against the pinned release copy, which is this tree's working
+    fhp.json (provenance.json). The FHP 1.0 compatibility line stays covered by
+    the immutable v0.4.0 pin below and in tests/test_fhp_schema.py."""
 
     @classmethod
     def setUpClass(cls):
         from jsonschema import Draft202012Validator, FormatChecker
-        cls.schema = json.loads(RELEASE_SCHEMA.read_text(encoding="utf-8"))
+        cls.schema = json.loads((ROOT / "fhp.json").read_text(encoding="utf-8"))
         cls.validator = Draft202012Validator(cls.schema, format_checker=FormatChecker())
         cls.examples = examples()
 
+    def test_working_schema_is_the_pinned_release_copy(self):
+        import hashlib
+        data = (ROOT / "fhp.json").read_bytes()
+        self.assertEqual(hashlib.sha256(data).hexdigest(),
+                         "2409739d4a223164ca368f93afa78c8f1e3809fb04ec46cc9a793cc5aaaba427")
+        self.assertEqual(data,
+                         (ROOT / "tests" / "fixtures" / "releases"
+                          / "fhp-v0.5.0.json").read_bytes())
+        self.assertEqual(self.schema["$defs"]["FHP"]["properties"]["schemaVersion"]["enum"],
+                         ["1.0", "1.1"])
+
     def test_pinned_schema_is_the_released_fhp_1_0(self):
         import hashlib
+        released_10 = json.loads(RELEASE_SCHEMA.read_text(encoding="utf-8"))
         data = RELEASE_SCHEMA.read_bytes()
         self.assertEqual(hashlib.sha256(data).hexdigest(),
                          "e3f8f45260b833f931644e87ff7530cb9b4151e67094023dd96edde9a1d90366")
-        self.assertEqual(self.schema["$defs"]["FHP"]["properties"]["schemaVersion"]["enum"],
+        self.assertEqual(released_10["$defs"]["FHP"]["properties"]["schemaVersion"]["enum"],
                          ["1.0"])
         self.assertIn("nameType",
-                      self.schema["$defs"]["Author"]["properties"])
+                      released_10["$defs"]["Author"]["properties"])
 
     def test_examples_validate_against_the_released_schema(self):
         for name, record in self.examples.items():
@@ -881,22 +923,27 @@ class ProcessorTests(unittest.TestCase):
 
 
 class DocumentationTests(unittest.TestCase):
-    def test_draft_status_is_documented(self):
+    def test_released_line_and_serialization_status_are_documented(self):
+        """docs/FHP.md is the pinned shared publication copy (issue #3): it states
+        the released contract line (FHP 1.1 at shared v0.5.0, FHP 1.0 at v0.4.0).
+        The development-tree serialization status (draft microdata/context,
+        FAIR-bioHeaders-Tools#58, the pinned shared vocabulary commit) lives in
+        docs/JSONLD.md and CHANGELOG.md."""
         fhp = (ROOT / "docs" / "FHP.md").read_text(encoding="utf-8")
         jsonld = (ROOT / "docs" / "JSONLD.md").read_text(encoding="utf-8")
         changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
-        for text, name in ((fhp, "docs/FHP.md"), (jsonld, "docs/JSONLD.md"),
-                           (changelog, "CHANGELOG.md")):
+        self.assertIn('"1.1"', fhp)
+        self.assertIn("https://w3id.org/fair-bioheaders/fhp/v0.5.0", fhp)
+        self.assertIn("released", fhp)
+        for text, name in ((jsonld, "docs/JSONLD.md"), (changelog, "CHANGELOG.md")):
             with self.subTest(document=name):
                 self.assertIn("FAIR-bioHeaders-Tools#58", text)
-        self.assertIn("fhp.context.jsonld", fhp)
-        self.assertIn("draft", fhp.lower())
+                self.assertIn("fhp.context.jsonld", text)
+                self.assertIn("one-way", text.lower())
         # The reused shared vocabulary is pinned, not linked through main.
-        for text in (fhp, jsonld, changelog):
+        for text in (jsonld, changelog):
             self.assertIn("v0.4.0", text)
             self.assertIn(make_jsonld.FHP_SHARED_COMMIT, text)
-        # Canonical JSON-LD is loss-preserving; schema.org export is one-way.
-        self.assertIn("one-way", fhp.lower())
 
 
 if __name__ == "__main__":

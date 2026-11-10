@@ -22,6 +22,7 @@ generator = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(generator)
 
 FHP_URL = "https://w3id.org/fair-bioheaders/fhp/v0.4.0"
+FHP_URL_050 = "https://w3id.org/fair-bioheaders/fhp/v0.5.0"
 CHECKSUM = "A" * 43 + "="
 MINIMAL = {
     "schema": FHP_URL,
@@ -34,6 +35,11 @@ MINIMAL = {
     "dateCreated": "2026-10-11",
     "checksum": CHECKSUM,
 }
+# The FHP 1.1 record (shared v0.5.0, docs/FORMAT.md R15): the same required
+# fields plus the extension fields the 1.1 minor introduces.
+MINIMAL_11 = dict(MINIMAL, schema=FHP_URL_050, schemaVersion="1.1",
+                  **{"x-predictor-lineage": "lineage:1",
+                     "x-annotation": {"nested": ["any", 1, None, True]}})
 RICH = dict(
     MINIMAL,
     derivedFrom=[{"headerType": "FHR", "checksum": CHECKSUM, "relationship": "translatedFrom"},
@@ -80,10 +86,10 @@ REJECTED = [
     ("schema", "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json",
      "an FHR schema URL is not an FHP schema URL"),
     ("schema", "https://example.org/fhp.json", "other hosts are not FHP schema URLs"),
-    ("schemaVersion", 1, "schemaVersion is the string 1.0"),
-    ("schemaVersion", 1.0, "schemaVersion is the string 1.0, not a number"),
+    ("schemaVersion", 1, "schemaVersion is a string, not a number"),
+    ("schemaVersion", 1.0, "schemaVersion is a string, not a number"),
     ("schemaVersion", "1", "MAJOR.MINOR"),
-    ("schemaVersion", "1.1", "FHP 1.0 accepts only 1.0"),
+    ("schemaVersion", "1.2", "the FHP 1.1 contract lists the enum 1.0 and 1.1 only"),
     ("schemaVersion", "2.0", "FHR's version is not FHP's"),
     ("schema", "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/"
      "0123abc/fhp.json", "only main and release tags are schema refs"),
@@ -168,6 +174,49 @@ class FHPSchemaTests(unittest.TestCase):
     def test_minimal_and_rich_records_are_valid(self):
         self.assertEqual(self.errors(MINIMAL), [])
         self.assertEqual(self.errors(RICH), [])
+        self.assertEqual(self.errors(MINIMAL_11), [])
+
+    def test_extension_fields_follow_r15(self):
+        """FHP 1.1 (shared v0.5.0): top-level x- fields hold any value; every
+        other unknown key, a malformed x- name, a nested x- object and an x-
+        key on a record that states the older 1.0 minor stay invalid
+        (docs/FORMAT.md R15; conformance/invalid/fhp-fasta-extension-*)."""
+        for name, value in (("x-demo", 1),
+                            ("x-A_9.-mixed", ["any", {"value": None}, True]),
+                            ("x-refget-commonName", "human")):
+            with self.subTest(accepted=name):
+                self.assertEqual(self.errors(dict(MINIMAL_11, **{name: value})), [])
+        for name, reason in (
+                ("x-", "an empty extension name is not x-<name>"),
+                ("x-.leading-punctuation", "the name must start alphanumeric"),
+                ("X-Upper", "the x- prefix is lowercase"),
+                ("extension-demo", "only the x- prefix is reserved"),
+                ("unknownKey", "unknown root keys stay invalid")):
+            with self.subTest(rejected=name):
+                self.assertTrue(self.errors(dict(MINIMAL_11, **{name: 1})), reason)
+        with self.subTest(nested=True):
+            record = copy.deepcopy(MINIMAL_11)
+            record["metadataAuthor"][0]["x-affiliation-id"] = "ROR:01"
+            self.assertTrue(self.errors(record), "x- keys inside nested objects stay invalid")
+        with self.subTest(older_minor=True):
+            record = dict(MINIMAL, **{"x-demo": 1})
+            self.assertTrue(self.errors(record),
+                            "a record stating schemaVersion 1.0 has no extension fields")
+
+    def test_released_contract_fixtures_keep_the_compatibility_line(self):
+        """Historical fixtures are immutable: FHP 1.0 records stay valid against
+        the pinned v0.4.0 contract copy, and the pinned v0.5.0 copy equals the
+        working fhp.json (issue #3 sync set)."""
+        released_10 = json.loads(
+            (ROOT / "tests" / "fixtures" / "releases" / "fhp-v0.4.0.json").read_text())
+        released_11 = json.loads(
+            (ROOT / "tests" / "fixtures" / "releases" / "fhp-v0.5.0.json").read_text())
+        self.assertEqual(released_11, self.published)
+        validator_10 = Draft202012Validator(released_10, format_checker=FormatChecker())
+        self.assertEqual(list(validator_10.iter_errors(MINIMAL)), [])
+        self.assertEqual(list(validator_10.iter_errors(RICH)), [])
+        self.assertTrue(list(validator_10.iter_errors(MINIMAL_11)),
+                        "the released FHP 1.0 contract rejects 1.1 records")
 
     def test_rejected_values(self):
         for path, value, reason in REJECTED:
@@ -200,7 +249,8 @@ class FHPSchemaTests(unittest.TestCase):
     def test_fhr_generation_is_unchanged(self):
         # FHP must not change FHR: this development tree's FHR still imports the
         # v0.3 core, so its generated schema keeps the legacy open objects and has
-        # no FHP keys. FHP 1.0 uses the pinned v0.4 core (schemas/core-v0.4.yaml).
+        # no FHP keys. FHP 1.1 uses the pinned v0.5 core (schemas/core-v0.5.yaml);
+        # the v0.4 snapshot stays for the released FHP 1.0 compatibility tests.
         fhr = generator.generate()
         for name in ("Taxon", "Author", "AccessionID"):
             self.assertNotIn("additionalProperties", fhr["$defs"][name])

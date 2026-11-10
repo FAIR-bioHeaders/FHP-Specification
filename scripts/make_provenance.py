@@ -1,13 +1,41 @@
-"""Generate SHA-256 provenance entries for the pinned FHP v0.5.0 artifacts."""
+"""Generate SHA-256 provenance entries for the pinned FHP v0.5.0 artifacts.
+
+The entries describe the byte-for-byte copies of FAIR-bioHeaders-Specification
+at the pinned v0.5.0 release commit that this development repository maintains
+(issue #3, docs/DEVELOPMENT-TREE-PROPOSAL.md section 3). Two copies carry a
+machine-checkable local adjustment instead of plain identity:
+
+- ``fhp_linkml.yml`` retargets the model import to the vendored core snapshot
+  (docs/DEVELOPMENT-TREE-PROPOSAL.md Q3), so the shared ``schemas/core`` import
+  line is replaced by ``schemas/core-v0.5``;
+- ``schemas/core-v0.5.yaml`` is the shared core payload behind a pinned
+  provenance comment header, following this tree's ``schemas/core-v0.4.yaml``.
+
+Adjusted entries record both digests (``sha256`` for the local bytes,
+``upstreamSha256`` for the pinned upstream bytes) plus the ``adjustment``;
+``scripts/check_shared_parity.py`` re-applies the transformation in both
+directions. ``examples/fhp/rich-predicted.fhp.yaml`` is pinned to the companion
+fix commit ``e1e5998`` (post-v0.5.0, shared issue #201) via a per-entry
+``commit``. ``docs/FORMAT.md``, ``conformance/manifest.json`` and the fhp-fasta
+vectors that the v0.5.0 manifest added or changed are deliberately NOT in this
+set: their synchronization is part of the family-wide package gated by the
+proposal's Q2 decision, as is everything listed under ``legacy``/``deferred``
+in ``provenance.json``.
+"""
 
 import argparse
+from pathlib import Path
 import hashlib
 import json
-from pathlib import Path
 import subprocess
 
 
 DEFAULT_COMMIT = "170e677fbb6726a3f765373dbe1f214820000be7"
+# Post-tag companion fix for the rich-predicted example (shared #201); its
+# bytes equal shared origin/main for this path at audit time (issue #3).
+COMPANION_COMMIT = "e1e5998709a6df922b83bb89e6a2bf5c5d27d87d"
+COMPANION_FILES = ("examples/fhp/rich-predicted.fhp.yaml",)
+
 PINNED_FILES = (
     "fhp.json",
     "fhp_linkml.yml",
@@ -15,9 +43,7 @@ PINNED_FILES = (
     "schemas/shared.yaml",
     "schemas/versions.json",
     "docs/FHP.md",
-    "docs/FORMAT.md",
     "docs/SCHEMA-VERSIONS.md",
-    "conformance/manifest.json",
     "examples/fhp/example.fhp.fasta",
     "examples/fhp/minimal-database.fhp.json",
     "examples/fhp/minimal-mixed.fhp.json",
@@ -26,6 +52,42 @@ PINNED_FILES = (
     "examples/fhp/rich-mixed.fhp.yaml",
     "examples/fhp/rich-predicted.fhp.yaml",
 )
+
+# The vendored core snapshot's provenance header, followed by the byte-for-byte
+# shared schemas/core.yaml. Keep in sync with schemas/core-v0.5.yaml itself;
+# scripts/check_shared_parity.py verifies the pair against upstream bytes.
+CORE_V05_HEADER = (
+    "# Pinned snapshot of the shared core for FHP 1.1 (FAIR-bioHeaders-Specification\n"
+    "# v0.5.0, release commit 170e677fbb6726a3f765373dbe1f214820000be7; the payload\n"
+    "# below is byte-identical to schemas/core.yaml at that commit and at shared\n"
+    "# origin/main, verified by scripts/check_shared_parity.py against provenance.json).\n"
+    "#\n"
+    "# FHP imports this snapshot because the released FHP 1.1 line builds on the v0.5\n"
+    "# core: the x- extension-field rules (docs/FORMAT.md R15), the MAJOR.MINOR string\n"
+    "# schemaVersion patterns and the optional author nameType. The inherited FHR and\n"
+    "# FHGFF3 generation in this development tree still imports schemas/core.yaml\n"
+    "# (the v0.3-era core) and their published compatibility copies are unchanged;\n"
+    "# synchronizing them is the Q2 decision in docs/DEVELOPMENT-TREE-PROPOSAL.md.\n"
+    "# Do not edit: replace this file from a release, not by hand.\n"
+)
+
+# Local adjustments, keyed by (upstream path, local target path).
+ADJUSTMENTS = {
+    ("fhp_linkml.yml", "fhp_linkml.yml"): {
+        "kind": "import-retarget",
+        "from": "- schemas/core\n",
+        "to": "- schemas/core-v0.5\n",
+        "reason": ("the pinned shared model imports the shared root core; this tree "
+                   "vendors it as schemas/core-v0.5.yaml so the v0.3-era root core "
+                   "can stay intact for the inherited FHR/FHGFF3 generation (Q3)"),
+    },
+    ("schemas/core.yaml", "schemas/core-v0.5.yaml"): {
+        "kind": "provenance-header",
+        "header": CORE_V05_HEADER,
+        "reason": ("vendored snapshot with a provenance comment header, following "
+                   "schemas/core-v0.4.yaml (docs/DEVELOPMENT-TREE-PROPOSAL.md 2d)"),
+    },
+}
 
 
 def git(upstream, *args):
@@ -51,26 +113,51 @@ def artifact_paths(upstream, commit):
         path
         for path in vectors
         if Path(path).name.startswith("fhp-fasta-")
-        and path.endswith(".fhp.fasta")
+        and path.endswith((".fhp.fasta", ".fhp.fasta.gz"))
     ]
     return sorted((*PINNED_FILES, *vectors))
 
 
-def generate_entries(upstream, commit, core_target="schemas/core.yaml"):
+def apply_adjustment(contents, adjustment):
+    """The local bytes of an adjusted copy; fails loudly if the transform does
+    not fit the upstream bytes."""
+    kind = adjustment["kind"]
+    if kind == "provenance-header":
+        return adjustment["header"].encode("utf-8") + contents
+    if kind == "import-retarget":
+        if contents.count(adjustment["from"].encode("utf-8")) != 1:
+            raise ValueError("import-retarget: upstream line not found exactly once")
+        return contents.replace(adjustment["from"].encode("utf-8"),
+                                adjustment["to"].encode("utf-8"))
+    raise ValueError(f"unknown adjustment kind {kind}")
+
+
+def generate_entries(upstream, commit, core_target="schemas/core-v0.5.yaml"):
     entries = []
     for path in artifact_paths(upstream, commit):
-        contents = git(upstream, "show", f"{commit}:{path}")
+        entry_commit = commit if path not in COMPANION_FILES else COMPANION_COMMIT
+        contents = git(upstream, "show", f"{entry_commit}:{path}")
         if path == "fhp.json":
             targets = ("fhp.json", "tests/fixtures/releases/fhp-v0.5.0.json")
         elif path == "schemas/core.yaml":
             targets = (core_target,)
         else:
             targets = (path,)
-        digest = hashlib.sha256(contents).hexdigest()
-        entries.extend(
-            {"local": target, "upstream": path, "sha256": digest}
-            for target in targets
-        )
+        upstream_digest = hashlib.sha256(contents).hexdigest()
+        for target in targets:
+            adjustment = ADJUSTMENTS.get((path, target))
+            local = apply_adjustment(contents, adjustment) if adjustment else contents
+            entry = {"local": target, "upstream": path,
+                     "size": len(local),
+                     "sha256": hashlib.sha256(local).hexdigest()}
+            if entry_commit != commit:
+                entry["commit"] = entry_commit
+                entry["commitNote"] = ("post-v0.5.0 companion fix (shared #201); "
+                                       "identical to shared origin/main at audit")
+            if adjustment:
+                entry["upstreamSha256"] = upstream_digest
+                entry["adjustment"] = adjustment
+            entries.append(entry)
     return entries
 
 
@@ -85,8 +172,9 @@ def main(argv=None):
     parser.add_argument(
         "--core-target",
         choices=("schemas/core.yaml", "schemas/core-v0.5.yaml"),
-        default="schemas/core.yaml",
-        help="local path chosen for the pinned shared core",
+        default="schemas/core-v0.5.yaml",
+        help="local path chosen for the pinned shared core (Q3: the vendored "
+             "snapshot; schemas/core.yaml stays the v0.3-era legacy copy until Q2)",
     )
     parser.add_argument(
         "--output", type=Path, help="output JSON file (default: stdout)"

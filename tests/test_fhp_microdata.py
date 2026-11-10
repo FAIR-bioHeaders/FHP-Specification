@@ -167,12 +167,14 @@ class FHPMicrodataBindingTests(unittest.TestCase):
         with self.assertRaises(fhp_microdata.MicrodataError):
             fhp_microdata.read_page(fhp_microdata.write_page(record), SCHEMA)
 
-    def test_contract_is_the_released_fhp_1_0(self):
-        # This tree now carries released FHP 1.0, so the raw-main contract and
-        # the v0.4.0/v0.4.1 releases all select the string "1.0" contract (F2).
+    def test_contract_line_follows_the_synced_release(self):
+        # Issue #3 synced the working contract to shared v0.5.0, so raw-main
+        # selects the FHP 1.1 contract and the synced example declares "1.1".
+        # The released FHP 1.0 line stays covered through the v0.4.0/v0.4.1
+        # fixture copies (F2), which are immutable.
         self.assertEqual(
             extract_page(fhp_microdata.write_page(self.minimal()))["schemaVersion"],
-            "1.0")
+            "1.1")
         release = dict(self.minimal(), schema=RELEASE_040, schemaVersion="1.0")
         self.assertEqual(extract_page(fhp_microdata.write_page(release))["schemaVersion"], "1.0")
         with self.assertRaises(fhp_microdata.MicrodataError):
@@ -372,6 +374,31 @@ class FHPMicrodataBindingTests(unittest.TestCase):
         record = dict(self.minimal(), identifier=[])
         self.assertTrue(same_json(
             fhp_microdata.read_page(fhp_microdata.write_page(record), SCHEMA), record))
+
+    def test_extension_fields_are_omitted_and_reported(self):
+        record = dict(self.minimal(), **{"x-source-note": "private extension",
+                                         "x-review": {"flag": True}})
+        warnings = []
+        page = fhp_microdata.write_page(record, warn=warnings.append)
+        self.assertNotIn('itemprop="x-source-note"', page)
+        self.assertNotIn('itemprop="x-review"', page)
+        self.assertEqual(
+            warnings,
+            ["microdata: extension fields were not emitted: x-source-note, x-review"])
+        self.assertIn("x-source-note", record)
+        with self.assertWarnsRegex(
+                UserWarning, "extension fields were not emitted: x-source-note, x-review"):
+            fhp_microdata.write_page(record)
+
+    def test_extension_fields_are_rejected(self):
+        page = fhp_microdata.write_page(self.minimal()).replace(
+            "</div>",
+            '<span itemprop="x-source-note" data-fhr-type="string">'
+            "private extension</span></div>", 1)
+        with self.assertRaisesRegex(
+                fhp_microdata.MicrodataError,
+                "extension fields are not permitted in microdata: x-source-note"):
+            fhp_microdata.read_page(page, SCHEMA)
 
     def test_false_is_a_value_not_absence(self):
         # FHP schemaVersion 1 defines no boolean property; the typed form keeps
