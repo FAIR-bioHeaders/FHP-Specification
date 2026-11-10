@@ -1,211 +1,139 @@
 # FHP-Specification (FHP development)
 
-> **This repository is where the FHP (FAIR Header for protein FASTA) header is
-> developed.** FHP is a draft. The released specifications of every FAIR-bioHeaders
-> header type live in
-> [FAIR-bioHeaders-Specification](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification)
-> ([#108](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/issues/108)).
->
-> - Develop on branches and open issues here for FHP-specific work.
-> - Finished changes go to FAIR-bioHeaders-Specification by pull request.
-> - This repository starts as a copy of the specification repository; trimming it
->   to FHP content is tracked in [#2](https://github.com/FAIR-bioHeaders/FHP-Specification/issues/2).
->
-> The rest of this README is a copy of the specification repository's README.
+[![Specification checks](https://github.com/FAIR-bioHeaders/FHP-Specification/actions/workflows/validate-specification.yml/badge.svg?branch=main)](https://github.com/FAIR-bioHeaders/FHP-Specification/actions/workflows/validate-specification.yml)
+[![Schema drift checks](https://github.com/FAIR-bioHeaders/FHP-Specification/actions/workflows/check-schema-drift.yml/badge.svg?branch=main)](https://github.com/FAIR-bioHeaders/FHP-Specification/actions/workflows/check-schema-drift.yml)
 
-# FAIR-bioHeaders Specification
+**This repository is the development home of FHP — the FAIR-bioHeaders header
+for protein FASTA** (proteomes and protein sets: predicted, database and mixed
+origins). FHP is a small YAML block embedded in `;~` comment lines at the top
+of a protein FASTA file, validated against a JSON Schema contract and covered
+by a SHA-512/256 checksum of the file's exact bytes.
 
-[![Specification checks](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/actions/workflows/validate-specification.yml/badge.svg?branch=main)](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/actions/workflows/validate-specification.yml)
-[![Schema drift checks](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/actions/workflows/check-schema-drift.yml/badge.svg?branch=main)](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/actions/workflows/check-schema-drift.yml)
-[![Specification DOI](https://img.shields.io/badge/Specification_DOI-10.5281%2Fzenodo.6762549-blue)](https://doi.org/10.5281/zenodo.6762549)
-[![File Converter DOI](https://img.shields.io/badge/File_Converter_DOI-10.5281%2Fzenodo.6762547-blue)](https://doi.org/10.5281/zenodo.6762547)
+## Released contract versus development repository
 
-This repository holds the released FAIR-bioHeaders specifications: FHR (reference
-genomes), the draft FHP (protein FASTA) and FHGFF3 (GFF3 annotation) headers, the
-shared core schema, the format rules, the JSON-LD context and vocabulary, and the
-conformance suite. It was called `FHR-Specification` until 2026-10-14 (#108).
+The **published FHP specification lives in
+[FAIR-bioHeaders-Specification](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification)**
+(called `FHR-Specification` until 2026-10-14,
+[#108](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/issues/108))
+and is cited by versioned URLs — never invent one:
 
-Development of each header type happens in its own repository, and finished work
-comes here by pull request:
+| FHP `schemaVersion` | Released in | Persistent schema URL |
+| --- | --- | --- |
+| `"1.0"` | FAIR-bioHeaders-Specification v0.4.0–v0.4.2 | <https://w3id.org/fair-bioheaders/fhp/v0.4.0> |
+| `"1.1"` (optional `x-` extension fields) | FAIR-bioHeaders-Specification v0.5.0 | <https://w3id.org/fair-bioheaders/fhp/v0.5.0> |
 
-| Header type | Development repository |
-| --- | --- |
-| FHR | [FHR-Specification](https://github.com/FAIR-bioHeaders/FHR-Specification) |
-| FHP | [FHP-Specification](https://github.com/FAIR-bioHeaders/FHP-Specification) |
-| FHT | [FHT-Specification](https://github.com/FAIR-bioHeaders/FHT-Specification) |
-| FHGFF3 | [FHGFF3](https://github.com/FAIR-bioHeaders/FHGFF3) |
+This repository is **not an independent publication authority**. FHP model,
+documentation and example work happens here on branches and publishes through
+the shared repository by pull request (family migration:
+[#107](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/issues/107),
+establishment tracker:
+[#158](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/issues/158)).
+The tree started as a copy of the family publication tree; what belongs here,
+which files are pinned compatibility copies, and the canonical v0.5.0 pins are
+classified in **[docs/DEVELOPMENT-TREE-PROPOSAL.md](docs/DEVELOPMENT-TREE-PROPOSAL.md)**
+(issue [#2](https://github.com/FAIR-bioHeaders/FHP-Specification/issues/2)).
+Until the synchronization in issue
+[#3](https://github.com/FAIR-bioHeaders/FHP-Specification/issues/3) lands,
+this root tree still carries the **FHP 1.0 line** (`fhp.json`,
+`fhp_linkml.yml` importing the pinned `schemas/core-v0.4.yaml`) and the older
+draft-era `docs/FHP.md`; the released v0.5.0 text is authoritative and lives
+in the shared repository.
 
-Schema URLs under the old name
-(`https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json`
-and the like) keep working and are recognised by the tools; new files should cite a
-versioned w3id URL (see [SCHEMA-VERSIONS](docs/SCHEMA-VERSIONS.md) on `release-v0.4`).
+**Canonical here:** this repository is the current raw-`main` source of the FHP
+JSON-LD context and vocabulary (`jsonld/fhp.context.jsonld`,
+`jsonld/fhp.terms.jsonld`, `jsonld/fhp.terms.ttl`), and of the FHP HTML-microdata
+binding ([docs/FHP-MICRODATA.md](docs/FHP-MICRODATA.md)); the
+[FAIR-bioHeaders-Tools](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools)
+serializers resolve the FHP context from the raw-main path. The current Pages
+build publishes the vocabulary and FHR/family JSON-LD files, not FHP files or
+FHP versioned aliases; those Pages surfaces remain pending work.
 
-FHR (FAIR Header Reference genome) keeps machine-readable and human-readable
-provenance with reference genome data. This repository defines the JSON Schema,
-LinkML model, examples, and partial MIxS/MIGS mappings. The
-[FAIR-bioHeaders toolkit](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools)
-provides conversion, validation, and FASTA/GFA/GFF3 header tools.
+## Working with FHP
 
-## v0.3 metadata
+- The contract: `fhp.json` (generated — never hand-edited) from
+  `fhp_linkml.yml` with
+  `python json-schema-generator.py --type fhp --output fhp.json`;
+  the model imports the pinned shared core `schemas/core-v0.4.yaml` and
+  `schemas/shared.yaml`.
+- Required fields (FHP 1.0): `schema`, `schemaVersion`, `proteome`,
+  `sourceType` (`predicted` | `database` | `mixed`), `taxon`, `version`,
+  `metadataAuthor`, `dateCreated`, `checksum`. Field semantics and rules are
+  in [docs/FHP.md](docs/FHP.md); examples — minimal and rich, for each of the
+  three `sourceType` values — in [examples/fhp/](examples/fhp/), conformance
+  vectors in [conformance/](conformance/README.md).
+- **Use the toolkit, not a converter in this repository.**
+  [FAIR-bioHeaders-Tools](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools)
+  (`pip install fair-bioheaders`) is the single active family toolkit:
+  `bioheaders combine`, `verify` and `strip` handle FHP headers and checksums.
+  Never write or edit a checksum by hand. No FHP-specific converter will be
+  created here; the archived FHT-File-Converter is not an active dependency.
+- Strict FASTA readers (samtools faidx and the rest of htslib, Picard,
+  Biopython's default `fasta` format) reject a leading `;~` block; see
+  [docs/TOOL_COMPATIBILITY.md](docs/TOOL_COMPATIBILITY.md).
+- Scientific care for protein sets: asserted source provenance is not a
+  QC result; do not infer a genome parent, genetic code, isoform policy,
+  database release or BUSCO counts from the presence of protein sequences,
+  and never invent identifiers, authors or provenance.
 
-The v0.3 release adds optional fields and fixes examples; the required metadata
-set and numeric `schemaVersion: 1` remain unchanged. Package/release version,
-schema version, and assembly `version` are distinct.
+## Checks in this checkout
 
-Required fields: `schema`, `schemaVersion`, `genome`, `taxon`, `version`,
-`metadataAuthor`, `assemblyAuthor`, `dateCreated`, `masking`, and `checksum`.
-See [the minimal instance](examples/minimal.fhr.json) and
-[the annotated field reference](docs/FORMAT.md). Top-level unknown fields are
-rejected by the schema. Many nested objects remain open for existing metadata;
-software provenance objects have an explicit field set.
-
-The [rich YAML example](examples/example.fhr.yaml) shows optional
-`assemblySoftware`, `assemblyProtocol`, `vitalStats.N90`, `vitalStats.gcContent`,
-and `seqcol_id`. A legacy software name string remains valid. GC content uses a
-percentage from 0 to 100; N90 uses base pairs. SeqCol digests are supplied by users
-and have a different identity/algorithm from the FHR file checksum.
-
-Checksum helpers require SHA-512/256 support in the Python build. Some Apple
-system Python builds omit it; use an OpenSSL-enabled Python distribution.
-Metadata conversion and validation do not require that hash implementation.
-
-## Serialization and checksums
-
-YAML is embedded in FASTA comments with `;~` and GFA comments with `#~`; the prefix
-is removed to recover YAML. JSON/YAML and HTML microdata can store the same
-metadata separately. See [the HTML example](examples/example.microdata.fhr.html)
-and [microdata guidance](docs/MICRODATA.md). The [JSON-LD form](docs/JSONLD.md)
-([example](examples/example.fhr.jsonld)) is the FHR record plus a JSON-LD context
-that maps every field to schema.org or a [FAIR-bioHeaders term](docs/TERMS.md), so
-the same document is linked data. A separate, one-way [schema.org export](docs/SCHEMAORG-EXPORT.md)
-([example](examples/example.fhr.export.jsonld)) splits the record into typed entities (assembly,
-metadata record, assembly activity, statistics, grant, article) for search engines and Bioschemas
-tools.
-
-The v0.3 checksum policy is base64 SHA-512/256 over the exact file bytes except
-the scalar FHR checksum line (including that line's newline). Metadata, ordinary
-comments, and sequence bytes all contribute. [Checksum and migration details](docs/FORMAT.md)
-explain the change from the old MD5/payload-only documentation.
-
-[Conformance vectors](conformance/README.md) give valid and invalid FASTA/GFA
-files, with expected checksums, for the header parsing and checksum rules. Use
-them to test other FHR implementations.
-
-[Tool compatibility](docs/TOOL_COMPATIBILITY.md) records how common FASTA, GFA
-and GFF3 tools handle files with FHR headers, and gives workarounds. Most
-FASTA indexers, including samtools faidx, need a stripped copy.
-
-The [FAIR header guideline](docs/FAIR_HEADER_GUIDELINE.md) is guidance for the
-headers of any data file (FASTA, GFF3, VCF, GAF, GFA and others), organised as 8
-items mapped to the RDA FAIR Data Maturity Model indicators, with examples in
-each format's own convention. It changes no schema. `bioheaders assess` in
-FAIR-bioHeaders-Tools reports a checklist against it, and the
-[assessment fixtures](assessment/README.md) let other implementations test the
-same expected outcomes.
-
-JSON/YAML/HTML examples contain synthetic checksum and SeqCol placeholders.
-The FASTA/GFA examples have verified FHR file checksums but retain a synthetic
-SeqCol placeholder; it must not be used as the sequence collection's identity.
-
-## Validation and LinkML
-
-Use Python 3.13 or later for repository checks. The cross-repo `check_release.py`
-command requires a companion FHR-File-Converter checkout at the supplied path:
+Python 3.13 or later; `python -m pip install -r requirements-linkml.txt`
+(plus `requirements-jsonld.txt` for the JSON-LD tests).
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements-linkml.txt
 python -m unittest discover -s tests -v
-python scripts/validate_examples.py
+python scripts/validate_examples.py --schema fhp.json --examples examples/fhp
 python scripts/check_linkml.py
-python scripts/check_schema_drift.py
-python scripts/check_release.py --converter ../FHR-File-Converter
-python scripts/check_conformance.py --converter ../FHR-File-Converter
-python json-schema-generator.py --output /tmp/fhr_linkml.json
-python scripts/project_mixs.py examples/example.fhr.json
+python scripts/check_schema_drift.py --schema fhp.json --baseline .github/schema-baseline-fhp.json
+python scripts/make_jsonld.py --check
+python scripts/check_conformance.py
 ```
 
-CI checks JSON/YAML examples, the explicit schema review baseline, and LinkML
-validation equivalence. Generation uses pinned LinkML 1.11.1 and preserves
-legacy open nested objects and checksum length constraints. Equivalence checking
-resolves local references and compares validation keywords, ignoring descriptive
-annotations and ordering of required fields. Generated output does not overwrite
-the published `fhr.json`. [MIxS/MIGS mapping limits](docs/MAPPINGS.md) include
-partial/lossy terms and omissions; the output is not a complete MIGS submission.
-The [JSON-LD and DCMI mapping table](mappings/fhr-jsonld-dcmi.yml) gives every FHR
-field's JSON-LD term and its Dublin Core (DCMI Terms) equivalents, with mapping kinds,
-conditions and losses ([summary](docs/MAPPINGS.md#json-ld-and-dublin-core-dcmi-terms)).
-
-### Schema files
-
-- `fhr.json`: the published FHR JSON Schema (the contract).
-- `schemas/core.yaml`: the LinkML core shared by the FAIR-bioHeaders family
-  (`schema`, `schemaVersion`, `taxon`, `version`, `metadataAuthor`,
-  `dateCreated`, `checksum` and the optional provenance slots, plus `Taxon`,
-  `Author`, `AccessionID`, the `sha2` type and `seqcol_id`). It also defines a
-  provisional `DerivedFrom` class and `derivedFrom` slot that link a file to a
-  parent by checksum; FHR schemaVersion 1 does not use them.
-- `fhr_linkml.yml`: the FHR LinkML model. It imports the core and adds FHR-only
-  slots (`genome`, `assemblyAuthor`, `masking`, `vitalStats`, ...).
-- `fhp_linkml.yml` and `fhp.json`: the **draft** FHP header for protein FASTA
-  (proteomes and protein sets). The LinkML model imports the core, and the JSON
-  Schema is generated from it. The format is described in [docs/FHP.md](docs/FHP.md),
-  with examples in [examples/fhp/](examples/fhp/) and the **draft** HTML microdata
-  binding in [docs/FHP-MICRODATA.md](docs/FHP-MICRODATA.md). FHP is not released; see
-  [specs/006-protein-header](specs/006-protein-header/spec.md).
-- `fhgff3_linkml.yml` and `fhgff3.json`: the **draft** FHGFF3 header for GFF3
-  annotations, placed after `##gff-version 3`. The record links the annotation to
-  its genome, by FHR checksum or by accession plus SeqCol digest. The LinkML model
-  imports the core and `schemas/shared.yaml` (software, sources and BUSCO
-  completeness, shared with FHP), and the JSON Schema is generated from it. See
-  [docs/FHGFF3.md](docs/FHGFF3.md) and [examples/fhgff3/](examples/fhgff3/). FHGFF3 is
-  not released; see [specs/007-gff3-header](specs/007-gff3-header/spec.md).
-- `tests/fixtures/fhp_stub.yaml`: a test-only stub showing how a new header type
-  imports the core.
-
-For intentional schema edits, explain compatibility and update the review baseline:
-
-```bash
-python scripts/check_schema_drift.py --update
-```
-
-Commit the baseline with the schema/model changes, synchronize both converter
-schema copies, and run every check. Require `schema-drift` and `validate` checks in
-branch protection to block failing merges. Whitespace/key order do not count as
-drift; other JSON changes require an explicit update and maintainer review.
+For an intentional model change, regenerate `fhp.json` with the command above,
+review the schema diff, and update the drift baseline only with explicit
+maintainer review (`python scripts/check_schema_drift.py --schema fhp.json
+--baseline .github/schema-baseline-fhp.json --update`). CI workflows also run
+the inherited FHR/FHGFF3 family checks; their scope in this repository is a
+decision recorded in the development-tree proposal (issue #3).
 
 ## Project guidance
 
 See [CONTRIBUTING](CONTRIBUTING.md), [CODE_OF_CONDUCT](CODE_OF_CONDUCT.md),
-[SECURITY](SECURITY.md), and [AGENTS](AGENTS.md). David and Adam retain schema
-authority; [GOVERNANCE](GOVERNANCE.md) describes the current two-maintainer model and a future steering-group option that is not active.
-The [schema diagram](Diagram.svg) is generated with
-`python scripts/render_diagram.py` and summarizes required and optional fields.
+[SECURITY](SECURITY.md), and [AGENTS](AGENTS.md). David and Adam retain
+schema and release authority;
+[GOVERNANCE](GOVERNANCE.md) describes the current two-maintainer model and a
+future steering-group option that is not active.
 [Release notes](CHANGELOG.md) document compatibility and deferred work.
+[Diagram.svg](Diagram.svg) is the inherited FHR schema diagram from the
+family tree, kept as provenance pending the FHP-specific diagram decision
+(issue #2).
 
-## Citing FHR
+## Citing
 
-Chicago bibliography entries are used below. Cite the published paper for a
-general description of FHR; cite the specification or converter when using that
-resource directly. The software and specification links are concept DOIs; for a
-specific release, use the corresponding version DOI from Zenodo. Authors and
-years follow the v0.3 records resolved by the concept DOIs, and can change as later records are published.
+FHP metadata work is motivated by the published FHR paper:
 
-### Published paper
+> Wright, Adam, Mark D. Wilkinson, Christopher Mungall, Scott Cain, Stephen
+> Richards, Paul Sternberg, Ellen Provin, Jonathan L. Jacobs, Scott Geib,
+> Daniela Raciti, Karen Yook, Lincoln Stein, and David C. Molik. “FAIR Header
+> Reference Genome: A TRUSTworthy Standard.” *Briefings in Bioinformatics* 25,
+> no. 3 (2024): bbae122. https://doi.org/10.1093/bib/bbae122.
 
-Wright, Adam, Mark D. Wilkinson, Christopher Mungall, Scott Cain, Stephen Richards, Paul Sternberg, Ellen Provin, Jonathan L. Jacobs, Scott Geib, Daniela Raciti, Karen Yook, Lincoln Stein, and David C. Molik. “FAIR Header Reference Genome: A TRUSTworthy Standard.” *Briefings in Bioinformatics* 25, no. 3 (2024): bbae122. https://doi.org/10.1093/bib/bbae122.
+The Zenodo records in `CITATION.cff` belong to the **FHR specification and
+converter** resources — they are related family history, not FHP identifiers,
+and no FHP DOI is implied by them. The
+publication and DOI identity of *this* repository is tracked in issue
+[#6](https://github.com/FAIR-bioHeaders/FHP-Specification/issues/6) and
+coordinated with
+[FHR-Citation](https://github.com/FAIR-bioHeaders/FHR-Citation/blob/main/citation.bib);
+until that lands, cite the released FHP contract as the
+FAIR-bioHeaders-Specification release carrying it (v0.4.0–v0.4.2 for FHP 1.0,
+v0.5.0 for FHP 1.1).
 
-### Specification
-
-Molik, David, and Adam Wright. *FHR Specification*. Data set. 2026. https://doi.org/10.5281/zenodo.6762549.
-
-### Converter
-
-Molik, David, and Adam Wright. *FHR File Converter*. Computer software. 2026. https://doi.org/10.5281/zenodo.6762547.
-
-Machine-readable entries are maintained in
-[FHR-Citation](https://github.com/FAIR-bioHeaders/FHR-Citation/blob/main/citation.bib).
+**Historical issue numbers:** before 2026-10-14 this tree lived in the
+repository then named `FHR-Specification`; `#N` references inherited from that
+era (for example in `specs/` and `docs/`) resolve to
+[FAIR-bioHeaders-Specification](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/issues),
+not to this repository's own issues ([#107](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/issues/107)).
 
 ## Licensing
 

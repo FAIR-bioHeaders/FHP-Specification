@@ -1,15 +1,17 @@
 # Contributing
 
-Open issues about a released specification, the shared core, the format rules or the
-conformance suite here. Development of one header type belongs in its own repository:
+This repository develops the FHP (protein FASTA) header. Open issues about a
+released specification, the shared core, the family format rules or the
+cross-type conformance suite in
+[FAIR-bioHeaders-Specification](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification)
+instead. Development of the other header types lives in their own repositories:
 [FHR-Specification](https://github.com/FAIR-bioHeaders/FHR-Specification),
-[FHP-Specification](https://github.com/FAIR-bioHeaders/FHP-Specification),
 [FHT-Specification](https://github.com/FAIR-bioHeaders/FHT-Specification) or
 [FHGFF3](https://github.com/FAIR-bioHeaders/FHGFF3).
 
 Start with an issue describing the use case or failure and a small reproducible
 example. Submit a focused branch/PR with behavior, compatibility implications,
-and relevant validation. Link related work in [FHR-File-Converter](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools)
+and relevant validation. Link related work in [FAIR-bioHeaders-Tools](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools)
 and the release tracker when a change spans repositories. Do not include private
 genome data, credentials, or unrelated formatting in fixtures.
 
@@ -25,8 +27,10 @@ python scripts/check_linkml.py
 python scripts/check_schema_drift.py
 ```
 
-Changes to metadata must coordinate `fhr.json`, the LinkML model, both converter
-schema copies, serializers, examples, and documentation. Add regression tests
+Changes to the FHP model must coordinate `fhp_linkml.yml`, the generated
+`fhp.json`, the toolkit schema copies and serializers in FAIR-bioHeaders-Tools,
+examples, conformance vectors, and documentation, and publish through
+FAIR-bioHeaders-Specification. Add regression tests
 for changed behavior, including minimal metadata and relevant invalid cases.
 Document checksum semantics and migration rather than silently changing identity.
 Keep required metadata and runtime dependencies small.
