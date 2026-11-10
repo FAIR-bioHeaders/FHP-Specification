@@ -1,0 +1,106 @@
+name: Check shared parity
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '17 5 * * 1' # Mondays: catch upstream drift of the pinned commits
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  shared-parity:
+    name: Pinned shared copies (provenance.json)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.13'
+      - name: Test the provenance generator
+        run: python -m unittest discover -s tests -p "test_make_provenance.py" -v
+      - name: Check the pinned copies against their recorded digests
+        run: python scripts/check_shared_parity.py --no-upstream
+      - name: Read the pinned shared revision
+        id: pin
+        run: |
+          echo "commit=$(python -c 'import json; print(json.load(open("provenance.json"))["source"]["commit"])')" >> "$GITHUB_OUTPUT"
+      - name: Check out the pinned shared publication revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: FAIR-bioHeaders/FAIR-bioHeaders-Specification
+          ref: ${{ steps.pin.outputs.commit }}
+          path: .upstream/FAIR-bioHeaders-Specification
+          persist-credentials: false
+      - name: Check the pinned copies against the pinned bytes
+        run: python scripts/check_shared_parity.py --upstream .upstream/FAIR-bioHeaders-Specification
+      - name: Regenerate the pinned copies and compare with this tree
+        # scripts/make_provenance.py is the single digest source: the recorded
+        # copied[] entries must equal what the pinned commit produces today,
+        # including the machine-checkable adjustments.
+        run: |
+          python scripts/make_provenance.py --upstream .upstream/FAIR-bioHeaders-Specification \
+            --output "$RUNNER_TEMP/copied.json"
+          python - <<'EOF'
+          import json
+          generated = json.load(open(__import__("os").environ["RUNNER_TEMP"] + "/copied.json"))
+          pinned = {e["local"]: e for e in json.load(open("provenance.json"))["copied"]}
+          deferred = {v["upstream"] for v in
+                      json.load(open("provenance.json"))["deferred"]["vectors"]}
+          stale = []
+          for entry in generated:
+              local = entry["local"]
+              if (local.startswith("conformance/")
+                      and entry["upstream"] in deferred):
+                  continue  # byte-deferred with the Q2 family package
+              if pinned.get(local) != entry:
+                  stale.append(local)
+          extra = sorted(set(pinned) - {e["local"] for e in generated})
+          for problem in stale + extra:
+              print(f"provenance.json is not what make_provenance.py produces: {problem}")
+          raise SystemExit(bool(stale or extra))
+          EOF
+
+  shared-conformance:
+    name: Pinned shared tree conformance with the released toolkit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.13'
+      - name: Read the pinned shared revision
+        id: pin
+        run: |
+          echo "commit=$(python -c 'import json; print(json.load(open("provenance.json"))["source"]["commit"])')" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: FAIR-bioHeaders/FAIR-bioHeaders-Specification
+          ref: ${{ steps.pin.outputs.commit }}
+          path: .upstream/FAIR-bioHeaders-Specification
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+      - name: Install the toolkit with the v0.5.0 schemas
+        # fair-bioheaders 0.9.0 bundles schema copies byte-identical to the
+        # pinned v0.5.0 release commit (verified at issue #3 audit; the same
+        # pin and rationale as validate-specification.yml).
+        run: |
+          python -m venv "$RUNNER_TEMP/fair-bioheaders"
+          "$RUNNER_TEMP/fair-bioheaders/bin/python" -m pip install "fair-bioheaders[jsonld]==0.9.0"
+      - name: Check shared fixture generation and independent checksums
+        working-directory: .upstream/FAIR-bioHeaders-Specification
+        run: python scripts/check_conformance.py
+      - name: Run positive and rejection vectors with the released toolkit
+        working-directory: .upstream/FAIR-bioHeaders-Specification
+        run: python scripts/check_conformance.py --skip-regeneration --require-format jsonld --require-format fhp-fasta --require-format fhgff3 --converter "$RUNNER_TEMP/fair-bioheaders"
