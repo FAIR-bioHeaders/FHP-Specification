@@ -1,9 +1,34 @@
+# Identity (FHP-Specification#6): this file describes the FHP *development*
+# repository only. It carries no DOI of its own — this repository publishes no
+# GitHub releases or tags and no FHP Zenodo/Zenodo-concept record exists, and
+# none is implied here. The registered bibliographic titles in `references`
+# below ("FHR Specification", "FAIR-bioHeaders Specification") belong to the
+# shared publication lineage; FHP work must not rename them, and they do not
+# identify this development repository. Cite the published FHP contract through
+# the FAIR-bioHeaders-Specification release that carries it.
+#
+# Source provenance (#6 / #2 / FAIR-bioHeaders-Specification#107 handoff): the
+# FHP contract bytes in this tree are pinned compatibility copies of the shared
+# v0.5.0 release commit 170e677fbb6726a3f765373dbe1f214820000be7 (annotated tag
+# object 7150f74cf447de5694b8938c705d5a5896eaeacd, released 2026-11-04), per
+# docs/DEVELOPMENT-TREE-PROPOSAL.md §3; machine-readable digests arrive with
+# FHP-Specification#3 (provenance.json + shared-parity CI). Any future
+# FHP-specific release record is a maintainer action coordinated through
+# FAIR-bioHeaders-Specification#107 (see also FHP-Specification#1).
 cff-version: 1.2.0
-title: FHR Specification
-message: For a general description of FHR, cite the preferred paper; cite this resource
-  DOI for direct use. Historical USDA public-domain material remains public domain;
-  applicable subsequent project contributions from March 2025 onward use MPL-2.0.
-  Third-party terms and provenance details are documented in LICENSE.
+title: FHP Specification (development repository)
+message: >-
+  This repository develops the FHP (protein-set) header of the FAIR BioHeaders
+  family; it has no release DOI of its own. Cite the released FHP contract as
+  the FAIR-bioHeaders-Specification release carrying it (shared v0.4.0 for FHP
+  schemaVersion 1.0, shared v0.5.0 for FHP 1.1) via its fixed
+  https://w3id.org/fair-bioheaders/fhp/vX.Y.Z alias. The Zenodo records listed
+  under `references` are FHR-lineage specification records kept as labeled
+  related citations, not FHP identifiers. For the motivating publication cite
+  the FHR paper in `references`. Historical USDA public-domain material
+  remains public domain; applicable subsequent project contributions from
+  March 2025 onward use MPL-2.0. Third-party terms and provenance details are
+  documented in LICENSE.
 type: dataset
 authors:
 - given-names: David
@@ -15,44 +40,37 @@ authors:
   email: wright@fhref.org
   affiliation: OICR
   orcid: https://orcid.org/0000-0002-5719-4024
-identifiers:
-- type: doi
-  value: 10.5281/zenodo.6762549
-  description: Zenodo concept DOI for this resource
-- type: doi
-  value: 10.5281/zenodo.23224136
-  description: Zenodo version DOI for v0.3.0
-- type: doi
-  value: 10.5281/zenodo.23244878
-  description: Zenodo version DOI for v0.3.1
-repository-code: https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification
-repository-artifact: https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification
-abstract: The lack of interoperable data standards among reference genome data-sharing
-  platforms inhibits cross-platform analysis while increasing the risk of data provenance
-  loss. Here, we describe the FAIR-bioHeaders Reference genome (FHR), a metadata standard
-  guided by the principles of Findability, Accessibility, Interoperability, and Reuse
-  (FAIR) in addition to the principles of Transparency, Responsibility, User focus,
-  Sustainability, and Technology (TRUST). The objective of FHR is to provide an extensive
-  set of data serialisation methods and minimum data field requirements while still
-  maintaining extensibility, flexibility, and expressivity in an increasingly decentralised
-  genomic data ecosystem. The effort needed to implement FHR is low; FHR’s design
-  philosophy ensures easy implementation while retaining the benefits gained from
-  recording both machine and human-readable provenance.
+# No `identifiers`, `doi`, `version` or `date-released`: this development
+# repository publishes no release artifacts or DOI (tracked in
+# FHP-Specification#6; do not borrow the FHR-lineage records below).
+repository-code: https://github.com/FAIR-bioHeaders/FHP-Specification
+url: https://github.com/FAIR-bioHeaders/FHP-Specification
+abstract: >-
+  The FAIR bioHeaders Protein set (FHP) standard embeds a small YAML metadata
+  header inside protein FASTA files, validated against a per-type JSON Schema
+  contract and covered by a checksum of the file's exact bytes. FHP
+  distinguishes predicted, database and mixed protein sets and records source
+  provenance without inferring quality-control results. This repository is the
+  FHP development surface: the LinkML model, the FHP JSON-LD context and
+  vocabulary, the HTML-microdata binding and the FHP conformance vectors are
+  developed and served here, while the published FHP contract is released by
+  FAIR-bioHeaders-Specification (schemaVersion 1.0 from shared release v0.4.0;
+  schemaVersion 1.1 with x- extension fields from shared release v0.5.0).
 keywords:
 - FAIR
 - TRUST
+- protein
+- proteome
 - fasta
 - yaml
 - json
-- gfa
+- json-ld
 - microdata
-- genome assembly
 license: MPL-2.0
 # Historical permissions and third-party exceptions are documented in LICENSE.
-doi: 10.5281/zenodo.6762549
-url: https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification
-preferred-citation:
-  type: article
+references:
+# The motivating family publication; it describes FHR, not FHP.
+- type: article
   title: 'FAIR Header Reference genome: a TRUSTworthy standard'
   authors:
   - given-names: Adam
@@ -87,6 +105,52 @@ preferred-citation:
   issue: '3'
   start: bbae122
   year: 2024
-
-version: 0.3.1
-date-released: 2026-10-08
+# Shared publication lineage (concept record; registered title is
+# "FAIR-bioHeaders Specification", historically "FHR Specification"). It is not
+# this repository's identifier.
+- type: data
+  title: 'FAIR-bioHeaders Specification'
+  authors:
+  - given-names: David
+    family-names: Molik
+  - given-names: Adam
+    family-names: Wright
+  publisher:
+    name: Zenodo
+  year: 2026
+  version: v0.5.0
+  doi: 10.5281/zenodo.6762549
+  repository-code: https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification
+  url: https://zenodo.org/doi/10.5281/zenodo.6762549
+# Release carrying published FHP schemaVersion 1.0 (registered title at this
+# version record remains "FHR Specification"); fixed FHP alias verified live.
+- type: data
+  title: 'FHR Specification'
+  authors:
+  - given-names: David
+    family-names: Molik
+  - given-names: Adam
+    family-names: Wright
+  publisher:
+    name: Zenodo
+  year: 2026
+  version: v0.4.0
+  doi: 10.5281/zenodo.23376528
+  repository-code: https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification
+  url: https://w3id.org/fair-bioheaders/fhp/v0.4.0
+# Release carrying published FHP schemaVersion 1.1 (x- extension fields);
+# fixed FHP alias verified live.
+- type: data
+  title: 'FAIR-bioHeaders Specification'
+  authors:
+  - given-names: David
+    family-names: Molik
+  - given-names: Adam
+    family-names: Wright
+  publisher:
+    name: Zenodo
+  year: 2026
+  version: v0.5.0
+  doi: 10.5281/zenodo.23948191
+  repository-code: https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification
+  url: https://w3id.org/fair-bioheaders/fhp/v0.5.0
