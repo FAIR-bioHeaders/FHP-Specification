@@ -534,6 +534,26 @@ class WriterTests(unittest.TestCase):
         for key in ("source", "derivedFrom", "completeness", "sequenceStats"):
             self.assertNotIn(key, document)
 
+    def test_extension_fields_are_omitted_and_reported(self):
+        record = dict(self.examples["minimal-predicted"],
+                      **{"x-source-note": "private extension",
+                         "x-review": {"flag": True}})
+        warnings = []
+        document = make_jsonld.fhp_to_jsonld(record, warn=warnings.append)
+        self.assertNotIn("x-source-note", document)
+        self.assertNotIn("x-review", document)
+        self.assertEqual(
+            warnings,
+            ["JSON-LD: extension fields were not emitted: x-source-note, x-review"])
+        self.assertIn("x-source-note", record)
+        with self.assertWarnsRegex(
+                UserWarning, "extension fields were not emitted: x-source-note, x-review"):
+            make_jsonld.fhp_to_jsonld(record)
+        text_warnings = []
+        text = make_jsonld.fhp_jsonld_text(record, warn=text_warnings.append)
+        self.assertNotIn("x-source-note", json.loads(text))
+        self.assertEqual(text_warnings, warnings)
+
     def test_source_relationships_are_preserved(self):
         record = self.examples["rich-mixed"]
         document = make_jsonld.fhp_to_jsonld(record)
@@ -613,6 +633,13 @@ class ReaderTests(unittest.TestCase):
         back = make_jsonld.fhp_canonical_record(document, warn=warnings.append)
         self.assertTrue(equal(back, self.record))
         self.assertEqual(len(warnings), 1)
+
+    def test_extension_fields_are_rejected(self):
+        document = dict(self.document, **{"x-source-note": "private extension",
+                                          "x-review": {"flag": True}})
+        with self.assertRaisesRegex(
+                ValueError, "extension fields are not permitted: x-source-note, x-review"):
+            make_jsonld.fhp_canonical_record(document)
 
     def test_export_document_is_not_fhp_metadata(self):
         export = json.loads(

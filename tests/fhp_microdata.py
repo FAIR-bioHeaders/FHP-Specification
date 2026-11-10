@@ -21,6 +21,7 @@ types, as rule M3 requires.
 import json
 from pathlib import Path
 import re
+import warnings
 from html import escape
 from html.parser import HTMLParser
 
@@ -423,7 +424,12 @@ def read_page(text, schema):
         raise MicrodataError(
             f"expected exactly one FHP item scope, found {len(fhp_scopes)}")
     selected = _selected_schema(fhp_scopes[0], schema)
-    return _read_scope(fhp_scopes[0], selected, selected)
+    record = _read_scope(fhp_scopes[0], selected, selected)
+    extension_keys = [key for key in record if key.startswith("x-")]
+    if extension_keys:
+        raise MicrodataError(
+            f"extension fields are not permitted in microdata: {', '.join(extension_keys)}")
+    return record
 
 
 def _write_property(name, value):
@@ -445,9 +451,18 @@ def _write_property(name, value):
     return f'<span itemprop="{prop}" data-fhr-type="{datatype}">{escape(text)}</span>'
 
 
-def write_page(record, itemtype=FHP_ITEMTYPE, title="FHP microdata example"):
+def write_page(record, itemtype=FHP_ITEMTYPE, title="FHP microdata example", warn=None):
     """Write one record as a standalone HTML document (typed serialization)."""
-    content = "".join(_write_property(name, value) for name, value in record.items())
+    extension_keys = [name for name in record if name.startswith("x-")]
+    if extension_keys:
+        message = f"microdata: extension fields were not emitted: {', '.join(extension_keys)}"
+        if warn is None:
+            warnings.warn(message, stacklevel=2)
+        else:
+            warn(message)
+    content = "".join(
+        _write_property(name, value) for name, value in record.items()
+        if not name.startswith("x-"))
     return (
         '<!doctype html>\n<html lang="en"><head><meta charset="utf-8">'
         f"<title>{escape(title)}</title></head><body>\n"

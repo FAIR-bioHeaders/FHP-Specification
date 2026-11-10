@@ -46,6 +46,7 @@ import json
 from pathlib import Path
 import re
 import sys
+import warnings
 
 ROOT = Path(__file__).resolve().parents[1]
 LINKML = ROOT / "fhr_linkml.yml"
@@ -1101,15 +1102,24 @@ def _fhp_typed(key, value):
     return copy.deepcopy(value)
 
 
-def fhp_to_jsonld(record, context=None):
-    """The canonical JSON-LD document for an FHP record (loss-preserving)."""
+def fhp_to_jsonld(record, context=None, warn=None):
+    """Write canonical FHP JSON-LD, reporting omitted extension fields."""
     _reserved_keys(record, "")
     for key in (URL_TERM, *FHP_RESERVED_ROOT):
         if key in record:
             raise ValueError(f"JSON-LD: the root key {key} is reserved for JSON-LD output")
+    extension_keys = [key for key in record if key.startswith("x-")]
+    if extension_keys:
+        message = f"JSON-LD: extension fields were not emitted: {', '.join(extension_keys)}"
+        if warn is None:
+            warnings.warn(message, stacklevel=2)
+        else:
+            warn(message)
     context = load_fhp_context() if context is None else context
     document = {"@context": context["@context"], "@type": "Dataset"}
     for key, value in record.items():
+        if key.startswith("x-"):
+            continue
         if key == "documentation" and is_absolute_url(value):
             document[URL_TERM] = value
         else:
@@ -1117,8 +1127,8 @@ def fhp_to_jsonld(record, context=None):
     return document
 
 
-def fhp_jsonld_text(record, context=None):
-    return json.dumps(fhp_to_jsonld(record, context), ensure_ascii=False, indent=2) + "\n"
+def fhp_jsonld_text(record, context=None, warn=None):
+    return json.dumps(fhp_to_jsonld(record, context, warn), ensure_ascii=False, indent=2) + "\n"
 
 
 # The classes the canonical FHP form expects on the record and its objects. A
@@ -1220,6 +1230,10 @@ def fhp_canonical_record(document, warn=None, context=None):
         raise ValueError(FHP_BAD_VERSION)
     if isinstance(value, str) and value not in FHP_KNOWN_CONTEXT_URLS:
         raise ValueError(f"unknown FHP JSON-LD context (nothing is fetched): {value}")
+    extension_keys = [key for key in document if key.startswith("x-")]
+    if extension_keys:
+        raise ValueError(
+            f"JSON-LD: extension fields are not permitted: {', '.join(extension_keys)}")
     if not fhp_is_canonical(document, context):
         raise ValueError(FHP_NOT_CANONICAL)
     fhp_validate_types(document)

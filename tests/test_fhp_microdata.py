@@ -375,6 +375,31 @@ class FHPMicrodataBindingTests(unittest.TestCase):
         self.assertTrue(same_json(
             fhp_microdata.read_page(fhp_microdata.write_page(record), SCHEMA), record))
 
+    def test_extension_fields_are_omitted_and_reported(self):
+        record = dict(self.minimal(), **{"x-source-note": "private extension",
+                                         "x-review": {"flag": True}})
+        warnings = []
+        page = fhp_microdata.write_page(record, warn=warnings.append)
+        self.assertNotIn('itemprop="x-source-note"', page)
+        self.assertNotIn('itemprop="x-review"', page)
+        self.assertEqual(
+            warnings,
+            ["microdata: extension fields were not emitted: x-source-note, x-review"])
+        self.assertIn("x-source-note", record)
+        with self.assertWarnsRegex(
+                UserWarning, "extension fields were not emitted: x-source-note, x-review"):
+            fhp_microdata.write_page(record)
+
+    def test_extension_fields_are_rejected(self):
+        page = fhp_microdata.write_page(self.minimal()).replace(
+            "</div>",
+            '<span itemprop="x-source-note" data-fhr-type="string">'
+            "private extension</span></div>", 1)
+        with self.assertRaisesRegex(
+                fhp_microdata.MicrodataError,
+                "extension fields are not permitted in microdata: x-source-note"):
+            fhp_microdata.read_page(page, SCHEMA)
+
     def test_false_is_a_value_not_absence(self):
         # FHP schemaVersion 1 defines no boolean property; the typed form keeps
         # a false value when one is added. The reader must not drop it.
