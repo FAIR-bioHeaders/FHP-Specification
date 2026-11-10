@@ -3,9 +3,21 @@
 FHR's output must stay validation-equivalent to the hand-written fhr.json;
 FHP's and FHGFF3's outputs are the published fhp.json and fhgff3.json
 (specs/006-protein-header D-01, specs/007-gff3-header D-01).
+
+Development-tree deviation (FHP-Specification#3): the FHP path follows the
+shared v0.5.0 generator byte-for-byte — schemaVersion enum with 1.1 and the
+top-level extension-field rules (docs/FORMAT.md R15). The FHR and FHGFF3 paths
+keep the pre-v0.5.0 shared generator's legacy behavior on purpose: this tree's
+inherited fhr.json/fhgff3.json compatibility copies still carry the FHR 2.0 and
+FHGFF3 1.0 constraint lines (open legacy core objects, no extension fields),
+and their contract bytes are not synchronized here until the Q2 decision in
+docs/DEVELOPMENT-TREE-PROPOSAL.md lands. When Q2 retires the legacy chain,
+restore generate() and generate_fhgff3() to apply_fhr_rules()/apply_fhgff3_rules()
+and synchronize the contracts from the shared repository in the same change.
 """
 
 import argparse
+import copy
 import json
 from pathlib import Path
 
@@ -13,15 +25,163 @@ from linkml.generators.jsonschemagen import JsonSchemaGenerator
 from linkml_runtime import SchemaView
 
 ROOT = Path(__file__).resolve().parent
+DIALECT = "https://json-schema.org/draft/2020-12/schema"
 # Core string slots whose exact length LinkML cannot express.
 EXACT_LENGTHS = {"checksum": 44, "seqcol_id": 32}
+# FHGFF3 genome link (specs/007-gff3-header research D-03). LinkML cannot say
+# "derivedFrom contains an item with these values", so the rule is added after
+# generation and reused for profiles that subclass FHGFF3.
+GENOME_LINK_DEFINITIONS = {
+    "AnnotatesGenome": {
+        "description": "A derivedFrom item that links the annotated FHR genome by checksum",
+        "type": "object",
+        "required": ["headerType", "relationship"],
+        "properties": {"headerType": {"const": "FHR"}, "relationship": {"const": "annotates"}},
+    },
+    "AnnotatesAny": {
+        "description": "A derivedFrom item with the relationship annotates",
+        "type": "object",
+        "required": ["relationship"],
+        "properties": {"relationship": {"const": "annotates"}},
+    },
+}
+GENOME_LINK_RULE = {
+    "anyOf": [
+        {"required": ["genomeReference"]},
+        {
+            "required": ["derivedFrom"],
+            "properties": {
+                "derivedFrom": {"contains": {"$ref": "#/$defs/AnnotatesGenome"}}
+            },
+        },
+    ],
+    "allOf": [
+        {
+            "not": {
+                "required": ["derivedFrom"],
+                "properties": {
+                    "derivedFrom": {
+                        "contains": {"$ref": "#/$defs/AnnotatesAny"},
+                        "minContains": 2,
+                    }
+                },
+            }
+        },
+        {
+            "properties": {
+                "derivedFrom": {
+                    "items": {
+                        "if": {"$ref": "#/$defs/AnnotatesAny"},
+                        "then": {"properties": {"headerType": {"const": "FHR"}}},
+                    }
+                }
+            }
+        },
+    ],
+}
+
+
+# Extension fields (docs/FORMAT.md R15, specs/015-extension-fields). LinkML cannot
+# express patternProperties, propertyNames or a conditional, so they are added to
+# each header type's root after generation. Nested objects stay closed.
+EXTENSION_PATTERN = "^x-[A-Za-z0-9][A-Za-z0-9_.-]*$"
+EXTENSION_FIELD = {
+    "description": (
+        "Extension field (docs/FORMAT.md R15): any value; it means nothing to the standard"
+    )
+}
+# Python's "$" also matches before a final line feed, ECMA-262's does not; no key
+# may contain one, so both dialects accept the same keys (research R-01).
+NO_LINE_FEED = {"not": {"pattern": "\n"}}
+# The first schemaVersion of each type's current major. A record that states it is
+# held to that minor, which has no extension fields (research R-02).
+FIRST_MINOR = {"FHR": "2.0", "FHP": "1.0", "FHGFF3": "1.0"}
+
+
+def extension_gate(version):
+    """The rule that a record stating ``version`` has no extension fields."""
+    return {
+        "description": (
+            f"A record that states schemaVersion {version} has no extension fields "
+            "(docs/SCHEMA-VERSIONS.md)"
+        ),
+        "if": {
+            "required": ["schemaVersion"],
+            "properties": {"schemaVersion": {"const": version}},
+        },
+        "then": {"propertyNames": {"not": {"pattern": "^x-"}}},
+    }
+
+
+def _nodes(generated, root_names):
+    """The schema root plus the named ``$defs`` entries, without duplicates."""
+    yield generated
+    definitions = generated.get("$defs", {})
+    for name in dict.fromkeys(root_names):
+        if name in definitions and definitions[name] is not generated:
+            yield definitions[name]
+
+
+def apply_common_rules(generated):
+    """Post-process every generated type: schemaVersion enum, exact lengths, dialect."""
+    # All nested objects are closed (v0.4). The published contract writes the
+    # schemaVersion restriction as an enum so later versions can be listed.
+    for node in (generated, *generated["$defs"].values()):
+        version = node.get("properties", {}).get("schemaVersion", {})
+        if "const" in version:
+            version["enum"] = [version.pop("const")]
+        # A trailing newline satisfies "$" in Python regexes; pin the exact length.
+        for name, length in EXACT_LENGTHS.items():
+            if name in node.get("properties", {}):
+                node["properties"][name].update(minLength=length, maxLength=length)
+    generated["$schema"] = DIALECT
+    return generated
+
+
+def apply_extension_rules(generated, header_type, *root_names):
+    """Allow top-level extension fields (R15) on the root and the named roots.
+
+    A record that states the type's first minor ``schemaVersion`` may not use them.
+    """
+    for node in _nodes(generated, root_names):
+        node["patternProperties"] = {EXTENSION_PATTERN: copy.deepcopy(EXTENSION_FIELD)}
+        node["propertyNames"] = copy.deepcopy(NO_LINE_FEED)
+        node.setdefault("allOf", []).append(extension_gate(FIRST_MINOR[header_type]))
+    return generated
+
+
+def apply_fhr_rules(generated, *root_names):
+    """LinkML emits a scalar type beside a heterogeneous union. Retain the union.
+
+    Also adds the extension-field rules (R15) to each root."""
+    for node in _nodes(generated, root_names):
+        properties = node.get("properties", {})
+        if "assemblySoftware" in properties:
+            properties["assemblySoftware"].pop("type", None)
+    return apply_extension_rules(generated, "FHR", *root_names)
+
+
+def apply_fhgff3_rules(generated, *root_names):
+    """Add the genome-link rule and the extension-field rules (R15) to the FHGFF3
+    root and any profile subclass root."""
+    definitions = generated.setdefault("$defs", {})
+    for name, definition in GENOME_LINK_DEFINITIONS.items():
+        definitions[name] = copy.deepcopy(definition)
+    for node in _nodes(generated, root_names):
+        node.update(copy.deepcopy(GENOME_LINK_RULE))
+    return apply_extension_rules(generated, "FHGFF3", *root_names)
+
+
+def apply_fhp_rules(generated, *root_names):
+    """Add the extension-field rules (R15) to the FHP root and any profile subclass root."""
+    return apply_extension_rules(generated, "FHP", *root_names)
 
 
 def generate_from(schema_path, legacy_open=True):
     """Generate JSON Schema for any LinkML schema that imports schemas/core.yaml.
 
-    ``legacy_open`` keeps the core objects that FHR schemaVersion 1 leaves open
-    open; new header types close them.
+    ``legacy_open`` keeps the core objects that FHR schemaVersion 1 leaves open;
+    the dev-tree FHR compatibility copy needs it (see the module docstring).
     """
     view = SchemaView(str(schema_path))
     generated = json.loads(
@@ -31,20 +191,21 @@ def generate_from(schema_path, legacy_open=True):
             not_closed=False,
         ).serialize()
     )
-    # Legacy FHR nested objects in the core are open; newer objects stay closed.
     if legacy_open:
+        # Legacy FHR nested objects in the core are open; newer objects stay closed.
         for name in ("Taxon", "Author", "AccessionID"):
             generated["$defs"].get(name, {}).pop("additionalProperties", None)
-    # A trailing newline satisfies "$" in Python regexes; pin the exact length.
-    for node in (generated, *generated["$defs"].values()):
-        for name, length in EXACT_LENGTHS.items():
-            if name in node.get("properties", {}):
-                node["properties"][name].update(minLength=length, maxLength=length)
-    generated["$schema"] = "https://json-schema.org/draft/2020-12/schema"
-    return generated
+    return apply_common_rules(generated)
 
 
 def generate():
+    """The dev-tree FHR compatibility generator (pre-v0.5.0 shared behavior).
+
+    Unlike the shared v0.5.0 apply_fhr_rules() path, this keeps the legacy open
+    VitalStats, the assemblySoftware heterogeneous union and emits no
+    extension-field rules, so the output stays validation-equivalent to this
+    tree's pinned FHR 2.0 compatibility copy (tests/test_linkml.py).
+    """
     generated = generate_from(ROOT / "fhr_linkml.yml")
     generated["$defs"]["VitalStats"].pop("additionalProperties", None)
     # LinkML emits a scalar type beside a heterogeneous union. Retain the union.
@@ -69,72 +230,33 @@ def _generate_type(linkml, name, published):
     # Each header type versions its schema; enum lets later versions be listed.
     for node in (generated, generated["$defs"][name]):
         version = node["properties"]["schemaVersion"]
-        version["enum"] = [version.pop("const")]
+        if "const" in version:  # generate_from already converts it from v0.4
+            version["enum"] = [version.pop("const")]
     return generated
 
 
 def generate_fhp():
     """The published FHP schema (specs/006-protein-header contracts/fhp-schema.md)."""
-    return _generate_type("fhp_linkml.yml", "FHP", "fhp.json")
+    return apply_fhp_rules(_generate_type("fhp_linkml.yml", "FHP", "fhp.json"), "FHP")
 
 
 def generate_fhgff3():
-    """The published FHGFF3 schema (specs/007-gff3-header contracts/fhgff3-schema.md).
+    """The dev-tree FHGFF3 compatibility generator (pre-v0.5.0 shared behavior).
 
     LinkML cannot say "derivedFrom contains an item with these values", so the
     genome-link rule (research D-03) is added here: a genomeReference or an
     annotates link to an FHR genome is required, at most one derivedFrom item
-    annotates, and an annotates item must name an FHR parent.
+    annotates, and an annotates item must name an FHR parent. Unlike the shared
+    v0.5.0 apply_fhgff3_rules() path, this emits no extension-field rules, so
+    the output stays validation-equivalent to this tree's pinned FHGFF3 1.0
+    compatibility copy (see the module docstring and Q2).
     """
     generated = _generate_type("fhgff3_linkml.yml", "FHGFF3", "fhgff3.json")
-    generated["$defs"]["AnnotatesGenome"] = {
-        "description": "A derivedFrom item that links the annotated FHR genome by checksum",
-        "type": "object",
-        "required": ["headerType", "relationship"],
-        "properties": {"headerType": {"const": "FHR"}, "relationship": {"const": "annotates"}},
-    }
-    generated["$defs"]["AnnotatesAny"] = {
-        "description": "A derivedFrom item with the relationship annotates",
-        "type": "object",
-        "required": ["relationship"],
-        "properties": {"relationship": {"const": "annotates"}},
-    }
-    rule = {
-        "anyOf": [
-            {"required": ["genomeReference"]},
-            {
-                "required": ["derivedFrom"],
-                "properties": {
-                    "derivedFrom": {"contains": {"$ref": "#/$defs/AnnotatesGenome"}}
-                },
-            },
-        ],
-        "allOf": [
-            {
-                "not": {
-                    "required": ["derivedFrom"],
-                    "properties": {
-                        "derivedFrom": {
-                            "contains": {"$ref": "#/$defs/AnnotatesAny"},
-                            "minContains": 2,
-                        }
-                    },
-                }
-            },
-            {
-                "properties": {
-                    "derivedFrom": {
-                        "items": {
-                            "if": {"$ref": "#/$defs/AnnotatesAny"},
-                            "then": {"properties": {"headerType": {"const": "FHR"}}},
-                        }
-                    }
-                }
-            },
-        ],
-    }
+    definitions = generated.setdefault("$defs", {})
+    for name, definition in GENOME_LINK_DEFINITIONS.items():
+        definitions[name] = copy.deepcopy(definition)
     for node in (generated, generated["$defs"]["FHGFF3"]):
-        node.update(rule)
+        node.update(copy.deepcopy(GENOME_LINK_RULE))
     return generated
 
 
