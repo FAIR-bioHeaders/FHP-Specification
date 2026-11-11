@@ -1,16 +1,24 @@
 # The FHP development tree — proposal (issue #2)
 
-**Status: proposal.** This document is the canonical-tree and
-schema-ownership proposal for
+**Status: adopted and implemented; superseded as the current record.** This
+document is the canonical-tree and schema-ownership proposal for
 [FHP-Specification#2](https://github.com/FAIR-bioHeaders/FHP-Specification/issues/2)
 (federation tracker
 [FAIR-bioHeaders-Specification#158](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/issues/158),
 migration record
 [#107](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/issues/107)).
-It changes no schema bytes. On adoption it becomes `docs/DEVELOPMENT-TREE.md`
-(the FHR-Specification convention, enforced there by
-`scripts/check_development_tree.py`) with a companion check script wired for
-issue #3.
+It changed no schema bytes, was merged as
+[#21](https://github.com/FAIR-bioHeaders/FHP-Specification/pull/21) and
+implemented for the FHP line by issue #3
+([#23](https://github.com/FAIR-bioHeaders/FHP-Specification/pull/23), commit
+`cc0334b`, 2026-11-10). The current
+classification lives in [DEVELOPMENT-TREE.md](DEVELOPMENT-TREE.md); this file
+is retained as the dated 2026-11-10 audit record, and its path is cited by the
+digest-pinned provenance header in `schemas/core-v0.5.yaml` and by
+`provenance.json`, so it is not renamed or deleted. Sections below are frozen
+as proposed: §2c/§5 describe the sync **as planned** — what has since landed,
+what was bounded and deferred, and the still-open Q2/Q4/Q6/Q7 are recorded in
+[DEVELOPMENT-TREE.md](DEVELOPMENT-TREE.md).
 
 Audited 2026-11-10 against:
 
