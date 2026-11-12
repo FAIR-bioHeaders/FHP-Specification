@@ -4,16 +4,22 @@ FHR's output must stay validation-equivalent to the hand-written fhr.json;
 FHP's and FHGFF3's outputs are the published fhp.json and fhgff3.json
 (specs/006-protein-header D-01, specs/007-gff3-header D-01).
 
-Development-tree deviation (FHP-Specification#3): the FHP path follows the
-shared v0.5.0 generator byte-for-byte — schemaVersion enum with 1.1 and the
+Development-tree state (FHP-Specification#3, frozen by the Q2 decision of
+FHP-Specification#2 recorded 2026-11-12): the FHP path follows the shared
+v0.5.0 generator byte-for-byte — schemaVersion enum with 1.1 and the
 top-level extension-field rules (docs/FORMAT.md R15). The FHR and FHGFF3 paths
 keep the pre-v0.5.0 shared generator's legacy behavior on purpose: this tree's
-inherited fhr.json/fhgff3.json compatibility copies still carry the FHR 2.0 and
+inherited fhr.json/fhgff3.json compatibility copies carry the FHR 2.0 and
 FHGFF3 1.0 constraint lines (open legacy core objects, no extension fields),
-and their contract bytes are not synchronized here until the Q2 decision in
-docs/DEVELOPMENT-TREE-PROPOSAL.md lands. When Q2 retires the legacy chain,
-restore generate() and generate_fhgff3() to apply_fhr_rules()/apply_fhgff3_rules()
-and synchronize the contracts from the shared repository in the same change.
+and Q2 froze them — with root schemas/core.yaml at its v0.3-era bytes — as
+pinned compatibility fixtures (provenance.json "pinned", verified by
+scripts/check_shared_parity.py). FHP CI generates and drift-checks fhp only;
+these two generators remain what tests/test_linkml.py, tests/test_core_schema.py
+and tests/test_fhgff3_schema.py check the frozen fixtures against. Do not
+"restore" generate()/generate_fhgff3() to the shared apply_fhr_rules()/
+apply_fhgff3_rules(): synchronizing the inherited contracts would diverge this
+tree's frozen copies from their recorded historical bytes, which is a
+deliberate resync decision, not an incidental cleanup.
 """
 
 import argparse

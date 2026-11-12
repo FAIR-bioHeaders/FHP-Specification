@@ -22,9 +22,10 @@ jobs:
           python-version: '3.13'
       - name: Test drift detection
         run: python -m unittest discover -s tests -p test_schema_drift.py -v
-      - name: Check published schema against its review baseline
-        run: python scripts/check_schema_drift.py
+      # The Q2 decision (FHP-Specification#2, 2026-11-12): drift-check the FHP
+      # schema only. The inherited FHR/FHGFF3 schema copies and their review
+      # baselines (.github/schema-baseline.json, schema-baseline-fhgff3.json)
+      # are frozen compatibility artifacts; their bytes are asserted by
+      # scripts/check_shared_parity.py against provenance.json.
       - name: Check the FHP schema against its review baseline
         run: python scripts/check_schema_drift.py --schema fhp.json --baseline .github/schema-baseline-fhp.json
-      - name: Check the FHGFF3 schema against its review baseline
-        run: python scripts/check_schema_drift.py --schema fhgff3.json --baseline .github/schema-baseline-fhgff3.json
