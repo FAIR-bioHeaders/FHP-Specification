@@ -31,7 +31,6 @@ import hashlib
 import json
 from pathlib import Path
 import re
-import shutil
 import struct
 import sys
 import zlib
@@ -957,9 +956,7 @@ def write(output):
     self_check()
     for status in ("valid", "invalid"):
         directory = output / status
-        if directory.exists():
-            shutil.rmtree(directory)
-        directory.mkdir(parents=True)
+        directory.mkdir(parents=True, exist_ok=True)
     for entry in VALID + INVALID:
         (output / path_for(entry)).write_bytes(entry["data"])
     text = json.dumps(manifest(), indent=2, ensure_ascii=True) + "\n"

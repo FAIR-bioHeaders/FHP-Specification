@@ -20,6 +20,7 @@ import re
 import subprocess
 import sys
 import unittest
+from unittest import mock
 
 import yaml
 
@@ -198,9 +199,18 @@ class ContextTests(unittest.TestCase):
             cls.keys[name] = object_properties(cls.schema["properties"][path[0]], cls.schema)
 
     def test_generated_files_are_current(self):
-        result = subprocess.run([sys.executable, str(ROOT / "scripts/make_jsonld.py"), "--check"],
+        result = subprocess.run([sys.executable, str(ROOT / "scripts/make_jsonld.py"),
+                                 "--check", "--fhp"],
                                 capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_fhp_examples_check_excludes_frozen_fhr_outputs(self):
+        with mock.patch.object(make_jsonld, "check", return_value=0) as checked:
+            self.assertEqual(make_jsonld.main(["--fhp", "--examples", "--check"]), 0)
+        outputs = checked.call_args.args[0]
+        self.assertTrue(outputs)
+        self.assertTrue(all(path.is_relative_to(ROOT / "examples" / "fhp")
+                            for path in outputs))
 
     def test_header_prefixes_and_no_export_terms(self):
         self.assertEqual(list(self.document), ["@context"])

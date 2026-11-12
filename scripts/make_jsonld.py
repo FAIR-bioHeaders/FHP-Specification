@@ -1631,8 +1631,9 @@ def main(argv=None):
             subset = schemaorg_subset(args.schemaorg_subset)
             outputs = {SCHEMAORG_SUBSET: json.dumps(subset, indent=2) + "\n"}
         elif args.examples:
-            outputs = {**example_outputs(load_context()), **export_outputs(),
-                       **fhp_example_outputs()}
+            outputs = (fhp_example_outputs() if args.fhp else
+                       {**example_outputs(load_context()), **export_outputs(),
+                        **fhp_example_outputs()})
         else:
             outputs = generate(fhp_only=args.fhp)
     except ValueError as error:

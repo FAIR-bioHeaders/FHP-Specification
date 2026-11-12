@@ -54,6 +54,20 @@ class ConformanceTests(unittest.TestCase):
                           for path in output.rglob("*") if path.is_file()} for output in outputs)
         self.assertEqual(first, second)
 
+    def test_generator_preserves_legacy_family_files(self):
+        output = self.root / "conformance"
+        legacy = {
+            output / "valid/example.fhr.jsonld": b"frozen JSON-LD\n",
+            output / "invalid/example.fhr.gfa": b"frozen GFA\n",
+        }
+        for path, data in legacy.items():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+        result = run(ROOT / "scripts/make_conformance.py", "--output", output)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for path, data in legacy.items():
+            self.assertEqual(path.read_bytes(), data)
+
     def test_modified_vector_is_reported(self):
         copy = self.copy_vectors()
         vector = copy / "valid/fasta-lf.fhr.fasta"
@@ -198,6 +212,40 @@ class ConformanceTests(unittest.TestCase):
         self.assertNotIn("fasta-lf:", result.stderr)
         self.assertNotIn("fhp-fasta-lf:", result.stderr)
 
+    def test_converter_rejection_matches_declared_outcome(self):
+        bin_directory = self.root / "bin"
+        bin_directory.mkdir()
+        vectors = {Path(vector["file"]).name: vector["expected"]
+                   for vector in self.manifest["vectors"]}
+        target = "fhp-fasta-schema-release-without-type.fhp.fasta"
+
+        def install(outcome):
+            body = (
+                f"#!{sys.executable}\nimport json, os, sys\n"
+                f"vectors = {vectors!r}\n"
+                f"if os.path.basename(sys.argv[1]) == {target!r}:\n"
+                f"    print({outcome!r}, file=sys.stderr)\n"
+                "    raise SystemExit(1)\n"
+                "raise SystemExit(0 if vectors[os.path.basename(sys.argv[1])] == 'valid' else 1)\n"
+            )
+            for name in ("fhr-fasta-validate", "fhr-gfa-validate", "fhr-convert"):
+                script = bin_directory / name
+                script.write_text(body)
+                script.chmod(0o755)
+
+        install("schema validation failed")
+        wrong = self.check("--skip-regeneration", "--require-format", "fhp-fasta",
+                           "--converter", bin_directory)
+        self.assertEqual(wrong.returncode, 1)
+        self.assertIn("fhp-fasta-schema-release-without-type: converter rejected with "
+                      "schema validation failed; expected outcome unsupported-version",
+                      wrong.stderr)
+
+        install("FHP: unsupported schema version: https://example.org/fhp/v0.3.1")
+        correct = self.check("--skip-regeneration", "--require-format", "fhp-fasta",
+                             "--converter", bin_directory)
+        self.assertEqual(correct.returncode, 0, correct.stderr)
+
     def test_converter_without_a_format_is_skipped_unless_required(self):
         # The skip/require mechanism, exercised on a synthetic tree: the
         # FHP-owned manifest holds only FASTA-container vectors, so a fake
@@ -220,6 +268,9 @@ class ConformanceTests(unittest.TestCase):
             f"#!{sys.executable}\nimport json, sys\n"
             f"vectors = {{v.rsplit('/', 1)[-1]: m for v, m in json.loads({all_vectors!r}).items()}}\n"
             "vector = vectors[sys.argv[1].rsplit('/', 1)[-1]]\n"
+            "if vector['id'] == 'fhp-fasta-schema-release-without-type':\n"
+            "    print('FHP: unsupported schema version', file=sys.stderr)\n"
+            "    raise SystemExit(1)\n"
             "if vector['format'] == 'jsonld':\n"
             "    print('FHR: Unsupported file extension: ' + sys.argv[1], file=sys.stderr)\n"
             "    raise SystemExit(1)\n"

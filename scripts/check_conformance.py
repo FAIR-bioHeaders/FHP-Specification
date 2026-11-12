@@ -334,6 +334,9 @@ def same_json(left, right):
 
 
 UNSUPPORTED = "Unsupported file extension"
+RESULT_MARKERS = {
+    "unsupported-version": ("unsupported-version", "unsupported schema version"),
+}
 
 
 def check_converter(conformance, manifest, location, skip=(), require=(), unsupported=None):
@@ -385,6 +388,14 @@ def check_converter(conformance, manifest, location, skip=(), require=(), unsupp
             outcome = "accepted" if accepted else f"rejected ({detail})"
             expected = vector["expected"] + (f", {vector['rule']}" if "rule" in vector else "")
             problems.append(f"{vector['id']}: converter {outcome}; expected {expected}")
+        elif not accepted and vector.get("result"):
+            output = (result.stderr + result.stdout).casefold()
+            markers = RESULT_MARKERS.get(vector["result"], (vector["result"],))
+            if not any(marker.casefold() in output for marker in markers):
+                detail = (result.stderr or result.stdout).strip().splitlines()
+                detail = detail[-1] if detail else f"exit {result.returncode}"
+                problems.append(f"{vector['id']}: converter rejected with {detail}; "
+                                f"expected outcome {vector['result']}")
         elif extracted is not None and not same_json(extracted, vector["metadata"]):
             differences = sorted(
                 key for key in extracted.keys() | vector["metadata"].keys()
