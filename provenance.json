@@ -1,6 +1,6 @@
 {
   "provenanceVersion": 1,
-  "description": "Machine-readable pinning of the FAIR-bioHeaders-Specification copies this FHP development repository serves (FHP-Specification#3; docs/DEVELOPMENT-TREE-PROPOSAL.md sections 3 and 5 PR-A, adapted to the bounded issue-#3 sync). Every entry under 'copied' is a byte-for-byte copy of the named path at 'source.commit' (or the entry's own 'commit' override), except entries with an 'adjustment', whose local bytes are the upstream bytes with one machine-checkable local transformation applied (import-retarget: the shared 'schemas/core' model import line is replaced by 'schemas/core-v0.5', per proposal Q3; provenance-header: the vendored core snapshot prepends an exact comment header, following schemas/core-v0.4.yaml). scripts/check_shared_parity.py verifies the local digests and, with --upstream, the pinned commits' bytes and the adjustments themselves. 'imports' records digests of shared files this tree references but intentionally does not vendor at these bytes. 'legacy' lists the inherited pre-v0.5.0 family state frozen by the proposal's Q2 decision; 'owned' lists paths canonical in this repository (proposal section 2a) or identity/history files. Every file under 'strictDirs' must be classified as copied, legacy or owned; an unclassified new path fails the parity check. A deliberate resync re-runs scripts/make_provenance.py against the new pinned commit.",
+  "description": "Machine-readable pinning of the FAIR-bioHeaders-Specification copies this FHP development repository serves (FHP-Specification#3; the Q2/Q4 decisions of FHP-Specification#2 recorded 2026-11-12 in docs/DEVELOPMENT-TREE.md). Every entry under 'copied' is a byte-for-byte copy of the named path at 'source.commit' (or the entry's own 'commit' override), except entries with an 'adjustment', whose local bytes are the upstream bytes with one machine-checkable local transformation applied (import-retarget: the shared 'schemas/core' model import line is replaced by 'schemas/core-v0.5', per proposal Q3; provenance-header: the vendored core snapshot prepends an exact comment header, following schemas/core-v0.4.yaml). 'copied' covers the FHP-owned conformance package's vector bytes: every fhp-fasta vector of the pinned v0.5.0 line (Q4), so the deferred additions and the fhp-fasta-rich byte update joined it when the package was wired. scripts/check_shared_parity.py verifies the local digests and, with --upstream, the pinned commits' bytes and the adjustments themselves. 'imports' records digests of shared files this tree references but intentionally does not vendor at these bytes (the family conformance manifest it runs from the pinned tree, and the current v0.5.0 copies of the frozen legacy docs and contracts). 'legacy' lists the inherited pre-v0.5.0 family state frozen by the Q2 decision; 'owned' lists paths canonical in this repository (proposal section 2a), the FHP-owned conformance package (Q4: conformance/manifest.json, the FHP-owned fhp-fasta-author-bad-name-type vector, and the package's generator/checker/tests) or identity/history files. Every file under 'strictDirs' must be classified as copied, legacy or owned; an unclassified new path fails the parity check. A deliberate resync re-runs scripts/make_provenance.py against the new pinned commit.",
   "source": {
     "repository": "FAIR-bioHeaders/FAIR-bioHeaders-Specification",
     "url": "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification",
@@ -13,7 +13,7 @@
   },
   "liveMain": {
     "auditCommit": "c6ad686711b75059dad8a3fd3f95f6b65c7d7121",
-    "note": "Raw shared origin/main is the current-contract link, not a byte pin (proposal section 3). Re-audited 2026-11-11 at c6ad686: origin/main equals the v0.5.0 pin for every copied path except examples/fhp/rich-predicted.fhp.yaml, which this pin takes from companion fix e1e5998 (shared #201, identical to origin/main), and docs/FHP.md, corrected post-tag by 29034bf (shared #218: the F-01 bullet now names this repository's JSON-LD/microdata bindings and the fair-bioheaders 0.8.2 toolkit reader/writer). RE-PIN TASK for docs/FHP.md: re-copy the bytes from the pinned commit and update this entry's size/sha256 at the next deliberate resync (scripts/make_provenance.py against the new pinned commit), per the note in this file's description. A per-entry commit override now would contradict the shared-parity workflow's regeneration step, which requires copied[] to equal exactly what the generator produces from source.commit plus the hard-wired companion-file set (also asserted by tests/test_make_provenance.py). Legacy family docs on origin/main have also moved with the deferred package (docs/FHGFF3.md #214/#219, docs/MICRODATA.md #217). The shared-parity workflow re-runs the pinned tree's own suite, so post-tag drift upstream is caught there."
+    "note": "Raw shared origin/main is the current-contract link, not a byte pin (proposal section 3). Re-audited 2026-11-12 at origin/main 692cffe (FHP-Specification Q4 wiring): origin/main equals the v0.5.0 pin for every copied path except examples/fhp/rich-predicted.fhp.yaml, which this pin takes from companion fix e1e5998 (shared #201, identical to origin/main), and docs/FHP.md, corrected post-tag by 29034bf (shared #218: the F-01 bullet now names this repository's JSON-LD/microdata bindings and the fair-bioheaders 0.8.2 toolkit reader/writer). docs/FORMAT.md and all 31 fhp-fasta vectors are byte-identical between the pin and 692cffe. RE-PIN TASK for docs/FHP.md: re-copy the bytes from the pinned commit and update this entry's size/sha256 at the next deliberate resync (scripts/make_provenance.py against the new pinned commit). A per-entry commit override now would contradict the shared-parity workflow's regeneration step, which requires copied[] to equal exactly what the generator produces from source.commit plus the hard-wired companion-file set (also asserted by tests/test_make_provenance.py). Legacy family docs on origin/main have also moved with the deferred package (docs/FHGFF3.md #214/#219, docs/MICRODATA.md #217). The shared-parity workflow re-runs the pinned tree's own suite, so post-tag drift upstream is caught there."
   },
   "fhpContract": {
     "schemaVersion": "1.1",
@@ -60,6 +60,24 @@
       "sha256": "afa714048d68e3efc78d7092ccaf1fb0ba26d7d16056b67bdd4d7682ac1f9763"
     },
     {
+      "local": "conformance/invalid/fhp-fasta-extension-nested.fhp.fasta",
+      "upstream": "conformance/invalid/fhp-fasta-extension-nested.fhp.fasta",
+      "size": 802,
+      "sha256": "c4a4b022655b39f1391246f5f74f5760cacdae1cf062c4a30d9521d8144edf0b"
+    },
+    {
+      "local": "conformance/invalid/fhp-fasta-extension-older-release.fhp.fasta",
+      "upstream": "conformance/invalid/fhp-fasta-extension-older-release.fhp.fasta",
+      "size": 800,
+      "sha256": "e7e3834ff8cb1f7ab7c31871a3af958a2bb2d45928450a565c1cfee7b7d4bc5d"
+    },
+    {
+      "local": "conformance/invalid/fhp-fasta-extension-older-version.fhp.fasta",
+      "upstream": "conformance/invalid/fhp-fasta-extension-older-version.fhp.fasta",
+      "size": 800,
+      "sha256": "72d68328fd39e93995af6fccfc866d1153e3b12f9a9d7b0c641450bc861d4d65"
+    },
+    {
       "local": "conformance/invalid/fhp-fasta-genome-key.fhp.fasta",
       "upstream": "conformance/invalid/fhp-fasta-genome-key.fhp.fasta",
       "size": 797,
@@ -76,6 +94,12 @@
       "upstream": "conformance/invalid/fhp-fasta-missing-source-type.fhp.fasta",
       "size": 746,
       "sha256": "80a99284f28d51e68c2226d12e86a61b0e6070c1d85441cbe189f1c8a667785c"
+    },
+    {
+      "local": "conformance/invalid/fhp-fasta-schema-release-without-type.fhp.fasta",
+      "upstream": "conformance/invalid/fhp-fasta-schema-release-without-type.fhp.fasta",
+      "size": 770,
+      "sha256": "c1ec4a9054d711700522c8a3e81a216668e570f38329b1a99c00aacfa7bc6af0"
     },
     {
       "local": "conformance/invalid/fhp-fasta-sequence-tampered.fhp.fasta",
@@ -132,6 +156,18 @@
       "sha256": "8c01bc0688e1f90588ff0ce68ebbe7dbc3357c09370b578fda3f032741a08cbb"
     },
     {
+      "local": "conformance/valid/fhp-fasta-escaped-record-markers.fhp.fasta",
+      "upstream": "conformance/valid/fhp-fasta-escaped-record-markers.fhp.fasta",
+      "size": 750,
+      "sha256": "eec298a8c7ec120b46e03d17f72186e39a3757029745002e2f8bb34fa294fa0a"
+    },
+    {
+      "local": "conformance/valid/fhp-fasta-extension-fields.fhp.fasta",
+      "upstream": "conformance/valid/fhp-fasta-extension-fields.fhp.fasta",
+      "size": 824,
+      "sha256": "fabd633b12c125865f1c1b1d6a241566a9c6b88c848c3a0e5015407ea5858940"
+    },
+    {
       "local": "conformance/valid/fhp-fasta-gzip.fhp.fasta.gz",
       "upstream": "conformance/valid/fhp-fasta-gzip.fhp.fasta.gz",
       "size": 793,
@@ -156,10 +192,34 @@
       "sha256": "dc042803aa0bda9826782889a90436c61a4f5bcde9665d2f7bb1d3226268751f"
     },
     {
+      "local": "conformance/valid/fhp-fasta-rich.fhp.fasta",
+      "upstream": "conformance/valid/fhp-fasta-rich.fhp.fasta",
+      "size": 1244,
+      "sha256": "bdbf9375cb7eb14c2f1508732c2c59851e9d075f6b2d267c6994b5825deb0d92"
+    },
+    {
+      "local": "conformance/valid/fhp-fasta-schema-canonical-raw-main.fhp.fasta",
+      "upstream": "conformance/valid/fhp-fasta-schema-canonical-raw-main.fhp.fasta",
+      "size": 820,
+      "sha256": "d7668f4d7c4cc014f961e93fbffede691a3981c69b20ef2a75459db071bfe92d"
+    },
+    {
+      "local": "conformance/valid/fhp-fasta-schema-raw-tag.fhp.fasta",
+      "upstream": "conformance/valid/fhp-fasta-schema-raw-tag.fhp.fasta",
+      "size": 810,
+      "sha256": "cd6ca7f9627b6ed46b88b5e2d3673477ca4bb016335b4ad629af9751a8f6aad5"
+    },
+    {
       "local": "docs/FHP.md",
       "upstream": "docs/FHP.md",
       "size": 7366,
       "sha256": "a328ad7f544e4fe2757e1a47787b16280ad069f6f94f12f46c1986de46481e9b"
+    },
+    {
+      "local": "docs/FORMAT.md",
+      "upstream": "docs/FORMAT.md",
+      "size": 16237,
+      "sha256": "482f3553963ca707c1ac2313df167abfc3f6cd100c09582c313ec9b3c5eea5e8"
     },
     {
       "local": "docs/SCHEMA-VERSIONS.md",
@@ -263,11 +323,6 @@
   ],
   "imports": [
     {
-      "upstream": "docs/FORMAT.md",
-      "sha256": "482f3553963ca707c1ac2313df167abfc3f6cd100c09582c313ec9b3c5eea5e8",
-      "note": "recorded for reference; this tree keeps the pre-v0.5.0 copy under legacy (Q2-gated), not vendored at these bytes"
-    },
-    {
       "upstream": "docs/JSONLD.md",
       "sha256": "f90591ba6df73db9f0a59966120cf93fc3c53333a4f32fc75749b381a6ebca15",
       "note": "recorded for reference; this tree keeps the pre-v0.5.0 copy under legacy (Q2-gated), not vendored at these bytes"
@@ -285,7 +340,7 @@
     {
       "upstream": "conformance/manifest.json",
       "sha256": "8ab8f7f4ee592573650973d30dc3e422c22b62b08c6b0b9f7839e12c5e4169ea",
-      "note": "recorded for reference; this tree keeps the pre-v0.5.0 copy under legacy (Q2-gated), not vendored at these bytes"
+      "note": "the complete family manifest; this tree owns its own FHP package manifest (Q4) and runs the family one from the pinned shared tree via .github/workflows/shared-parity.yml"
     },
     {
       "upstream": "fhr.json",
@@ -346,10 +401,6 @@
       "note": "generated by this tree's scripts/make_jsonld.py from the legacy chain"
     },
     {
-      "path": "docs/FORMAT.md",
-      "note": "pre-v0.5.0 rules copy; the published FORMAT.md carries the [R11]-[R15] rule tokens that must byte-match the shared conformance/manifest.json rule list, so it syncs only with the full conformance package (see deferred)"
-    },
-    {
       "path": "docs/JSONLD.md",
       "note": "pre-v0.5.0 (no [J9]); part of the deferred package"
     },
@@ -378,18 +429,6 @@
       "note": "legacy family doc (Q2)"
     },
     {
-      "path": "scripts/check_conformance.py",
-      "note": "pre-v0.5.0 checker, coherent with the local manifest and rule docs; see deferred"
-    },
-    {
-      "path": "scripts/make_conformance.py",
-      "note": "pre-v0.5.0 generator, coherent with the local vector tree (see deferred)"
-    },
-    {
-      "path": "tests/test_conformance.py",
-      "note": "pre-v0.5.0 suite for the local tree (see deferred)"
-    },
-    {
       "path": "tests/test_core_schema.py",
       "note": "tests the legacy root core (Q2)"
     },
@@ -403,7 +442,7 @@
     },
     {
       "path": "conformance/",
-      "note": "manifest.json, README.md and every vector except the pinned fhp-fasta copies listed under copied[]: pre-v0.5.0 family state, coherent with the legacy scripts (see deferred)"
+      "note": "vector files except the pinned fhp-fasta copies listed under copied[]: the pre-v0.5.0 family generation state. The FHP-owned manifest (Q4) still reads the FASTA-container fasta-*.fhr.fasta vectors — the shared R rules on the FASTA header reader this package exercises — and regenerates them locally; the non-FASTA family vector files (gfa, microdata, jsonld, fhgff3) are historical: the complete family manifest runs from the pinned shared tree via .github/workflows/shared-parity.yml"
     },
     {
       "path": "examples/example.fhr.fasta",
@@ -650,62 +689,26 @@
     {
       "path": "examples/fhp/invalid-unsupported-version.microdata.fhp.html",
       "note": "FHP negative fixture"
+    },
+    {
+      "path": "conformance/manifest.json",
+      "note": "FHP-owned manifest (Q4): every fhp-fasta vector of the pinned v0.5.0 line, the FHP-owned fhp-fasta-author-bad-name-type vector, and the shared FASTA-container vectors; generated by scripts/make_conformance.py; the family manifest is not maintained here"
+    },
+    {
+      "path": "conformance/invalid/fhp-fasta-author-bad-name-type.fhp.fasta",
+      "note": "FHP-owned vector: this repository's local addition to the fhp-fasta set, absent from the shared manifest; still rejected by fhp.json 1.1 and the fair-bioheaders 0.9.0 reader"
+    },
+    {
+      "path": "scripts/make_conformance.py",
+      "note": "FHP-owned conformance package generator (Q4): the shared v0.5.0 fhp-fasta builders plus this tree's FASTA-container generation"
+    },
+    {
+      "path": "scripts/check_conformance.py",
+      "note": "FHP-owned conformance package checker (Q4)"
+    },
+    {
+      "path": "tests/test_conformance.py",
+      "note": "FHP-owned conformance package tests (Q4)"
     }
-  ],
-  "deferred": {
-    "package": "conformance/manifest.json + the conformance vector tree + scripts/check_conformance.py + scripts/make_conformance.py + tests/test_conformance.py + docs/FORMAT.md + docs/JSONLD.md + docs/MICRODATA.md + docs/FHGFF3.md + the v0.5.0-era jsonld/fhr.* inputs + shared git tags",
-    "reason": [
-      "check_manifest requires the manifest's rule list to equal the rule tokens extracted from docs/FORMAT.md, docs/MICRODATA.md, docs/JSONLD.md, docs/FHP.md and docs/FHGFF3.md; the v0.5.0 manifest (40 rules incl. R11-R15, J9, M5, G1 grammar, V1-V6) therefore cannot coexist with the frozen pre-v0.5.0 docs, and reducing the manifest locally would create a second divergent manifest, which the issue #3 acceptance forbids",
-      "the regeneration check rebuilds every vector, including jsonld vectors that embed the v0.5.0-era FHR context: byte parity requires the shared-era jsonld/fhr.* copies and the v0.4-era shared make_jsonld.py writer, both excluded from this PR by the bounded issue-#3 scope",
-      "the --schema path resolves schema-selection vectors (V1-V6) against FHR 2.1-era contracts and the shared repository's git tags; this tree freezes fhr.json at the pre-v0.4 lineage and has no shared release tags"
-    ],
-    "consequence": "the 8 new fhp-fasta R15/V vectors and the fhp-fasta-rich byte update are validated from their single pinned source by the shared-parity workflow (the upstream tree's own check_conformance.py with the released toolkit), not by copies in this tree; local fhp-fasta coverage stays at the vectors already byte-identical to v0.5.0",
-    "vectors": [
-      {
-        "upstream": "conformance/invalid/fhp-fasta-extension-nested.fhp.fasta",
-        "v050Sha256": "c4a4b022655b39f1391246f5f74f5760cacdae1cf062c4a30d9521d8144edf0b",
-        "state": "not present locally (new in the v0.5.0 manifest)"
-      },
-      {
-        "upstream": "conformance/invalid/fhp-fasta-extension-older-release.fhp.fasta",
-        "v050Sha256": "e7e3834ff8cb1f7ab7c31871a3af958a2bb2d45928450a565c1cfee7b7d4bc5d",
-        "state": "not present locally (new in the v0.5.0 manifest)"
-      },
-      {
-        "upstream": "conformance/invalid/fhp-fasta-extension-older-version.fhp.fasta",
-        "v050Sha256": "72d68328fd39e93995af6fccfc866d1153e3b12f9a9d7b0c641450bc861d4d65",
-        "state": "not present locally (new in the v0.5.0 manifest)"
-      },
-      {
-        "upstream": "conformance/invalid/fhp-fasta-schema-release-without-type.fhp.fasta",
-        "v050Sha256": "c1ec4a9054d711700522c8a3e81a216668e570f38329b1a99c00aacfa7bc6af0",
-        "state": "not present locally (new in the v0.5.0 manifest)"
-      },
-      {
-        "upstream": "conformance/valid/fhp-fasta-escaped-record-markers.fhp.fasta",
-        "v050Sha256": "eec298a8c7ec120b46e03d17f72186e39a3757029745002e2f8bb34fa294fa0a",
-        "state": "not present locally (new in the v0.5.0 manifest)"
-      },
-      {
-        "upstream": "conformance/valid/fhp-fasta-extension-fields.fhp.fasta",
-        "v050Sha256": "fabd633b12c125865f1c1b1d6a241566a9c6b88c848c3a0e5015407ea5858940",
-        "state": "not present locally (new in the v0.5.0 manifest)"
-      },
-      {
-        "upstream": "conformance/valid/fhp-fasta-rich.fhp.fasta",
-        "v050Sha256": "bdbf9375cb7eb14c2f1508732c2c59851e9d075f6b2d267c6994b5825deb0d92",
-        "state": "local bytes are the pre-v0.5.0 release line"
-      },
-      {
-        "upstream": "conformance/valid/fhp-fasta-schema-canonical-raw-main.fhp.fasta",
-        "v050Sha256": "d7668f4d7c4cc014f961e93fbffede691a3981c69b20ef2a75459db071bfe92d",
-        "state": "not present locally (new in the v0.5.0 manifest)"
-      },
-      {
-        "upstream": "conformance/valid/fhp-fasta-schema-raw-tag.fhp.fasta",
-        "v050Sha256": "cd6ca7f9627b6ed46b88b5e2d3673477ca4bb016335b4ad629af9751a8f6aad5",
-        "state": "not present locally (new in the v0.5.0 manifest)"
-      }
-    ]
-  }
+  ]
 }

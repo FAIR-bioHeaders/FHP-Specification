@@ -331,19 +331,23 @@ class ProcessorTests(unittest.TestCase):
 
     def test_general_form_vectors_mean_the_canonical_document(self):
         """Rules J3 to J5: each valid vector in another form expands to the same RDF as the
-        canonical document of its expected metadata, except where J5 accepts a string for
-        an IRI (a literal in RDF)."""
-        manifest = json.loads((ROOT / "conformance/manifest.json").read_text())
-        general = [v for v in manifest["vectors"] if v["format"] == "jsonld"
-                   and v["expected"] == "valid" and {"J3", "J4", "J5"} & set(v["rules"])]
-        self.assertEqual(len(general), 4)
-        for vector in general:
-            document = json.loads((ROOT / "conformance" / vector["file"]).read_text())
-            canonical = make_jsonld.to_jsonld(vector["metadata"])
-            with self.subTest(vector=vector["id"]):
+        canonical document, except where J5 accepts a string for an IRI (a literal in RDF).
+
+        The JSON-LD vectors are frozen legacy family copies: the FHP-owned manifest
+        (Q4, FAIR-bioHeaders/FHP-Specification#2) no longer lists them and the pinned
+        upstream tree runs them in shared-parity.yml, but their files stay on disk and
+        their meaning stays testable in this checkout against the canonical vector.
+        """
+        canonical = json.loads(
+            (ROOT / "conformance/valid/jsonld-canonical-embedded.fhr.jsonld").read_text())
+        general = ["jsonld-expanded", "jsonld-schemaorg-vocab-compaction",
+                   "jsonld-graph-single-node", "jsonld-iri-as-string"]
+        for name in general:
+            document = json.loads((ROOT / f"conformance/valid/{name}.fhr.jsonld").read_text())
+            with self.subTest(vector=name):
                 self.assertFalse(make_jsonld.is_canonical(document))
                 same = self.nquads(document) == self.nquads(canonical)
-                self.assertEqual(same, vector["id"] != "jsonld-iri-as-string")
+                self.assertEqual(same, name != "jsonld-iri-as-string")
 
     def test_general_form_invalid_vectors(self):
         def read(name):

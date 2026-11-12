@@ -1,18 +1,32 @@
-"""Check the FHR conformance vectors against their manifest.
+"""Check this repository's FHP-owned conformance vectors against their manifest.
+
+The package is FHP-owned (docs/DEVELOPMENT-TREE.md Q4, FAIR-bioHeaders/
+FHP-Specification#2): the manifest covers the complete ``fhp-fasta`` vector set
+— the shared v0.5.0 bytes plus this repository's own
+``fhp-fasta-author-bad-name-type`` — and the shared FASTA-container ``fasta``
+vectors, which exercise the docs/FORMAT.md R rules on the same FASTA header
+reader. The complete family manifest (GFA, microdata, JSON-LD and FHGFF3
+vectors) runs from the pinned shared tree under
+``.github/workflows/shared-parity.yml``; the remaining ``conformance/`` files
+are frozen legacy copies (``provenance.json`` ``legacy``) that this checker
+does not read.
 
 Without options this needs only the Python standard library: it regenerates the
-vectors in a temporary directory and compares bytes, and recomputes each valid
-vector's SHA-512/256 checksum with its own reading of docs/FORMAT.md.
+FHP-owned vectors in a temporary directory and compares bytes, and recomputes
+each valid vector's SHA-512/256 checksum with its own reading of
+docs/FORMAT.md. The rule ids must equal the [..] tokens of the documents in
+RULE_DOCUMENTS: docs/FORMAT.md and docs/SCHEMA-VERSIONS.md at the pinned
+v0.5.0 bytes, the rest at their frozen pre-v0.5.0 copies; rules the FHP-owned
+vectors do not cover in both directions carry an explicit ``notApplicable``
+note pointing at the family manifest.
 ``--schema`` also validates valid vectors' metadata against fhr.json (needs
 PyYAML and jsonschema); JSON-LD vectors are read by rule J1 first.
-``--converter`` runs fhr-fasta-validate/fhr-gfa-validate on every FASTA/GFA
-vector and ``fhr-convert in.html out.json`` or ``fhr-convert in.jsonld out.json``
-on every microdata or JSON-LD vector: valid vectors must exit 0 (microdata and
-JSON-LD ones must also produce exactly the manifest metadata) and invalid
-vectors nonzero. A converter that rejects every vector of a format as an
-unsupported file extension predates that format; those vectors are left out and
-reported, unless ``--require-format`` names the format. ``--skip-format`` leaves
-out a format explicitly.
+``--converter`` runs fhr-fasta-validate on every FASTA and FHP-FASTA vector:
+valid vectors must exit 0 and invalid vectors nonzero. A converter that
+rejects every vector of a format as an unsupported file extension predates
+that format; those vectors are left out and reported, unless
+``--require-format`` names the format. ``--skip-format`` leaves out a format
+explicitly.
 """
 
 import argparse
@@ -46,7 +60,12 @@ OPTIONAL_COMMANDS = {"fhgff3"}
 # Formats whose vectors the converter writes out as JSON metadata.
 EXTRACTED = {"microdata", "jsonld"}
 RULE_DOCUMENTS = ("docs/FORMAT.md", "docs/MICRODATA.md", "docs/JSONLD.md", "docs/FHP.md",
-                  "docs/FHGFF3.md")
+                  "docs/FHGFF3.md", "docs/SCHEMA-VERSIONS.md")
+# Vector files of this repository's FHP-owned package: the FASTA-container
+# vectors and the manifest. The frozen legacy family vectors (GFA, microdata,
+# JSON-LD, FHGFF3) stay in conformance/ but are not regenerated or compared
+# here; the pinned upstream tree runs them in shared-parity.yml.
+OWNED_SUFFIXES = (".fhr.fasta", ".fhr.fasta.gz", ".fhp.fasta", ".fhp.fasta.gz")
 # The schema each format's metadata must validate against (docs/FHP.md P1,
 # docs/FHGFF3.md G2).
 SCHEMAS = {"fhp-fasta": "fhp.json", "fhgff3": "fhgff3.json"}
@@ -54,16 +73,23 @@ SCHEMAS = {"fhp-fasta": "fhp.json", "fhgff3": "fhgff3.json"}
 SCHEMA_RULES = {"P1": "fhp.json", "P2": "fhr.json", "G2": "fhgff3.json", "G3": "fhr.json"}
 
 
-def generated_files(directory):
+def generated_files(directory, owned_only=False):
     return {
         path.relative_to(directory).as_posix(): path.read_bytes()
         for path in sorted(directory.rglob("*"))
         if path.is_file() and (path.name == "manifest.json" or path.parent.name in {"valid", "invalid"})
+        and not (owned_only and path.name != "manifest.json"
+                 and not path.name.endswith(OWNED_SUFFIXES))
     }
 
 
 def check_up_to_date(conformance):
-    """Regenerate the vectors and report files whose bytes differ."""
+    """Regenerate the FHP-owned vectors and report files whose bytes differ.
+
+    The comparison is scoped to the FHP-owned package (manifest.json plus the
+    FASTA-container and fhp-fasta vector files); the frozen legacy family
+    vectors that remain on disk are not produced by this generator.
+    """
     with tempfile.TemporaryDirectory() as temporary:
         result = subprocess.run(
             [sys.executable, str(GENERATOR), "--output", temporary],
@@ -72,7 +98,7 @@ def check_up_to_date(conformance):
         if result.returncode:
             return [f"generator failed: {result.stderr.strip()}"]
         expected = generated_files(Path(temporary))
-    actual = generated_files(conformance)
+    actual = generated_files(conformance, owned_only=True)
     problems = [f"{name}: missing" for name in sorted(expected.keys() - actual.keys())]
     problems += [f"{name}: not produced by the generator" for name in sorted(actual.keys() - expected.keys())]
     problems += [
@@ -173,7 +199,7 @@ def check_checksums(conformance, manifest):
 def check_manifest(manifest):
     problems = []
     labelled = [rule for document in RULE_DOCUMENTS
-                for rule in re.findall(r"\[([RMJPG]\d+)\]", (ROOT / document).read_text())]
+                for rule in re.findall(r"\[([RMJPGV]\d+)\]", (ROOT / document).read_text())]
     if labelled != list(manifest["rules"]):
         problems.append(f"rule ids {labelled} in {', '.join(RULE_DOCUMENTS)} "
                         "differ from the manifest")

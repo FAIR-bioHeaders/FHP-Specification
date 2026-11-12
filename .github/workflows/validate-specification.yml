@@ -61,14 +61,15 @@ jobs:
         run: |
           python -m venv "$RUNNER_TEMP/fair-bioheaders"
           "$RUNNER_TEMP/fair-bioheaders/bin/python" -m pip install "fair-bioheaders[jsonld]==0.9.0"
-      - name: Run the released toolkit on the FHP, FHR and microdata vectors
-        # fhp-fasta is no longer skipped (0.9.0 supports FHP). jsonld and fhgff3
-        # stay skipped: this tree's vector copies for those formats are the
-        # pre-v0.5.0 family state whose synchronization is gated by the
-        # Q2 decision in docs/DEVELOPMENT-TREE-PROPOSAL.md (provenance.json
-        # "deferred"); the 0.9.0 schema-selection rules reject their legacy
-        # numeric schemaVersion/legacy-context bytes. The v0.5.0-era jsonld and
-        # fhgff3 vectors, and every extension-field (R15) vector, are run
-        # against this same toolkit release in shared-parity.yml on the pinned
+      - name: Run the released toolkit on the FHP-owned vectors
+        # The FHP-owned manifest (Q4, FHP-Specification#2) covers the complete
+        # fhp-fasta vector set — every v0.5.0 byte-pinned vector, the deferred
+        # R15/schema-selection additions and this repository's
+        # fhp-fasta-author-bad-name-type — plus the shared FASTA-container
+        # vectors that exercise the R rules on the same FASTA header reader.
+        # fhp-fasta is required: the R15 and V vectors shipped with fair-
+        # bioheaders 0.9.0 and must pass against it. The complete family
+        # manifest (gfa, microdata, jsonld and fhgff3 vectors) runs against
+        # this same toolkit release in shared-parity.yml on the pinned
         # upstream checkout.
-        run: python scripts/check_conformance.py --skip-regeneration --skip-format jsonld --skip-format fhgff3 --require-format fhp-fasta --converter "$RUNNER_TEMP/fair-bioheaders"
+        run: python scripts/check_conformance.py --skip-regeneration --require-format fhp-fasta --converter "$RUNNER_TEMP/fair-bioheaders"

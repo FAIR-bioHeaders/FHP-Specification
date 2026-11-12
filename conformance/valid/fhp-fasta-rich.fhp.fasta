@@ -8,7 +8,6 @@
 ;~version: '1.0.0'
 ;~metadataAuthor:
 ;~- name: Synthetic metadata author (placeholder)
-;~  nameType: Personal
 ;~dateCreated: '2026-10-11'
 ;~derivedFrom:
 ;~- headerType: FHR
@@ -35,7 +34,7 @@
 ;~  fragmented: 0
 ;~  missing: 1
 ;~  total: 2
-;~checksum: Ru974Dt8M14OXH/ho4nsHAT7iB19QbOC3CYZFFEYDAk=
+;~checksum: 8PFQl3axuAdJna/Thr/VqST9jtoUdK7Hy5wXv4HdMwc=
 >prot1 synthetic protein with a terminal stop
 MKTAYIAKQRQISFVKSHFSRQ*
 >prot2 synthetic protein with rare and ambiguous residues
