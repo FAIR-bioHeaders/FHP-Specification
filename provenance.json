@@ -12,8 +12,8 @@
     "ref": "v0.5.0"
   },
   "liveMain": {
-    "auditCommit": "60fae6cd6e4f166f006b2d9fc5c6abc4a6d4f468",
-    "note": "Raw shared origin/main is the current-contract link, not a byte pin (proposal section 3). At audit, origin/main equals the v0.5.0 commit for every copied path except examples/fhp/rich-predicted.fhp.yaml, which this pin takes from companion fix e1e5998 (shared #201, identical to origin/main at audit), and docs/FHGFF3.md (#214, deferred with the family docs). The shared-parity workflow re-runs the pinned tree's own suite, so post-tag drift upstream is caught there."
+    "auditCommit": "c6ad686711b75059dad8a3fd3f95f6b65c7d7121",
+    "note": "Raw shared origin/main is the current-contract link, not a byte pin (proposal section 3). Re-audited 2026-11-11 at c6ad686: origin/main equals the v0.5.0 pin for every copied path except examples/fhp/rich-predicted.fhp.yaml, which this pin takes from companion fix e1e5998 (shared #201, identical to origin/main), and docs/FHP.md, corrected post-tag by 29034bf (shared #218: the F-01 bullet now names this repository's JSON-LD/microdata bindings and the fair-bioheaders 0.8.2 toolkit reader/writer). RE-PIN TASK for docs/FHP.md: re-copy the bytes from the pinned commit and update this entry's size/sha256 at the next deliberate resync (scripts/make_provenance.py against the new pinned commit), per the note in this file's description. A per-entry commit override now would contradict the shared-parity workflow's regeneration step, which requires copied[] to equal exactly what the generator produces from source.commit plus the hard-wired companion-file set (also asserted by tests/test_make_provenance.py). Legacy family docs on origin/main have also moved with the deferred package (docs/FHGFF3.md #214/#219, docs/MICRODATA.md #217). The shared-parity workflow re-runs the pinned tree's own suite, so post-tag drift upstream is caught there."
   },
   "fhpContract": {
     "schemaVersion": "1.1",

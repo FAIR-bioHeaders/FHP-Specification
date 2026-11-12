@@ -30,14 +30,24 @@ establishment tracker:
 [#158](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/issues/158)).
 The tree started as a copy of the family publication tree; what belongs here,
 which files are pinned compatibility copies, and the canonical v0.5.0 pins are
-classified in **[docs/DEVELOPMENT-TREE-PROPOSAL.md](docs/DEVELOPMENT-TREE-PROPOSAL.md)**
-(issue [#2](https://github.com/FAIR-bioHeaders/FHP-Specification/issues/2)).
-Until the synchronization in issue
-[#3](https://github.com/FAIR-bioHeaders/FHP-Specification/issues/3) lands,
-this root tree still carries the **FHP 1.0 line** (`fhp.json`,
-`fhp_linkml.yml` importing the pinned `schemas/core-v0.4.yaml`) and the older
-draft-era `docs/FHP.md`; the released v0.5.0 text is authoritative and lives
-in the shared repository.
+classified in **[docs/DEVELOPMENT-TREE.md](docs/DEVELOPMENT-TREE.md)**
+(adopted from
+[docs/DEVELOPMENT-TREE-PROPOSAL.md](docs/DEVELOPMENT-TREE-PROPOSAL.md);
+issue [#2](https://github.com/FAIR-bioHeaders/FHP-Specification/issues/2)).
+The synchronization in issue
+[#3](https://github.com/FAIR-bioHeaders/FHP-Specification/issues/3) has
+landed: this root tree now carries the **FHP 1.1 line**. `fhp.json`,
+`fhp_linkml.yml` (importing the vendored `schemas/core-v0.5.yaml`),
+`docs/FHP.md`, `docs/SCHEMA-VERSIONS.md`, `schemas/versions.json`, the shared
+`examples/fhp/` files and the byte-unchanged `fhp-fasta` vectors are
+byte-pinned to the shared v0.5.0 release commit and verified against
+`provenance.json` by `scripts/check_shared_parity.py` in CI. A documented
+subset still stands at the pre-v0.5.0 family state: the conformance manifest
+and the nine v0.5.0 `fhp-fasta` R15/V vectors (eight additions plus one byte
+update) are deferred with the
+conformance-package resync (`provenance.json` `deferred`) and are validated
+from the pinned upstream tree by the shared-parity workflow rather than by
+local copies.
 
 **Canonical here:** this repository is the current raw-`main` source of the FHP
 JSON-LD context and vocabulary (`jsonld/fhp.context.jsonld`,
@@ -53,9 +63,10 @@ FHP versioned aliases; those Pages surfaces remain pending work.
 - The contract: `fhp.json` (generated — never hand-edited) from
   `fhp_linkml.yml` with
   `python json-schema-generator.py --type fhp --output fhp.json`;
-  the model imports the pinned shared core `schemas/core-v0.4.yaml` and
+  the model imports the pinned shared core `schemas/core-v0.5.yaml` and
   `schemas/shared.yaml`.
-- Required fields (FHP 1.0): `schema`, `schemaVersion`, `proteome`,
+- Required fields (FHP 1.0 and 1.1 — 1.1 adds only optional `x-` extension
+  fields): `schema`, `schemaVersion`, `proteome`,
   `sourceType` (`predicted` | `database` | `mixed`), `taxon`, `version`,
   `metadataAuthor`, `dateCreated`, `checksum`. Field semantics and rules are
   in [docs/FHP.md](docs/FHP.md); examples — minimal and rich, for each of the
@@ -87,14 +98,16 @@ python scripts/check_linkml.py
 python scripts/check_schema_drift.py --schema fhp.json --baseline .github/schema-baseline-fhp.json
 python scripts/make_jsonld.py --check
 python scripts/check_conformance.py
+python scripts/check_shared_parity.py
 ```
 
 For an intentional model change, regenerate `fhp.json` with the command above,
 review the schema diff, and update the drift baseline only with explicit
 maintainer review (`python scripts/check_schema_drift.py --schema fhp.json
 --baseline .github/schema-baseline-fhp.json --update`). CI workflows also run
-the inherited FHR/FHGFF3 family checks; their scope in this repository is a
-decision recorded in the development-tree proposal (issue #3).
+the inherited FHR/FHGFF3 family checks; keeping them live here versus freezing
+them as pinned compatibility fixtures is the still-open
+[Q2 decision in docs/DEVELOPMENT-TREE.md](docs/DEVELOPMENT-TREE.md#open-questions-maintainer-decisions).
 
 ## Project guidance
 

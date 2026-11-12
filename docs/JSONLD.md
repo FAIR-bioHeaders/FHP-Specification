@@ -151,16 +151,26 @@ site from them and from every release tag (`.github/workflows/jsonld-pages.yml`)
 FHP has its own JSON-LD context, [`jsonld/fhp.context.jsonld`](../jsonld/fhp.context.jsonld),
 and FHP vocabulary additions, [`jsonld/fhp.terms.ttl`](../jsonld/fhp.terms.ttl) and
 [`jsonld/fhp.terms.jsonld`](../jsonld/fhp.terms.jsonld), generated from `fhp_linkml.yml`
-by `scripts/make_jsonld.py`. FHP is a draft: the toolkit reader and writer are not
-implemented yet ([FAIR-bioHeaders-Tools#58](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/issues/58)),
-and the files are published through
+by `scripts/make_jsonld.py`. The toolkit reader and writer for the FHP form
+are implemented and shipped: they landed in FAIR-bioHeaders-Tools
+[#98](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/pull/98)
+(closing [FAIR-bioHeaders-Tools#58](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/issues/58))
+and were first released in **fair-bioheaders 0.8.2**. "Draft" here now refers only
+to shared-publication state: these files are canonical in this repository and
+their integration into the shared publication tree is coordinated through
 [FAIR-bioHeaders-Specification#107](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/issues/107).
 The FHR context, vocabulary and writer above are unchanged.
 
-The context and fixtures describe **released FHP 1.0** (shared v0.4.0): the string
-`schemaVersion` `"1.0"` and the optional author `nameType`. FHP imports a pinned v0.4
-core snapshot (`schemas/core-v0.4.yaml`) so its schema is the released `fhp.json`; FHR
-and FHGFF3 in this development tree still use the v0.3 core.
+The context and fixtures are generated from the synced model and describe the
+**FHP 1.1 line** (shared v0.5.0): `fhp_linkml.yml` imports the vendored core
+snapshot [`schemas/core-v0.5.yaml`](../schemas/core-v0.5.yaml), so its schema
+is the pinned `fhp.json` (`schemaVersion` `"1.1"` — the string contract
+version, the optional author `nameType` and the optional `x-` extension
+fields). The extension fields are deliberately not JSON-LD terms: the writer
+omits them from the canonical document and reports the omission. Released
+FHP 1.0 records stay readable and writable against the immutable release
+fixtures under `tests/fixtures/fhp/`. FHR and FHGFF3 in this development tree
+still use the v0.3-era core (Q2).
 
 FHP reuses the shared terms with their FHR IRIs and adds only its own, which stay
 separate from the FHR meanings. The reused definitions are pinned to
@@ -174,8 +184,13 @@ The canonical FHP form is loss-preserving, like the FHR one; it carries no expor
 terms. Order-sensitive arrays use `@list` so their order survives JSON-LD processing.
 The writer types every inlined object recursively, so a `derivedFrom[].accessionID` is
 a `PropertyValue` just like the root `accessionID`. The reader rejects a wrong or
-missing nested `@type`. Reading rules and the term table are in
-[FHP.md](FHP.md#json-ld-draft), the fixtures are `examples/fhp/*.fhp.jsonld`, and
+missing nested `@type`. The FHP term table is the generated vocabulary
+[`jsonld/fhp.terms.ttl`](../jsonld/fhp.terms.ttl) (and the field table for the
+microdata form is in [FHP-MICRODATA.md](FHP-MICRODATA.md)); the pinned shared
+[FHP.md](FHP.md) still lists this form as a follow-up under rule token F-01
+because its text predates this repository's serialization work — the shared
+repository corrected that bullet in its PR #218, and the corrected copy lands
+here with the next documented re-pin. The fixtures are `examples/fhp/*.fhp.jsonld`, and
 `tests/test_fhp_jsonld.py` checks the typed round trip against the pinned released
 schema, ordered authors, nested objects, unknown-context and unsupported-`@version`
 rejection, wrong nested types, and offline operation.
