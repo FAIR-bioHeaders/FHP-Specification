@@ -1,38 +1,54 @@
-# FHR conformance vectors
+# FHP-owned conformance vectors
 
-These FASTA and GFA files show how FHR header lines are parsed and which bytes the
-SHA-512/256 checksum covers, as defined in
-[docs/FORMAT.md](../docs/FORMAT.md#checksum-decision-for-v03). The HTML files show
-how FHR metadata is extracted from microdata, as defined in
-[docs/MICRODATA.md](../docs/MICRODATA.md#reading-rules). The `.jsonld` files show
-how FHR metadata is read from its JSON-LD form, as defined in
-[docs/JSONLD.md](../docs/JSONLD.md#reading-rules). The `.fhp.fasta` files apply the
-same header and checksum rules to protein FASTA with the draft FHP header
-([docs/FHP.md](../docs/FHP.md#rules)). The `.fhgff3.gff3` files apply them to GFF3
-annotations with the draft FHGFF3 header, placed after `##gff-version 3`
-([docs/FHGFF3.md](../docs/FHGFF3.md#rules)). Use them to check an FHR
-reader or writer in any language against the specification.
+This package is **FHP-owned** (the Q4 decision of
+[issue #2](https://github.com/FAIR-bioHeaders/FHP-Specification/issues/2),
+recorded 2026-11-12, in
+[docs/DEVELOPMENT-TREE.md](../docs/DEVELOPMENT-TREE.md)): one manifest for
+this repository's own purposes. It covers the complete `fhp-fasta` vector set
+of the shared v0.5.0 line — protein FASTA files with an FHP header, applying
+the shared header and checksum rules ([docs/FORMAT.md](../docs/FORMAT.md)) and
+the FHP schema rules P1 and P2 ([docs/FHP.md](../docs/FHP.md#rules)), the
+extension-field rule R15 and the schema-selection rules V1, V2 and V4
+([docs/SCHEMA-VERSIONS.md](../docs/SCHEMA-VERSIONS.md)) — plus the shared
+`fasta-*.fhr.fasta` vectors, which exercise the R rules on the same FASTA
+header reader this repository's readers must satisfy. Every `fhp-fasta` file
+except `fhp-fasta-author-bad-name-type` (this repository's own addition) is a
+byte-for-byte copy of the shared published vector at the pinned release
+commit, digested in [`provenance.json`](../provenance.json) and verified by
+`scripts/check_shared_parity.py`.
+
+The **complete family manifest** — the GFA, microdata, JSON-LD and FHGFF3
+vectors and all 40 rules — is not maintained here. It runs in full from the
+pinned shared tree in the `shared-conformance` job of
+[`.github/workflows/shared-parity.yml`](../.github/workflows/shared-parity.yml).
+The remaining non-FASTA vector files in `valid/` and `invalid/` are frozen
+pre-v0.5.0 family copies kept as history (`provenance.json` `legacy`); the
+local generator and checker do not read them.
 
 ## Layout
 
 - `valid/`: files that a conforming implementation must accept.
 - `invalid/`: files that it must reject.
-- `manifest.json`: the expected outcome for every file.
+- `manifest.json`: the expected outcome for every FHP-owned vector.
 - `*.gz`: gzip or BGZF copies. Validate their decompressed bytes.
 
 Every file is byte-exact. `.gitattributes` turns off line-ending conversion for
 this directory, so CR and CRLF vectors stay unchanged in every checkout. Don't
-open and re-save them in an editor. Run the generator instead.
+open and re-save them in an editor. Run the generator instead
+(`python scripts/make_conformance.py`); it regenerates only the FHP-owned
+files and the manifest.
 
 ## Manifest
 
-`rules` maps each stable rule id to a short summary: R1 to R10 from
+`rules` maps each stable rule id to a short summary: R1 to R15 from
 docs/FORMAT.md, M1 to M4 from docs/MICRODATA.md, J1 to J7 from
-docs/JSONLD.md, P1 to P2 from docs/FHP.md, and G1 to G3 from docs/FHGFF3.md. The J3 to J5 vectors are JSON-LD in other forms than the canonical
-one, so a reader needs a JSON-LD processor for them. J7 constrains writers, so it is
-`notApplicable` for invalid input; the valid vectors citing it are writer output. The same ids appear in
-brackets in those documents, where the rule text is authoritative. R9 (repeated
-attributes and token lists) and M1 to M4 are tested by the microdata vectors.
+docs/JSONLD.md, P1 to P2 from docs/FHP.md, G1 to G3 from docs/FHGFF3.md and
+V1 to V6 from docs/SCHEMA-VERSIONS.md — the ids must equal the bracketed
+tokens in those documents. Rules that the FHP-owned vectors do not exercise
+in both directions carry a `notApplicable` note: R11 and R14 are
+recommendations (validators warn, they do not reject), J7 and J8 constrain
+writers, and the remaining notes point at the family manifest in the pinned
+shared tree, which tests those rules' vectors.
 
 Every entry in `vectors` has these fields:
 
@@ -40,15 +56,16 @@ Every entry in `vectors` has these fields:
 | --- | --- |
 | `id` | Stable vector name |
 | `file` | Path relative to this directory |
-| `format` | `fasta`, `gfa`, `microdata` (HTML), `jsonld`, `fhp-fasta` (protein FASTA with an FHP header) or `fhgff3` (GFF3 with an FHGFF3 header) |
+| `format` | `fasta` (genome FASTA with an FHR header) or `fhp-fasta` (protein FASTA with an FHP header) |
 | `compressed` | `true` for gzip/BGZF files; `compression` then gives `gzip` or `bgzf` |
 | `expected` | `valid` or `invalid` |
 | `rules` | Valid vectors only: the rules the file exercises |
 | `description` | Valid vectors only: what the file exercises |
-| `checksum` | Valid FASTA/GFA vectors only: the expected FHR checksum, base64 SHA-512/256 |
-| `metadata` | Valid FASTA/GFA vectors: some expected parsed values (`genome`, `version`, `masking`). Valid `fhp-fasta` vectors: `proteome`, `version` and `sourceType`. Valid `fhgff3` vectors: `annotation` and `version`. Valid microdata and JSON-LD vectors: the complete expected metadata object. `microdata-schema-invalid`, `jsonld-missing-checksum` the P1/P2 `fhp-fasta` vectors and the G2/G3 `fhgff3` vectors: the metadata they yield, which fails `fhp.json` (P1), `fhgff3.json` (G2) or `fhr.json` (the other vectors, P2 and G3) |
+| `checksum` | Valid vectors: the expected FHR/FHP checksum, base64 SHA-512/256 |
+| `metadata` | Valid vectors: some expected parsed values (`genome`, `version`, `masking` for `fasta`; `proteome`, `version`, `sourceType` for `fhp-fasta`). The P1/P2 `fhp-fasta` vectors: the metadata they yield, which fails `fhp.json` (P1) or `fhr.json` (P2) |
 | `rule` | Invalid vectors only: the rule the file breaks |
 | `reason` | Invalid vectors only: how the file breaks that rule |
+| `result` | Invalid vectors only, where set: the expected outcome class (`unsupported-version` for the V4 vector) |
 
 An invalid vector breaks one rule and is otherwise correct. Where possible its
 stated checksum matches the bytes, so an implementation can't pass by failing the
@@ -57,56 +74,52 @@ they deliberately carry a checksum computed the wrong way, or one made stale by
 editing the file. Reasons describe the defect, not any implementation's error
 message.
 
-Compressed valid vectors decompress to the bytes of `fasta-lf` or `gfa-lf` and
-have the same checksum.
-
-Microdata has no checksum coverage rule: its `checksum` property is an ordinary
-metadata value (here the `fasta-lf` checksum). A valid microdata vector instead
-pins the whole extracted object, so every tricky value (first-wins attributes,
-token lists, implied end tags, value attributes, escaping, typed and untyped
-values) is checked exactly. JSON-LD vectors work the same way: their `checksum`
-is an ordinary value, and each valid vector pins the metadata it reads back to. JSON numbers compare by value, so `1` and `1.0` are
-equal, but strings, numbers and booleans are never equal to each other. Valid metadata conforms to `fhr.json`. The checksums are
+Compressed valid vectors decompress to the bytes of `fasta-lf` or
+`fhp-fasta-lf` and keep their checksum: the digest covers the decompressed
+bytes. JSON numbers compare by value, so `1` and `1.0` are equal, but strings,
+numbers and booleans are never equal to each other. Valid metadata conforms to
+`fhr.json` (`fasta`) or `fhp.json` (`fhp-fasta`). The checksums are
 real; valid vectors carry no placeholder checksum or SeqCol value.
 
 ## Using the vectors in another implementation
 
 For each manifest entry, read `file` and decompress it if `compressed` is true.
-For a `valid` FASTA/GFA vector, your implementation must accept the file, compute
-`checksum`, and parse the listed `metadata` values. For a `valid` microdata or
-JSON-LD vector, it must extract exactly `metadata`. For an `invalid` vector, it
-must reject the file. Reporting the rule id is optional. Treat any difference as
+For a `valid` vector, your implementation must accept the file, compute
+`checksum`, and parse the listed `metadata` values. For an `invalid` vector, it
+must reject the file (a V4 vector rejects it with an unsupported-version
+result). Reporting the rule id is optional. Treat any difference as
 a bug in the implementation or the vectors, and report it as an issue.
 
-To run the FHR File Converter (or another CLI with the same commands and exit
-codes) over the vectors. FASTA and GFA vectors go to `fhr-fasta-validate` and
-`fhr-gfa-validate`. Microdata and JSON-LD vectors go to `fhr-convert in.html out.json`
-or `fhr-convert in.jsonld out.json`, and the JSON it writes must equal `metadata`.
-`--skip-format jsonld` leaves out the JSON-LD vectors for converters that predate them:
+Both vector formats go to a FASTA header reader — `fhr-fasta-validate` in the
+`fair-bioheaders` toolkit:
 
 ```bash
 python scripts/check_conformance.py --converter           # commands on PATH
 python scripts/check_conformance.py --converter .venv     # a virtual environment
-python scripts/check_conformance.py --converter ../FHR-File-Converter  # a checkout
+python scripts/check_conformance.py --skip-regeneration --require-format fhp-fasta --converter "$VENV"
 ```
 
 ## Regenerating and checking
 
-`scripts/make_conformance.py` builds every vector from small templates. It
-computes the checksums with Python's `hashlib` (`sha512_256`) and `base64`,
-independently of the converter. It writes gzip and BGZF data as stored deflate
-blocks with mtime 0 and no file name, so the output doesn't depend on the local
-zlib build. Rerunning it reproduces identical bytes.
+`scripts/make_conformance.py` builds every FHP-owned vector from small
+templates. It computes the checksums with Python's `hashlib` (`sha512_256`) and
+`base64`, independently of the converter. It writes gzip and BGZF data as
+stored deflate blocks with mtime 0 and no file name, so the output doesn't
+depend on the local zlib build. Rerunning it reproduces identical bytes. The
+`fhp-fasta` builders follow the shared v0.5.0 generator, so the regenerated
+bytes stay equal to the pinned shared copies that `provenance.json` digests.
 
 ```bash
-python scripts/make_conformance.py            # rewrite valid/, invalid/, manifest.json
+python scripts/make_conformance.py            # rewrite the FHP-owned vectors and manifest.json
 python scripts/check_conformance.py           # standard library only
 python scripts/check_conformance.py --schema  # also validate metadata (PyYAML, jsonschema)
 ```
 
-`check_conformance.py` regenerates the vectors in a temporary directory and
-compares the bytes. It then checks that the manifest covers every rule in
-docs/FORMAT.md, and recomputes each checksum with a separate reading of the
-rules. CI runs these checks and then runs the released converter (`fhr` from PyPI)
-over every vector. To add a vector, edit the generator, rerun it, and commit the
-script together with its output.
+`check_conformance.py` regenerates the FHP-owned vectors in a temporary
+directory and compares the bytes (the frozen legacy family files on disk are
+outside this comparison), checks that the manifest covers every rule in the
+documents of `RULE_DOCUMENTS`, and recomputes each checksum with a separate
+reading of the rules. CI runs these checks and then runs the pinned released
+converter (`fair-bioheaders==0.9.0`) over every vector, requiring the
+`fhp-fasta` format. To add a vector, edit the generator, rerun it, and commit
+the script together with its output.

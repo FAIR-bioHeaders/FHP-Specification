@@ -560,15 +560,15 @@
     },
     {
       "path": "docs/JSONLD.md",
-      "note": "pre-v0.5.0 (no [J9]); part of the deferred package"
+      "note": "pre-v0.5.0 (no [J9]); frozen by the Q2 decision as a compatibility copy: the v0.5.0 doc and its vectors run in the family manifest of the pinned shared tree via .github/workflows/shared-parity.yml"
     },
     {
       "path": "docs/MICRODATA.md",
-      "note": "pre-v0.5.0 (no [M5]); part of the deferred package"
+      "note": "pre-v0.5.0 (no [M5]); frozen by the Q2 decision as a compatibility copy (see docs/JSONLD.md)"
     },
     {
       "path": "docs/FHGFF3.md",
-      "note": "pre-v0.5.0; part of the deferred package"
+      "note": "pre-v0.5.0 (old [G1] grammar); frozen by the Q2 decision as a compatibility copy (see docs/JSONLD.md)"
     },
     {
       "path": "docs/SCHEMAORG-EXPORT.md",
