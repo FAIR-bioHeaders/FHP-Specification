@@ -43,8 +43,10 @@ Establishment tracker:
   They are FHP development outputs, not byte-copies of shared files.
 - **Shared core/imports** (`schemas/*`, `docs/FORMAT.md`,
   `docs/SCHEMA-VERSIONS.md`, `conformance/**`) are published by the shared
-  repository; anything kept here is a pinned copy, verified by digest, never
-  hand-edited.
+  repository. Local files listed in `provenance.json`'s `copied[]` are
+  digest-verified pinned copies. Inherited files listed only in `legacy`
+  are frozen by policy, not covered by the parity digest check. Both groups
+  must be synchronized deliberately rather than hand-edited.
 - The **active converter/validator** is FAIR-bioHeaders-Tools
   (`pip install fair-bioheaders`); the FHP JSON-LD and typed-HTML reader and
   writer shipped there in **0.8.2** (Tools
