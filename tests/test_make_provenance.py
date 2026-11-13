@@ -72,8 +72,11 @@ class MakeProvenanceTests(unittest.TestCase):
                           "size": len(b"v0.5.0:docs/FHP.md"), "sha256": digest})
         self.assertIn("schemas/versions.json", by_local)
         self.assertIn("docs/SCHEMA-VERSIONS.md", by_local)
-        self.assertNotIn("docs/FORMAT.md", by_local)  # deferred family package
-        self.assertNotIn("conformance/manifest.json", by_local)  # deferred
+        # docs/FORMAT.md joined the pinned set with the FHP-owned conformance
+        # package (Q4, FHP-Specification#2): the package's rule vocabulary
+        # needs its v0.5.0 [R11]-[R15] tokens at the pinned bytes.
+        self.assertIn("docs/FORMAT.md", by_local)
+        self.assertNotIn("conformance/manifest.json", by_local)  # FHP-owned, generated here
 
     def test_fhp_json_pin_serves_the_contract_and_the_release_fixture(self):
         by_local = {entry["local"]: entry for entry in self.entries()}

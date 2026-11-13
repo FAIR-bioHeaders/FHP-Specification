@@ -34,7 +34,10 @@ fetching anything. These need only the standard library; generating the context
 needs LinkML.
 
 ``--check`` regenerates everything in memory and exits 1 with a unified diff if
-a committed file differs; ``--examples`` writes only the JSON-LD examples;
+a committed file differs; ``--fhp`` limits generation and checking to the FHP
+outputs (the Q2 freeze: the FHR-side files are pinned compatibility fixtures,
+verified byte-for-byte by scripts/check_shared_parity.py per provenance.json);
+``--examples`` writes only the JSON-LD examples;
 ``--mappings-summary`` prints the mapping summary table. The script never uses
 the network.
 """
@@ -1556,12 +1559,23 @@ def fhp_outputs(fhr_terms=None, context=None):
     }
 
 
-def generate():
-    """Return ``{path: text}`` for every generated file."""
+def generate(fhp_only=False):
+    """Return ``{path: text}`` for every generated file.
+
+    ``fhp_only`` limits the set to the files canonical in this repository: the
+    FHP context, vocabulary additions and ``examples/fhp`` fixtures. Per the Q2
+    decision (docs/DEVELOPMENT-TREE.md, FHP-Specification#2, 2026-11-12) the
+    FHR-side files are pinned compatibility fixtures verified byte-for-byte by
+    scripts/check_shared_parity.py (provenance.json ``pinned``); CI regenerates
+    and checks the FHP chain only, while the full set stays available locally.
+    """
     model = Model()
     context = build_context(model)
     classes, properties = collect_terms(model)
     table = load_table()
+    fhp = fhp_outputs((classes, properties))
+    if fhp_only:
+        return fhp
     return {
         CONTEXT_PATH: json.dumps(context, indent=2) + "\n",
         TERMS_PATH: build_turtle(classes, properties),
@@ -1570,11 +1584,11 @@ def generate():
         MAPPINGS_DOC: mappings_doc(table),
         **example_outputs(context),
         **export_outputs(),
-        **fhp_outputs((classes, properties)),
+        **fhp,
     }
 
 
-def check(outputs):
+def check(outputs, regenerate="python scripts/make_jsonld.py"):
     stale = False
     for path, text in outputs.items():
         current = path.read_text(encoding="utf-8") if path.exists() else ""
@@ -1585,7 +1599,7 @@ def check(outputs):
                 current.splitlines(keepends=True), text.splitlines(keepends=True),
                 f"a/{relative}", f"b/{relative} (generated)"))
     if stale:
-        print("Generated JSON-LD files are out of date; run python scripts/make_jsonld.py",
+        print(f"Generated JSON-LD files are out of date; run {regenerate}",
               file=sys.stderr)
         return 1
     print("JSON-LD context, vocabulary and generated documents are up to date.")
@@ -1599,6 +1613,10 @@ def main(argv=None):
     parser.add_argument("--examples", action="store_true",
                         help="write only the examples/*.fhr.jsonld and examples/fhp/*.fhp.jsonld "
                              "files from the committed contexts")
+    parser.add_argument("--fhp", action="store_true",
+                        help="limit generation and --check to the FHP outputs canonical in this "
+                             "repository (the Q2 freeze: the FHR-side files are pinned "
+                             "compatibility fixtures checked by scripts/check_shared_parity.py)")
     parser.add_argument("--mappings-summary", action="store_true",
                         help="print the mapping table summary (Markdown) and exit")
     parser.add_argument("--schemaorg-subset", metavar="SOURCE",
@@ -1613,15 +1631,17 @@ def main(argv=None):
             subset = schemaorg_subset(args.schemaorg_subset)
             outputs = {SCHEMAORG_SUBSET: json.dumps(subset, indent=2) + "\n"}
         elif args.examples:
-            outputs = {**example_outputs(load_context()), **export_outputs(),
-                       **fhp_example_outputs()}
+            outputs = (fhp_example_outputs() if args.fhp else
+                       {**example_outputs(load_context()), **export_outputs(),
+                        **fhp_example_outputs()})
         else:
-            outputs = generate()
+            outputs = generate(fhp_only=args.fhp)
     except ValueError as error:
         print(f"make_jsonld: {error}", file=sys.stderr)
         return 1
     if args.check:
-        return check(outputs)
+        return check(outputs, "python scripts/make_jsonld.py --fhp" if args.fhp
+                     else "python scripts/make_jsonld.py")
     for path, text in outputs.items():
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")

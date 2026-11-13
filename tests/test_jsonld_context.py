@@ -3,6 +3,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """The generated JSON-LD context (feature 011, data-model sections 1 and 2)."""
 
+import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -83,10 +84,13 @@ class ContextTests(unittest.TestCase):
         for name, path in NESTED.items():
             cls.keys[name] = object_properties(cls.schema["properties"][path[0]], cls.schema)
 
-    def test_generated_files_are_current(self):
-        result = subprocess.run([sys.executable, str(ROOT / "scripts/make_jsonld.py"), "--check"],
-                                capture_output=True, text=True)
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+    def test_context_is_a_pinned_compatibility_fixture(self):
+        pinned = {entry["local"]: entry for entry in
+                  json.loads((ROOT / "provenance.json").read_text())["pinned"]}
+        entry = pinned["jsonld/fhr.context.jsonld"]
+        data = CONTEXT_PATH.read_bytes()
+        self.assertEqual(len(data), entry["size"])
+        self.assertEqual(hashlib.sha256(data).hexdigest(), entry["sha256"])
 
     def test_linkml_still_matches_fhr_json(self):
         result = subprocess.run([sys.executable, str(ROOT / "scripts/check_linkml.py")],

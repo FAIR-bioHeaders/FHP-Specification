@@ -59,12 +59,17 @@ def constraints(node, document):
     return result
 
 
-# (header type, published schema, generator function name). fhr.json is
-# hand-written and must stay validation-equivalent; fhp.json and fhgff3.json are
-# generated and must equal the generator's constraints (specs/006-protein-header
-# D-01, specs/007-gff3-header D-01).
-TYPES = (("FHR", "fhr.json", "generate"), ("FHP", "fhp.json", "generate_fhp"),
-         ("FHGFF3", "fhgff3.json", "generate_fhgff3"))
+# (header type, published schema, generator function name). Per the Q2 decision
+# (docs/DEVELOPMENT-TREE.md, FHP-Specification#2, 2026-11-12) this tree
+# generates and validates only the FHP chain: fhp.json is generated from
+# fhp_linkml.yml and must equal the generator's constraints
+# (specs/006-protein-header D-01). The inherited FHR and FHGFF3 contract/model
+# copies are pinned compatibility fixtures, not live-generation targets; their
+# bytes are asserted by scripts/check_shared_parity.py against the "pinned"
+# section of provenance.json, and tests/test_linkml.py plus
+# tests/test_fhgff3_schema.py keep checking their model/published equivalence
+# as a property of those frozen fixtures.
+TYPES = (("FHP", "fhp.json", "generate_fhp"),)
 
 
 def main():

@@ -49,24 +49,19 @@ jobs:
       - name: Regenerate the pinned copies and compare with this tree
         # scripts/make_provenance.py is the single digest source: the recorded
         # copied[] entries must equal what the pinned commit produces today,
-        # including the machine-checkable adjustments.
+        # including the machine-checkable adjustments. The deferred-vector skip
+        # retired with the Q4 decision (FHP-Specification#2, 2026-11-12): every
+        # fhp-fasta vector the v0.5.0 manifest added or changed is now copied,
+        # digested and run by this repository's own conformance package.
         run: |
           python scripts/make_provenance.py --upstream .upstream/FAIR-bioHeaders-Specification \
             --output "$RUNNER_TEMP/copied.json"
           python - <<'EOF'
           import json
-          generated = json.load(open(__import__("os").environ["RUNNER_TEMP"] + "/copied.json"))
+          import os
+          generated = json.load(open(os.environ["RUNNER_TEMP"] + "/copied.json"))
           pinned = {e["local"]: e for e in json.load(open("provenance.json"))["copied"]}
-          deferred = {v["upstream"] for v in
-                      json.load(open("provenance.json"))["deferred"]["vectors"]}
-          stale = []
-          for entry in generated:
-              local = entry["local"]
-              if (local.startswith("conformance/")
-                      and entry["upstream"] in deferred):
-                  continue  # byte-deferred with the Q2 family package
-              if pinned.get(local) != entry:
-                  stale.append(local)
+          stale = [entry["local"] for entry in generated if pinned.get(entry["local"]) != entry]
           extra = sorted(set(pinned) - {e["local"] for e in generated})
           for problem in stale + extra:
               print(f"provenance.json is not what make_provenance.py produces: {problem}")

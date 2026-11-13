@@ -1,6 +1,6 @@
 {
   "provenanceVersion": 1,
-  "description": "Machine-readable pinning of the FAIR-bioHeaders-Specification copies this FHP development repository serves (FHP-Specification#3; docs/DEVELOPMENT-TREE-PROPOSAL.md sections 3 and 5 PR-A, adapted to the bounded issue-#3 sync). Every entry under 'copied' is a byte-for-byte copy of the named path at 'source.commit' (or the entry's own 'commit' override), except entries with an 'adjustment', whose local bytes are the upstream bytes with one machine-checkable local transformation applied (import-retarget: the shared 'schemas/core' model import line is replaced by 'schemas/core-v0.5', per proposal Q3; provenance-header: the vendored core snapshot prepends an exact comment header, following schemas/core-v0.4.yaml). scripts/check_shared_parity.py verifies the local digests and, with --upstream, the pinned commits' bytes and the adjustments themselves. 'imports' records digests of shared files this tree references but intentionally does not vendor at these bytes. 'legacy' lists the inherited pre-v0.5.0 family state frozen by the proposal's Q2 decision; 'owned' lists paths canonical in this repository (proposal section 2a) or identity/history files. Every file under 'strictDirs' must be classified as copied, legacy or owned; an unclassified new path fails the parity check. A deliberate resync re-runs scripts/make_provenance.py against the new pinned commit.",
+  "description": "Machine-readable pinning of the FAIR-bioHeaders-Specification copies this FHP development repository serves (FHP-Specification#3; the Q2/Q4 decisions of FHP-Specification#2 recorded 2026-11-12 in docs/DEVELOPMENT-TREE.md). Every entry under 'copied' is a byte-for-byte copy of the named path at 'source.commit' (or the entry's own 'commit' override), except entries with an 'adjustment', whose local bytes are the upstream bytes with one machine-checkable local transformation applied (import-retarget: the shared 'schemas/core' model import line is replaced by 'schemas/core-v0.5', per proposal Q3; provenance-header: the vendored core snapshot prepends an exact comment header, following schemas/core-v0.4.yaml). 'copied' covers the FHP-owned conformance package's vector bytes: every fhp-fasta vector of the pinned v0.5.0 line (Q4), so the deferred additions and the fhp-fasta-rich byte update joined it when the package was wired. scripts/check_shared_parity.py verifies the local digests and, with --upstream, the pinned commits' bytes and the adjustments themselves. 'imports' records digests of shared files this tree references but intentionally does not vendor at these bytes (the family conformance manifest it runs from the pinned tree, and the current v0.5.0 copies of the frozen legacy docs and contracts). 'pinned' lists the inherited FHR/FHGFF3 contract, model and generated-output files frozen by the Q2 decision as compatibility fixtures, each with the local digest and the historical shared commit (43f9067d, v0.4.0~1) whose bytes it holds; scripts/check_shared_parity.py verifies pinned digests like copied ones, so silent drift fails CI; 'legacy' lists the remaining inherited pre-v0.5.0 family state; 'owned' lists paths canonical in this repository (proposal section 2a), the FHP-owned conformance package (Q4: conformance/manifest.json, the FHP-owned fhp-fasta-author-bad-name-type vector, and the package's generator/checker/tests) or identity/history files. Every file under 'strictDirs' must be classified as copied, pinned, legacy or owned; an unclassified new path fails the parity check. A deliberate resync re-runs scripts/make_provenance.py against the new pinned commit.",
   "source": {
     "repository": "FAIR-bioHeaders/FAIR-bioHeaders-Specification",
     "url": "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification",
@@ -13,7 +13,7 @@
   },
   "liveMain": {
     "auditCommit": "c6ad686711b75059dad8a3fd3f95f6b65c7d7121",
-    "note": "Raw shared origin/main is the current-contract link, not a byte pin (proposal section 3). Re-audited 2026-11-11 at c6ad686: origin/main equals the v0.5.0 pin for every copied path except examples/fhp/rich-predicted.fhp.yaml, which this pin takes from companion fix e1e5998 (shared #201, identical to origin/main), and docs/FHP.md, corrected post-tag by 29034bf (shared #218: the F-01 bullet now names this repository's JSON-LD/microdata bindings and the fair-bioheaders 0.8.2 toolkit reader/writer). RE-PIN TASK for docs/FHP.md: re-copy the bytes from the pinned commit and update this entry's size/sha256 at the next deliberate resync (scripts/make_provenance.py against the new pinned commit), per the note in this file's description. A per-entry commit override now would contradict the shared-parity workflow's regeneration step, which requires copied[] to equal exactly what the generator produces from source.commit plus the hard-wired companion-file set (also asserted by tests/test_make_provenance.py). Legacy family docs on origin/main have also moved with the deferred package (docs/FHGFF3.md #214/#219, docs/MICRODATA.md #217). The shared-parity workflow re-runs the pinned tree's own suite, so post-tag drift upstream is caught there."
+    "note": "Raw shared origin/main is the current-contract link, not a byte pin (proposal section 3). Re-audited 2026-11-12 at origin/main 692cffe (FHP-Specification Q4 wiring): origin/main equals the v0.5.0 pin for every copied path except examples/fhp/rich-predicted.fhp.yaml, which this pin takes from companion fix e1e5998 (shared #201, identical to origin/main), and docs/FHP.md, corrected post-tag by 29034bf (shared #218: the F-01 bullet now names this repository's JSON-LD/microdata bindings and the fair-bioheaders 0.8.2 toolkit reader/writer). docs/FORMAT.md and all 31 fhp-fasta vectors are byte-identical between the pin and 692cffe. RE-PIN TASK for docs/FHP.md: re-copy the bytes from the pinned commit and update this entry's size/sha256 at the next deliberate resync (scripts/make_provenance.py against the new pinned commit). A per-entry commit override now would contradict the shared-parity workflow's regeneration step, which requires copied[] to equal exactly what the generator produces from source.commit plus the hard-wired companion-file set (also asserted by tests/test_make_provenance.py). Legacy family docs on origin/main have also moved with the deferred package (docs/FHGFF3.md #214/#219, docs/MICRODATA.md #217). The shared-parity workflow re-runs the pinned tree's own suite, so post-tag drift upstream is caught there."
   },
   "fhpContract": {
     "schemaVersion": "1.1",
@@ -60,6 +60,24 @@
       "sha256": "afa714048d68e3efc78d7092ccaf1fb0ba26d7d16056b67bdd4d7682ac1f9763"
     },
     {
+      "local": "conformance/invalid/fhp-fasta-extension-nested.fhp.fasta",
+      "upstream": "conformance/invalid/fhp-fasta-extension-nested.fhp.fasta",
+      "size": 802,
+      "sha256": "c4a4b022655b39f1391246f5f74f5760cacdae1cf062c4a30d9521d8144edf0b"
+    },
+    {
+      "local": "conformance/invalid/fhp-fasta-extension-older-release.fhp.fasta",
+      "upstream": "conformance/invalid/fhp-fasta-extension-older-release.fhp.fasta",
+      "size": 800,
+      "sha256": "e7e3834ff8cb1f7ab7c31871a3af958a2bb2d45928450a565c1cfee7b7d4bc5d"
+    },
+    {
+      "local": "conformance/invalid/fhp-fasta-extension-older-version.fhp.fasta",
+      "upstream": "conformance/invalid/fhp-fasta-extension-older-version.fhp.fasta",
+      "size": 800,
+      "sha256": "72d68328fd39e93995af6fccfc866d1153e3b12f9a9d7b0c641450bc861d4d65"
+    },
+    {
       "local": "conformance/invalid/fhp-fasta-genome-key.fhp.fasta",
       "upstream": "conformance/invalid/fhp-fasta-genome-key.fhp.fasta",
       "size": 797,
@@ -76,6 +94,12 @@
       "upstream": "conformance/invalid/fhp-fasta-missing-source-type.fhp.fasta",
       "size": 746,
       "sha256": "80a99284f28d51e68c2226d12e86a61b0e6070c1d85441cbe189f1c8a667785c"
+    },
+    {
+      "local": "conformance/invalid/fhp-fasta-schema-release-without-type.fhp.fasta",
+      "upstream": "conformance/invalid/fhp-fasta-schema-release-without-type.fhp.fasta",
+      "size": 770,
+      "sha256": "c1ec4a9054d711700522c8a3e81a216668e570f38329b1a99c00aacfa7bc6af0"
     },
     {
       "local": "conformance/invalid/fhp-fasta-sequence-tampered.fhp.fasta",
@@ -132,6 +156,18 @@
       "sha256": "8c01bc0688e1f90588ff0ce68ebbe7dbc3357c09370b578fda3f032741a08cbb"
     },
     {
+      "local": "conformance/valid/fhp-fasta-escaped-record-markers.fhp.fasta",
+      "upstream": "conformance/valid/fhp-fasta-escaped-record-markers.fhp.fasta",
+      "size": 750,
+      "sha256": "eec298a8c7ec120b46e03d17f72186e39a3757029745002e2f8bb34fa294fa0a"
+    },
+    {
+      "local": "conformance/valid/fhp-fasta-extension-fields.fhp.fasta",
+      "upstream": "conformance/valid/fhp-fasta-extension-fields.fhp.fasta",
+      "size": 824,
+      "sha256": "fabd633b12c125865f1c1b1d6a241566a9c6b88c848c3a0e5015407ea5858940"
+    },
+    {
       "local": "conformance/valid/fhp-fasta-gzip.fhp.fasta.gz",
       "upstream": "conformance/valid/fhp-fasta-gzip.fhp.fasta.gz",
       "size": 793,
@@ -156,10 +192,34 @@
       "sha256": "dc042803aa0bda9826782889a90436c61a4f5bcde9665d2f7bb1d3226268751f"
     },
     {
+      "local": "conformance/valid/fhp-fasta-rich.fhp.fasta",
+      "upstream": "conformance/valid/fhp-fasta-rich.fhp.fasta",
+      "size": 1244,
+      "sha256": "bdbf9375cb7eb14c2f1508732c2c59851e9d075f6b2d267c6994b5825deb0d92"
+    },
+    {
+      "local": "conformance/valid/fhp-fasta-schema-canonical-raw-main.fhp.fasta",
+      "upstream": "conformance/valid/fhp-fasta-schema-canonical-raw-main.fhp.fasta",
+      "size": 820,
+      "sha256": "d7668f4d7c4cc014f961e93fbffede691a3981c69b20ef2a75459db071bfe92d"
+    },
+    {
+      "local": "conformance/valid/fhp-fasta-schema-raw-tag.fhp.fasta",
+      "upstream": "conformance/valid/fhp-fasta-schema-raw-tag.fhp.fasta",
+      "size": 810,
+      "sha256": "cd6ca7f9627b6ed46b88b5e2d3673477ca4bb016335b4ad629af9751a8f6aad5"
+    },
+    {
       "local": "docs/FHP.md",
       "upstream": "docs/FHP.md",
       "size": 7366,
       "sha256": "a328ad7f544e4fe2757e1a47787b16280ad069f6f94f12f46c1986de46481e9b"
+    },
+    {
+      "local": "docs/FORMAT.md",
+      "upstream": "docs/FORMAT.md",
+      "size": 16237,
+      "sha256": "482f3553963ca707c1ac2313df167abfc3f6cd100c09582c313ec9b3c5eea5e8"
     },
     {
       "local": "docs/SCHEMA-VERSIONS.md",
@@ -263,11 +323,6 @@
   ],
   "imports": [
     {
-      "upstream": "docs/FORMAT.md",
-      "sha256": "482f3553963ca707c1ac2313df167abfc3f6cd100c09582c313ec9b3c5eea5e8",
-      "note": "recorded for reference; this tree keeps the pre-v0.5.0 copy under legacy (Q2-gated), not vendored at these bytes"
-    },
-    {
       "upstream": "docs/JSONLD.md",
       "sha256": "f90591ba6df73db9f0a59966120cf93fc3c53333a4f32fc75749b381a6ebca15",
       "note": "recorded for reference; this tree keeps the pre-v0.5.0 copy under legacy (Q2-gated), not vendored at these bytes"
@@ -285,7 +340,7 @@
     {
       "upstream": "conformance/manifest.json",
       "sha256": "8ab8f7f4ee592573650973d30dc3e422c22b62b08c6b0b9f7839e12c5e4169ea",
-      "note": "recorded for reference; this tree keeps the pre-v0.5.0 copy under legacy (Q2-gated), not vendored at these bytes"
+      "note": "the complete family manifest; this tree owns its own FHP package manifest (Q4) and runs the family one from the pinned shared tree via .github/workflows/shared-parity.yml"
     },
     {
       "upstream": "fhr.json",
@@ -298,6 +353,200 @@
       "note": "recorded for reference; this tree keeps the pre-v0.5.0 copy under legacy (Q2-gated), not vendored at these bytes"
     }
   ],
+  "pinned": [
+    {
+      "local": "fhr.json",
+      "upstream": "fhr.json",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 7112,
+      "sha256": "e3d3843e1a1646e12495ccc9a615df94b7abe71b833c5f336c59444e0a49620a",
+      "note": "inherited FHR/FHGFF3 contract and model chain; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    },
+    {
+      "local": "fhr_linkml.yml",
+      "upstream": "fhr_linkml.yml",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 5372,
+      "sha256": "7599787980b8b664b12c15807c8baba3fc9e49da401099bfc20c1c4b3204ee6e",
+      "note": "inherited FHR/FHGFF3 contract and model chain; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    },
+    {
+      "local": "fhgff3.json",
+      "upstream": "fhgff3.json",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 21540,
+      "sha256": "22d4ecaf604f9fcc34b7e8bcb47f34655b9a416a73250aaef93dd0f429b4fd83",
+      "note": "inherited FHR/FHGFF3 contract and model chain; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    },
+    {
+      "local": "fhgff3_linkml.yml",
+      "upstream": "fhgff3_linkml.yml",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 5192,
+      "sha256": "2efff88d5b02a761f40de3865d8d826e29977d0f89d5b1c4272b367fc5f3c309",
+      "note": "inherited FHR/FHGFF3 contract and model chain; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    },
+    {
+      "local": "schemas/core.yaml",
+      "upstream": "schemas/core.yaml",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 7623,
+      "sha256": "bed7a16d3a21af61681bcece83fe67b90c92a734601417520332da8e461a59e3",
+      "note": "inherited FHR/FHGFF3 contract and model chain; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    },
+    {
+      "local": "jsonld/fhr.context.jsonld",
+      "upstream": "jsonld/fhr.context.jsonld",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 5477,
+      "sha256": "1430da825fa482488bd7cfec51f5db9c34e62c04f1b0711569a3e8a63cdcf89e",
+      "note": "inherited JSON-LD context, vocabulary and their generated docs; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    },
+    {
+      "local": "jsonld/terms.jsonld",
+      "upstream": "jsonld/terms.jsonld",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 14794,
+      "sha256": "4a7e7e21f9a8066308c4d48b38aa78d3781ec55d8ed9220b8dd8c7bab61c6a2e",
+      "note": "inherited JSON-LD context, vocabulary and their generated docs; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    },
+    {
+      "local": "jsonld/terms.ttl",
+      "upstream": "jsonld/terms.ttl",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 7846,
+      "sha256": "d64916ece9410b0cd0c1e98bdbed2622a3a32b9a5a28717832fcf0e922f1525b",
+      "note": "inherited JSON-LD context, vocabulary and their generated docs; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    },
+    {
+      "local": "docs/TERMS.md",
+      "upstream": "docs/TERMS.md",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 7236,
+      "sha256": "c24fd1df7c96b819aaa870e7bb47ba2b712e15733206efb976cb8a6da10682b8",
+      "note": "inherited JSON-LD context, vocabulary and their generated docs; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    },
+    {
+      "local": "docs/MAPPINGS.md",
+      "upstream": "docs/MAPPINGS.md",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 9000,
+      "sha256": "3ac7b83f5a47c6284293138fc6553f1f14ce9303ad6edae11fe550eb2d41df2e",
+      "note": "inherited JSON-LD context, vocabulary and their generated docs; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    },
+    {
+      "local": "examples/example.fhr.jsonld",
+      "upstream": "examples/example.fhr.jsonld",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 7547,
+      "sha256": "467a6cdeaf33d17ce879b5d73db67d9eb1bf603ae3ae2581bf581ddaa89e95c6",
+      "note": "inherited FHR JSON-LD/example serializations; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    },
+    {
+      "local": "examples/minimal.fhr.jsonld",
+      "upstream": "examples/minimal.fhr.jsonld",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 6223,
+      "sha256": "576842bc4feca174ef59b4cb5997d9a4261958c60013adeb38ce599a360f8ba1",
+      "note": "inherited FHR JSON-LD/example serializations; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    },
+    {
+      "local": "examples/example.fhr.export.jsonld",
+      "upstream": "examples/example.fhr.export.jsonld",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 6342,
+      "sha256": "8f4e6f0c7fa5a9ad20412c094da553d81e38ffe122b874c391b6ad86982b696d",
+      "note": "inherited FHR JSON-LD/example serializations; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    },
+    {
+      "local": "tests/fixtures/schemaorg-export/article-doi/expected.jsonld",
+      "upstream": "tests/fixtures/schemaorg-export/article-doi/expected.jsonld",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 1530,
+      "sha256": "35d9a53e7e22083d9bf6a6909cee9f20c0fc7b40674b15822cadd93943f421b3",
+      "note": "inherited schema.org export expectations; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    },
+    {
+      "local": "tests/fixtures/schemaorg-export/article-not-doi/expected.jsonld",
+      "upstream": "tests/fixtures/schemaorg-export/article-not-doi/expected.jsonld",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 1254,
+      "sha256": "694ec1e854d3eaf202dbe2bb48a29a29c350dd5364cfdd04eb533638e1ddb8fd",
+      "note": "inherited schema.org export expectations; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    },
+    {
+      "local": "tests/fixtures/schemaorg-export/full/expected.jsonld",
+      "upstream": "tests/fixtures/schemaorg-export/full/expected.jsonld",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 7119,
+      "sha256": "e6d861794b6cb44303acb9981c9d5182d824ab70ba5e41d4d64b0061a724656d",
+      "note": "inherited schema.org export expectations; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    },
+    {
+      "local": "tests/fixtures/schemaorg-export/funding-grant/expected.jsonld",
+      "upstream": "tests/fixtures/schemaorg-export/funding-grant/expected.jsonld",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 1332,
+      "sha256": "a656a061a9dab8269dcd8e4110c6cc8ce6437d0f65e2e8ebd81373fa50a538d5",
+      "note": "inherited schema.org export expectations; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    },
+    {
+      "local": "tests/fixtures/schemaorg-export/iri-values/expected.jsonld",
+      "upstream": "tests/fixtures/schemaorg-export/iri-values/expected.jsonld",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 1493,
+      "sha256": "a0b50e6e33e10f278277c4dc1314e2580b6506625ff9c0cd3ca5b97c514ce852",
+      "note": "inherited schema.org export expectations; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    },
+    {
+      "local": "tests/fixtures/schemaorg-export/metadata-record/expected.jsonld",
+      "upstream": "tests/fixtures/schemaorg-export/metadata-record/expected.jsonld",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 1305,
+      "sha256": "b21e0e9f3e97833007830993e73d524d3a45be7209ff67c717b22824c47f649e",
+      "note": "inherited schema.org export expectations; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    },
+    {
+      "local": "tests/fixtures/schemaorg-export/provenance-howto/expected.jsonld",
+      "upstream": "tests/fixtures/schemaorg-export/provenance-howto/expected.jsonld",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 1600,
+      "sha256": "30a4db81e1d07f686ea9702d25192b3d1eea89fc3bcba7489aa38adca4f42df4",
+      "note": "inherited schema.org export expectations; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    },
+    {
+      "local": "tests/fixtures/schemaorg-export/provenance-legacy/expected.jsonld",
+      "upstream": "tests/fixtures/schemaorg-export/provenance-legacy/expected.jsonld",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 1459,
+      "sha256": "6e49e1a55988f8e190ad00f7011f20da29eb9b343e0dddb196b7a8af9f76b5d8",
+      "note": "inherited schema.org export expectations; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    },
+    {
+      "local": "tests/fixtures/schemaorg-export/provenance-software/expected.jsonld",
+      "upstream": "tests/fixtures/schemaorg-export/provenance-software/expected.jsonld",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 1860,
+      "sha256": "2820a25c1ece297e6d1c242d4b9a444e4ed17ce60742a8734f093ef2d17f97cd",
+      "note": "inherited schema.org export expectations; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    },
+    {
+      "local": "tests/fixtures/schemaorg-export/seqcol/expected.jsonld",
+      "upstream": "tests/fixtures/schemaorg-export/seqcol/expected.jsonld",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 1615,
+      "sha256": "bc7bcbc2d0e51d64acc363ee17a60acab49d19b527983130d69473ec3dc35bb1",
+      "note": "inherited schema.org export expectations; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    },
+    {
+      "local": "tests/fixtures/schemaorg-export/statistics/expected.jsonld",
+      "upstream": "tests/fixtures/schemaorg-export/statistics/expected.jsonld",
+      "commit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+      "size": 4335,
+      "sha256": "2803bcd25fe31e208ebd9307030fffa744194f039bcb0da7fd41ff6ecc501f00",
+      "note": "inherited schema.org export expectations; bytes equal the shared tree at commit 43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4 (the inherited fork state, v0.4.0~1, 2026-10-14); frozen by the Q2 decision (FHP-Specification#2, 2026-11-12): pinned compatibility fixture, not a generation or drift target of FHP CI; authoritative home FAIR-bioHeaders-Specification"
+    }
+  ],
   "strictDirs": [
     "schemas",
     "conformance/valid",
@@ -306,64 +555,20 @@
   ],
   "legacy": [
     {
-      "path": "schemas/core.yaml",
-      "note": "v0.3-era shared core; still imported by this tree's inherited fhr_linkml.yml/fhgff3_linkml.yml generation. Replacing it with the published v0.5.0 copy breaks validation-equivalence of the frozen FHR 2.0/FHGFF3 1.0 compatibility contracts (check_linkml, test_linkml); proposal Q2 decides. FHP 1.1 imports schemas/core-v0.5.yaml."
-    },
-    {
       "path": "schemas/core-v0.4.yaml",
       "note": "immutable v0.4.0 snapshot; its own header pins release commit 84c2f90ab0e97c81d8afbf33eafe80ebade7a009 and tests/fixtures/fhp/v0.4.0/PROVENANCE.json; superseded for imports by core-v0.5.yaml but retained for the released FHP 1.0 line"
     },
     {
-      "path": "fhr.json",
-      "note": "frozen pre-v0.5.0 FHR 2.0 compatibility copy (Q2)"
-    },
-    {
-      "path": "fhr_linkml.yml",
-      "note": "frozen pre-v0.5.0 model copy (Q2)"
-    },
-    {
-      "path": "fhgff3.json",
-      "note": "frozen pre-v0.5.0 FHGFF3 1.0 compatibility copy (Q2)"
-    },
-    {
-      "path": "fhgff3_linkml.yml",
-      "note": "frozen pre-v0.5.0 model copy (Q2)"
-    },
-    {
-      "path": "jsonld/fhr.context.jsonld",
-      "note": "Pages-era copy; the shared repository publishes the v0.5.0-era context (Q2)"
-    },
-    {
-      "path": "jsonld/terms.jsonld",
-      "note": "Pages-era copy (Q2)"
-    },
-    {
-      "path": "jsonld/terms.ttl",
-      "note": "Pages-era copy (Q2)"
-    },
-    {
-      "path": "docs/TERMS.md",
-      "note": "generated by this tree's scripts/make_jsonld.py from the legacy chain"
-    },
-    {
-      "path": "docs/FORMAT.md",
-      "note": "pre-v0.5.0 rules copy; the published FORMAT.md carries the [R11]-[R15] rule tokens that must byte-match the shared conformance/manifest.json rule list, so it syncs only with the full conformance package (see deferred)"
-    },
-    {
       "path": "docs/JSONLD.md",
-      "note": "pre-v0.5.0 (no [J9]); part of the deferred package"
+      "note": "pre-v0.5.0 (no [J9]); frozen by the Q2 decision as a compatibility copy: the v0.5.0 doc and its vectors run in the family manifest of the pinned shared tree via .github/workflows/shared-parity.yml"
     },
     {
       "path": "docs/MICRODATA.md",
-      "note": "pre-v0.5.0 (no [M5]); part of the deferred package"
+      "note": "pre-v0.5.0 (no [M5]); frozen by the Q2 decision as a compatibility copy (see docs/JSONLD.md)"
     },
     {
       "path": "docs/FHGFF3.md",
-      "note": "pre-v0.5.0; part of the deferred package"
-    },
-    {
-      "path": "docs/MAPPINGS.md",
-      "note": "legacy family doc (Q2)"
+      "note": "pre-v0.5.0 (old [G1] grammar); frozen by the Q2 decision as a compatibility copy (see docs/JSONLD.md)"
     },
     {
       "path": "docs/SCHEMAORG-EXPORT.md",
@@ -376,18 +581,6 @@
     {
       "path": "docs/FAIR_HEADER_GUIDELINE.md",
       "note": "legacy family doc (Q2)"
-    },
-    {
-      "path": "scripts/check_conformance.py",
-      "note": "pre-v0.5.0 checker, coherent with the local manifest and rule docs; see deferred"
-    },
-    {
-      "path": "scripts/make_conformance.py",
-      "note": "pre-v0.5.0 generator, coherent with the local vector tree (see deferred)"
-    },
-    {
-      "path": "tests/test_conformance.py",
-      "note": "pre-v0.5.0 suite for the local tree (see deferred)"
     },
     {
       "path": "tests/test_core_schema.py",
@@ -403,7 +596,7 @@
     },
     {
       "path": "conformance/",
-      "note": "manifest.json, README.md and every vector except the pinned fhp-fasta copies listed under copied[]: pre-v0.5.0 family state, coherent with the legacy scripts (see deferred)"
+      "note": "vector files except the pinned fhp-fasta copies listed under copied[]: the pre-v0.5.0 family generation state. The FHP-owned manifest (Q4) still reads the FASTA-container fasta-*.fhr.fasta vectors — the shared R rules on the FASTA header reader this package exercises — and regenerates them locally; the non-FASTA family vector files (gfa, microdata, jsonld, fhgff3) are historical: the complete family manifest runs from the pinned shared tree via .github/workflows/shared-parity.yml"
     },
     {
       "path": "examples/example.fhr.fasta",
@@ -422,23 +615,11 @@
       "note": "legacy FHR example set (Q2)"
     },
     {
-      "path": "examples/example.fhr.jsonld",
-      "note": "legacy FHR example set (Q2)"
-    },
-    {
-      "path": "examples/example.fhr.export.jsonld",
-      "note": "legacy FHR example set (Q2)"
-    },
-    {
       "path": "examples/example.microdata.fhr.html",
       "note": "legacy FHR example set (Q2)"
     },
     {
       "path": "examples/minimal.fhr.json",
-      "note": "legacy FHR example set (Q2)"
-    },
-    {
-      "path": "examples/minimal.fhr.jsonld",
       "note": "legacy FHR example set (Q2)"
     },
     {
@@ -650,62 +831,26 @@
     {
       "path": "examples/fhp/invalid-unsupported-version.microdata.fhp.html",
       "note": "FHP negative fixture"
+    },
+    {
+      "path": "conformance/manifest.json",
+      "note": "FHP-owned manifest (Q4): every fhp-fasta vector of the pinned v0.5.0 line, the FHP-owned fhp-fasta-author-bad-name-type vector, and the shared FASTA-container vectors; generated by scripts/make_conformance.py; the family manifest is not maintained here"
+    },
+    {
+      "path": "conformance/invalid/fhp-fasta-author-bad-name-type.fhp.fasta",
+      "note": "FHP-owned vector: this repository's local addition to the fhp-fasta set, absent from the shared manifest; still rejected by fhp.json 1.1 and the fair-bioheaders 0.9.0 reader"
+    },
+    {
+      "path": "scripts/make_conformance.py",
+      "note": "FHP-owned conformance package generator (Q4): the shared v0.5.0 fhp-fasta builders plus this tree's FASTA-container generation"
+    },
+    {
+      "path": "scripts/check_conformance.py",
+      "note": "FHP-owned conformance package checker (Q4)"
+    },
+    {
+      "path": "tests/test_conformance.py",
+      "note": "FHP-owned conformance package tests (Q4)"
     }
-  ],
-  "deferred": {
-    "package": "conformance/manifest.json + the conformance vector tree + scripts/check_conformance.py + scripts/make_conformance.py + tests/test_conformance.py + docs/FORMAT.md + docs/JSONLD.md + docs/MICRODATA.md + docs/FHGFF3.md + the v0.5.0-era jsonld/fhr.* inputs + shared git tags",
-    "reason": [
-      "check_manifest requires the manifest's rule list to equal the rule tokens extracted from docs/FORMAT.md, docs/MICRODATA.md, docs/JSONLD.md, docs/FHP.md and docs/FHGFF3.md; the v0.5.0 manifest (40 rules incl. R11-R15, J9, M5, G1 grammar, V1-V6) therefore cannot coexist with the frozen pre-v0.5.0 docs, and reducing the manifest locally would create a second divergent manifest, which the issue #3 acceptance forbids",
-      "the regeneration check rebuilds every vector, including jsonld vectors that embed the v0.5.0-era FHR context: byte parity requires the shared-era jsonld/fhr.* copies and the v0.4-era shared make_jsonld.py writer, both excluded from this PR by the bounded issue-#3 scope",
-      "the --schema path resolves schema-selection vectors (V1-V6) against FHR 2.1-era contracts and the shared repository's git tags; this tree freezes fhr.json at the pre-v0.4 lineage and has no shared release tags"
-    ],
-    "consequence": "the 8 new fhp-fasta R15/V vectors and the fhp-fasta-rich byte update are validated from their single pinned source by the shared-parity workflow (the upstream tree's own check_conformance.py with the released toolkit), not by copies in this tree; local fhp-fasta coverage stays at the vectors already byte-identical to v0.5.0",
-    "vectors": [
-      {
-        "upstream": "conformance/invalid/fhp-fasta-extension-nested.fhp.fasta",
-        "v050Sha256": "c4a4b022655b39f1391246f5f74f5760cacdae1cf062c4a30d9521d8144edf0b",
-        "state": "not present locally (new in the v0.5.0 manifest)"
-      },
-      {
-        "upstream": "conformance/invalid/fhp-fasta-extension-older-release.fhp.fasta",
-        "v050Sha256": "e7e3834ff8cb1f7ab7c31871a3af958a2bb2d45928450a565c1cfee7b7d4bc5d",
-        "state": "not present locally (new in the v0.5.0 manifest)"
-      },
-      {
-        "upstream": "conformance/invalid/fhp-fasta-extension-older-version.fhp.fasta",
-        "v050Sha256": "72d68328fd39e93995af6fccfc866d1153e3b12f9a9d7b0c641450bc861d4d65",
-        "state": "not present locally (new in the v0.5.0 manifest)"
-      },
-      {
-        "upstream": "conformance/invalid/fhp-fasta-schema-release-without-type.fhp.fasta",
-        "v050Sha256": "c1ec4a9054d711700522c8a3e81a216668e570f38329b1a99c00aacfa7bc6af0",
-        "state": "not present locally (new in the v0.5.0 manifest)"
-      },
-      {
-        "upstream": "conformance/valid/fhp-fasta-escaped-record-markers.fhp.fasta",
-        "v050Sha256": "eec298a8c7ec120b46e03d17f72186e39a3757029745002e2f8bb34fa294fa0a",
-        "state": "not present locally (new in the v0.5.0 manifest)"
-      },
-      {
-        "upstream": "conformance/valid/fhp-fasta-extension-fields.fhp.fasta",
-        "v050Sha256": "fabd633b12c125865f1c1b1d6a241566a9c6b88c848c3a0e5015407ea5858940",
-        "state": "not present locally (new in the v0.5.0 manifest)"
-      },
-      {
-        "upstream": "conformance/valid/fhp-fasta-rich.fhp.fasta",
-        "v050Sha256": "bdbf9375cb7eb14c2f1508732c2c59851e9d075f6b2d267c6994b5825deb0d92",
-        "state": "local bytes are the pre-v0.5.0 release line"
-      },
-      {
-        "upstream": "conformance/valid/fhp-fasta-schema-canonical-raw-main.fhp.fasta",
-        "v050Sha256": "d7668f4d7c4cc014f961e93fbffede691a3981c69b20ef2a75459db071bfe92d",
-        "state": "not present locally (new in the v0.5.0 manifest)"
-      },
-      {
-        "upstream": "conformance/valid/fhp-fasta-schema-raw-tag.fhp.fasta",
-        "v050Sha256": "cd6ca7f9627b6ed46b88b5e2d3673477ca4bb016335b4ad629af9751a8f6aad5",
-        "state": "not present locally (new in the v0.5.0 manifest)"
-      }
-    ]
-  }
+  ]
 }

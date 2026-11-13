@@ -17,10 +17,19 @@ is what CI does. If an upstream checkout is found next to this repository (or
 in ``FAIR_BIOHEADERS_SPECIFICATION``) the live comparison runs automatically;
 ``--no-upstream`` forces the digest-only check.
 
-Every file under ``strictDirs`` must be classified: as a copied entry, under a
-``legacy`` path or prefix (frozen pre-v0.5.0 family state, gated by the
-DEVELOPMENT-TREE-PROPOSAL.md Q2 decision), or under ``owned`` (canonical in
-this development repository). An unclassified new path fails the check.
+The ``pinned`` section serves the Q2 freeze (docs/DEVELOPMENT-TREE.md,
+FAIR-bioHeaders/FHP-Specification#2, 2026-11-12): the inherited FHR/FHGFF3
+contracts, models and their generated outputs are pinned compatibility
+fixtures, no longer generation or drift-check targets of this repository's CI.
+Each entry records the local digest and the historical shared commit whose
+bytes it froze (the fork state, one commit before shared v0.4.0); the same
+digest and, with ``--upstream``, the recorded commit's bytes are verified, so
+silent drift of a frozen artifact fails CI exactly like drift of a copied one.
+
+Every file under ``strictDirs`` must be classified: as a copied entry, as a
+pinned compatibility artifact, under a ``legacy`` path or prefix (frozen
+pre-v0.5.0 family state), or under ``owned`` (canonical in this development
+repository). An unclassified new path fails the check.
 Nothing here edits the copies; a deliberate resync re-runs
 ``scripts/make_provenance.py`` against the new pinned commit.
 """
@@ -72,29 +81,30 @@ def expected_local(upstream_bytes, entry):
 
 
 def check_local(prov):
-    """Compare every copied file with its recorded (local) digest and size."""
+    """Compare every copied and pinned file with its recorded digest and size."""
     errors = []
     listed = {}
-    for entry in prov.get("copied", []):
-        local = entry["local"]
-        listed[local] = entry
-        path = ROOT / local
-        if not path.is_file():
-            errors.append(f"missing: {local}")
-            continue
-        data = path.read_bytes()
-        if len(data) != entry["size"]:
-            errors.append(f"size differs: {local} (local {len(data)}, "
-                          f"pinned {entry['size']})")
-        if sha256(data) != entry["sha256"]:
-            errors.append(f"content differs: {local} (local {sha256(data)[:12]}..., "
-                          f"pinned {entry['sha256'][:12]}...)")
+    for section in ("copied", "pinned"):
+        for entry in prov.get(section, []):
+            local = entry["local"]
+            listed[local] = entry
+            path = ROOT / local
+            if not path.is_file():
+                errors.append(f"missing: {local}")
+                continue
+            data = path.read_bytes()
+            if len(data) != entry["size"]:
+                errors.append(f"size differs: {local} (local {len(data)}, "
+                              f"pinned {entry['size']})")
+            if sha256(data) != entry["sha256"]:
+                errors.append(f"content differs: {local} (local {sha256(data)[:12]}..., "
+                              f"pinned {entry['sha256'][:12]}...)")
     return errors, listed
 
 
 def classified(prov):
-    """Local paths classified as copied, legacy or owned (prefixes end in /)."""
-    exact = {entry["local"] for entry in prov.get("copied", [])}
+    """Local paths classified as copied, pinned, legacy or owned (prefixes end in /)."""
+    exact = {entry["local"] for entry in prov.get("copied", []) + prov.get("pinned", [])}
     prefixes = set()
     for group in ("legacy", "owned"):
         for item in prov.get(group, []):
@@ -157,8 +167,8 @@ def check_upstream(prov, repo):
     """Compare the pinned commits' bytes with the recorded digests and copies."""
     errors = []
     default_commit = prov["source"]["commit"]
-    for commit in dict.fromkeys(e.get("commit", default_commit)
-                                for e in prov.get("copied", []) + prov.get("imports", [])):
+    sections = prov.get("copied", []) + prov.get("imports", []) + prov.get("pinned", [])
+    for commit in dict.fromkeys(e.get("commit", default_commit) for e in sections):
         exists = subprocess.run(
             ["git", "-C", str(repo), "cat-file", "-e", f"{commit}^{{commit}}"],
             capture_output=True,
@@ -168,7 +178,8 @@ def check_upstream(prov, repo):
     if errors:
         return errors, 0
     checked = 0
-    for entry in prov.get("copied", []) + prov.get("imports", []):
+    for entry in (prov.get("copied", []) + prov.get("imports", [])
+                  + prov.get("pinned", [])):
         commit = entry.get("commit", default_commit)
         data = git_show(repo, commit, entry["upstream"])
         if data is None:
@@ -202,6 +213,7 @@ def main(argv=None):
     commit = prov["source"]["commit"]
     print(f"shared parity: pinned {prov['source']['repository']} {commit}")
     print(f"  {len(prov.get('copied', []))} copied files, "
+          f"{len(prov.get('pinned', []))} frozen compatibility files, "
           f"{len(prov.get('imports', []))} recorded imports")
 
     errors, listed = check_local(prov)

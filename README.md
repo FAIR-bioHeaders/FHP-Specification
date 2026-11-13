@@ -41,13 +41,16 @@ landed: this root tree now carries the **FHP 1.1 line**. `fhp.json`,
 `docs/FHP.md`, `docs/SCHEMA-VERSIONS.md`, `schemas/versions.json`, the shared
 `examples/fhp/` files and the byte-unchanged `fhp-fasta` vectors are
 byte-pinned to the shared v0.5.0 release commit and verified against
-`provenance.json` by `scripts/check_shared_parity.py` in CI. A documented
-subset still stands at the pre-v0.5.0 family state: the conformance manifest
-and the nine v0.5.0 `fhp-fasta` R15/V vectors (eight additions plus one byte
-update) are deferred with the
-conformance-package resync (`provenance.json` `deferred`) and are validated
-from the pinned upstream tree by the shared-parity workflow rather than by
-local copies.
+`provenance.json` by `scripts/check_shared_parity.py` in CI. The conformance
+package was wired as **FHP-owned** under the Q4 decision
+([issue #2](https://github.com/FAIR-bioHeaders/FHP-Specification/issues/2),
+2026-11-12): `conformance/manifest.json` covers the complete v0.5.0
+`fhp-fasta` vector set — byte-pinned to the shared release commit, the former
+deferred additions included — plus this repository's own
+`fhp-fasta-author-bad-name-type` and the shared FASTA-container vectors that
+exercise the `docs/FORMAT.md` rules on the same FASTA header reader. The
+complete family manifest is not maintained here; it runs from the pinned
+shared tree under `.github/workflows/shared-parity.yml`.
 
 **Canonical here:** this repository is the current raw-`main` source of the FHP
 JSON-LD context and vocabulary (`jsonld/fhp.context.jsonld`,
@@ -96,7 +99,7 @@ python -m unittest discover -s tests -v
 python scripts/validate_examples.py --schema fhp.json --examples examples/fhp
 python scripts/check_linkml.py
 python scripts/check_schema_drift.py --schema fhp.json --baseline .github/schema-baseline-fhp.json
-python scripts/make_jsonld.py --check
+python scripts/make_jsonld.py --check --fhp
 python scripts/check_conformance.py
 python scripts/check_shared_parity.py
 ```
@@ -104,10 +107,12 @@ python scripts/check_shared_parity.py
 For an intentional model change, regenerate `fhp.json` with the command above,
 review the schema diff, and update the drift baseline only with explicit
 maintainer review (`python scripts/check_schema_drift.py --schema fhp.json
---baseline .github/schema-baseline-fhp.json --update`). CI workflows also run
-the inherited FHR/FHGFF3 family checks; keeping them live here versus freezing
-them as pinned compatibility fixtures is the still-open
-[Q2 decision in docs/DEVELOPMENT-TREE.md](docs/DEVELOPMENT-TREE.md#open-questions-maintainer-decisions).
+--baseline .github/schema-baseline-fhp.json --update`). Under the Q2 decision
+(2026-11-12, [docs/DEVELOPMENT-TREE.md](docs/DEVELOPMENT-TREE.md)) CI generates
+and drift-checks **FHP only**: the inherited FHR/FHGFF3 contracts, models and
+their generated outputs are pinned compatibility fixtures whose bytes are
+asserted by `scripts/check_shared_parity.py` against the `pinned` section of
+`provenance.json`.
 
 ## Project guidance
 

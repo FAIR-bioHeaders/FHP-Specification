@@ -53,6 +53,56 @@ class ProvenanceShapeTests(unittest.TestCase):
                          "e1e5998709a6df922b83bb89e6a2bf5c5d27d87d")
 
 
+class PinnedSectionTests(unittest.TestCase):
+    """The Q2 freeze: inherited FHR/FHGFF3 artifacts are digest-pinned fixtures."""
+
+    REQUIRED = {
+        "fhr.json", "fhr_linkml.yml", "fhgff3.json", "fhgff3_linkml.yml",
+        "schemas/core.yaml", "jsonld/fhr.context.jsonld", "jsonld/terms.jsonld",
+        "jsonld/terms.ttl", "docs/TERMS.md", "docs/MAPPINGS.md",
+        "examples/example.fhr.jsonld", "examples/minimal.fhr.jsonld",
+        "examples/example.fhr.export.jsonld",
+    }
+
+    def test_the_inherited_chain_is_fully_pinned(self):
+        prov = parity.load_provenance()
+        pinned = {entry["local"]: entry for entry in prov["pinned"]}
+        self.assertTrue(self.REQUIRED <= set(pinned),
+                        self.REQUIRED - set(pinned))
+        # Every schema.org export expectation (make_jsonld's generated outputs)
+        # is pinned too, and every entry names its historical source commit.
+        export_fixtures = {path.relative_to(parity.ROOT).as_posix()
+                           for path in (parity.ROOT / "tests/fixtures/schemaorg-export").glob(
+                               "*/expected.jsonld")}
+        self.assertTrue(export_fixtures <= set(pinned), export_fixtures - set(pinned))
+        for entry in pinned.values():
+            self.assertEqual(entry["commit"],
+                             "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4", entry["local"])
+            self.assertIn("upstream", entry)
+
+    def test_pinned_files_match_their_recorded_digests(self):
+        # check_local covers the pinned section, so drift fails CI offline.
+        prov = parity.load_provenance()
+        errors, listed = parity.check_local(prov)
+        self.assertEqual(errors, [])
+        for entry in prov["pinned"]:
+            self.assertIn(entry["local"], listed)
+
+    def test_pinned_drift_is_reported(self):
+        data = b'{"pinned": "bytes"}\n'
+        entry = entry_for(data, "fhr.json", "fhr.json")
+        entry["commit"] = "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4"
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "fhr.json").write_bytes(b"tampered\n")
+            prov = {"copied": [], "pinned": [entry], "legacy": [], "owned": [],
+                    "strictDirs": []}
+            with mock.patch.object(parity, "ROOT", root):
+                errors, _ = parity.check_local(prov)
+        self.assertEqual(len(errors), 2)  # size and content
+        self.assertTrue(all("fhr.json" in error for error in errors))
+
+
 class AdjustmentTests(unittest.TestCase):
     def test_provenance_header_is_prepended(self):
         adjustment = {"kind": "provenance-header", "header": "# pin\n"}
