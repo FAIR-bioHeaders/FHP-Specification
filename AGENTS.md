@@ -112,7 +112,9 @@ contract link, not an immutable version. Keep supported old-name URL aliases and
 published example/vector bytes intact. Exact file checksum coverage follows
 `docs/FORMAT.md`; SeqCol identifies sequence collections and is not a file checksum.
 
-The selection rules in `docs/SCHEMA-VERSIONS.md` are currently V1 to V7. V7
+The selection rules in the shared specification's
+[`docs/SCHEMA-VERSIONS.md`](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/blob/main/docs/SCHEMA-VERSIONS.md)
+are currently V1 to V7. V7
 (FAIR-bioHeaders-Specification#226, merged 2026-11-13) adds an opt-in reader lane
 for unreleased draft contracts: a draft is cited as the raw-main URL of the
 development repository that owns the type, is recognised only where the reader
