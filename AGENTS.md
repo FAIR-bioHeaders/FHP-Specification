@@ -134,9 +134,9 @@ For assistants and people adding FAIR-bioHeaders headers to data elsewhere (summ
   checksum by hand. The Claude Code plugin in FAIR-bioHeaders-Tools
   (`plugins/fair-bioheaders`) packages these steps as a skill.
 - Cite a versioned schema in `schema` (`https://w3id.org/fair-bioheaders/fhr/v0.6.0`,
-  `.../fhp/v0.6.0`, `.../fhgff3/v0.6.0`) with its `schemaVersion` from
-  `schemas/versions.json`. Required fields are in `fhr.json`, `fhp.json` and
-  `fhgff3.json`; never invent values for them.
+  `.../fhp/v0.6.0`, `.../fhgff3/v0.6.0`) with its `schemaVersion` from the shared
+  [v0.6.0 registry](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/blob/v0.6.0/schemas/versions.json).
+  Required fields are defined by those versioned schemas; never invent values for them.
 - Strict FASTA readers (samtools faidx and the rest of htslib, Picard, Biopython's default
   `fasta` format and others in `docs/TOOL_COMPATIBILITY.md`) reject a leading `;~`
   block: strip it first, or use Biopython's `fasta-pearson`.
