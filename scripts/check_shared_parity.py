@@ -6,8 +6,9 @@ byte-for-byte copies of the named paths at ``source.commit`` (or an entry's
 own ``commit`` override) in FAIR-bioHeaders-Specification, following the
 FHGFF3 ``header/provenance.json`` pattern adapted for this tree by issue #3.
 Two copies carry a machine-checkable ``adjustment`` instead of plain identity
-(``import-retarget`` replaces one import line; ``provenance-header`` prepends
-an exact comment header) and record both the local and the upstream digest.
+(``import-retarget`` replaces named import lines, one occurrence each;
+``provenance-header`` prepends an exact comment header) and record both the
+local and the upstream digest.
 
 Without options this checks each copied file against the recorded digest, so it
 needs only the standard library and works offline. With ``--upstream PATH`` it
@@ -67,10 +68,15 @@ def apply_adjustment(contents, adjustment):
     if kind == "provenance-header":
         return adjustment["header"].encode("utf-8") + contents
     if kind == "import-retarget":
-        old, new = adjustment["from"].encode("utf-8"), adjustment["to"].encode("utf-8")
-        if contents.count(old) != 1:
-            raise ValueError("import-retarget: upstream line not found exactly once")
-        return contents.replace(old, new)
+        olds, news = adjustment["from"], adjustment["to"]
+        if isinstance(olds, str):
+            olds, news = [olds], [news]
+        for old, new in zip(olds, news):
+            old, new = old.encode("utf-8"), new.encode("utf-8")
+            if contents.count(old) != 1:
+                raise ValueError("import-retarget: upstream line not found exactly once")
+            contents = contents.replace(old, new)
+        return contents
     raise ValueError(f"unknown adjustment kind {kind}")
 
 

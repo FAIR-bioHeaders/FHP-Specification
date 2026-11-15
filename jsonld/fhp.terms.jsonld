@@ -35,7 +35,7 @@
         "@language": "en"
       },
       "rdfs:comment": {
-        "@value": "BUSCO completeness as counts, with the lineage dataset whose name gives its version (for example primates_odb10)",
+        "@value": "BUSCO completeness as counts, with the lineage dataset whose name gives its version (for example primates_odb10 or enterobacterales_odb12.2)",
         "@language": "en"
       },
       "rdfs:isDefinedBy": {
@@ -370,7 +370,7 @@
         "@language": "en"
       },
       "rdfs:comment": {
-        "@value": "BUSCO lineage dataset, including its version suffix",
+        "@value": "BUSCO lineage dataset, including its version suffix; one or more dot-separated numeric version components are allowed, as BUSCO datasets are re-released (for example odb12.2)",
         "@language": "en"
       },
       "sdo:domainIncludes": [

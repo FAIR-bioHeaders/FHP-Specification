@@ -437,16 +437,35 @@ nothing was added to make it look like a different convention.
 
 See [docs/DEVELOPMENT-TREE.md](../../../docs/DEVELOPMENT-TREE.md#real-data-example-fixture-issue-29)
 for the classification. In short: this directory is classified FHP-owned in
-`provenance.json`, `examples/fhp/**` is now `-text` in `.gitattributes`, and the
-pair targets the released v0.6.0 contracts while this tree's pinned copies are
-FHP 1.1 and the frozen legacy FHR 1.0 — so this repository's own example gate
-cannot schema-validate it yet, and the fixture sits in a subdirectory that
-`scripts/validate_examples.py` and `tests/test_fhp_schema.py` do not read. The
-measured rejection against the local copies is
+`provenance.json` and `examples/fhp/**` is `-text` in `.gitattributes`.
+
+When this fixture was written (#30) this tree's pinned copies were FHP 1.1 and
+the frozen legacy FHR 1.0, so the repository's own example gate could not
+schema-validate it: the measured rejections against the local copies were
 `$.schemaVersion: '1.2' is not one of ['1.0', '1.1']` (FHP) and
 `$.schemaVersion: '2.1' is not of type 'number'` (FHR, whose local copy is FHR
-1.0). Validation was therefore done against the released contracts, two
-independent ways, as recorded above.
+1.0). Validation was then done against the released contracts, two independent
+ways, as recorded above.
+
+That FHP-side gap closed with [#31](https://github.com/FAIR-bioHeaders/FHP-Specification/issues/31):
+this repository's working `fhp.json` is now the v0.6.0-released FHP 1.2 bytes,
+and `tests/test_dmel_chr4_fixture.py` validates the header of
+`chr4.fhp.fasta` against it through the repository's own test gate:
+
+```text
+$ python -m unittest tests.test_dmel_chr4_fixture -v  # (excerpt)
+test_fhp_header_validates_against_working_fhp_json (tests.test_dmel_chr4_fixture.WorkingContractValidationTests) ... ok
+Ran 13 tests in 0.431s
+OK
+```
+
+Measured directly with `jsonschema` 4.26.0 (`Draft202012Validator` with
+`FormatChecker`) against the working `fhp.json` (FHP 1.2): 0 errors. The
+fixture stays in a subdirectory the flat example glob does not read, because
+`metadata.fhr.yaml` is not FHP metadata and this tree's `fhr.json` remains the
+frozen FHR 1.0 compatibility copy (Q2): the FHR header is still validated by
+the released toolkit and the shared repository, not by this repository's
+gates.
 
 ## Not verified
 
@@ -455,7 +474,9 @@ independent ways, as recorded above.
   the chr4 sequence and compared the products against these 298 records. The
   toolkit says the same thing in its own output ("A match confirms file identity
   only, not that the translations are correct").
-- **Schema validation by this repository's own gates**, for the pin reason above.
+- **Schema validation of the FHR header by this repository's own gates.** The
+  FHP header is validated locally since #31 (see above); the FHR header is not,
+  because this tree's `fhr.json` is the frozen FHR 1.0 compatibility copy.
 - **Whether the FHT lane's chr4 parent is this same file.** chr4 was chosen so an
   FHP and an FHT fixture could share one parent. While this work was in progress
   the FHT lane opened

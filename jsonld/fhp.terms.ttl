@@ -71,7 +71,7 @@
 
 fhr:Completeness a rdfs:Class ;
     rdfs:label "Completeness"@en ;
-    rdfs:comment "BUSCO completeness as counts, with the lineage dataset whose name gives its version (for example primates_odb10)"@en ;
+    rdfs:comment "BUSCO completeness as counts, with the lineage dataset whose name gives its version (for example primates_odb10 or enterobacterales_odb12.2)"@en ;
     rdfs:isDefinedBy <https://w3id.org/fair-bioheaders/terms> .
 
 fhr:DerivedFrom a rdfs:Class ;
@@ -168,7 +168,7 @@ fhr:isoformPolicy a rdf:Property ;
 
 fhr:lineageDataset a rdf:Property ;
     rdfs:label "lineageDataset"@en ;
-    rdfs:comment "BUSCO lineage dataset, including its version suffix"@en ;
+    rdfs:comment "BUSCO lineage dataset, including its version suffix; one or more dot-separated numeric version components are allowed, as BUSCO datasets are re-released (for example odb12.2)"@en ;
     sdo:domainIncludes fhr:Completeness ;
     sdo:rangeIncludes sdo:Text ;
     rdfs:isDefinedBy <https://w3id.org/fair-bioheaders/terms> .

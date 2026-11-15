@@ -857,7 +857,8 @@ def build_fhp():
     fhp_invalid("fhp-fasta-unused-genetic-code", fhp_record(geneticCode=7),
                 "P1", "geneticCode 7 is not an NCBI translation table.")
     # FHP-owned local addition (not in the shared manifest): kept from this
-    # tree's pre-v0.5.0 development and still rejected by fhp.json 1.1.
+    # tree's pre-v0.5.0 development and still rejected by fhp.json (1.1 at the
+    # shared v0.5.0 pin, and unchanged in behavior under 1.2 since #31).
     fhp_invalid("fhp-fasta-author-bad-name-type",
                 fhp_record(metadataAuthor=[{"name": "Synthetic metadata author (placeholder)",
                                             "nameType": "Company"}]),

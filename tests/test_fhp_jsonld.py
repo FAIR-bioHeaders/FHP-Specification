@@ -766,10 +766,10 @@ class ReaderTests(unittest.TestCase):
 
 
 class ReleasedContractTests(unittest.TestCase):
-    """The released contract line (FHP 1.1 at shared v0.5.0): validate the
+    """The released contract line (FHP 1.2 at shared v0.6.0): validate the
     examples against the pinned release copy, which is this tree's working
-    fhp.json (provenance.json). The FHP 1.0 compatibility line stays covered by
-    the immutable v0.4.0 pin below and in tests/test_fhp_schema.py."""
+    fhp.json (provenance.json). The FHP 1.0 and 1.1 lines stay covered by the
+    immutable v0.4.0 and v0.5.0 pins and in tests/test_fhp_schema.py."""
 
     @classmethod
     def setUpClass(cls):
@@ -779,15 +779,32 @@ class ReleasedContractTests(unittest.TestCase):
         cls.examples = examples()
 
     def test_working_schema_is_the_pinned_release_copy(self):
+        """The #31 regression guard: the working fhp.json must equal the
+        released FAIR-bioHeaders-Specification v0.6.0 bytes. The digest is the
+        v0.6.0 tag's fhp.json (recorded in the issue), the byte identity is
+        against this tree's v0.6.0 release pin, and scripts/check_shared_parity.py
+        --upstream (CI) verifies that pin against commit
+        0ae18b00ee4bd71ab2dc28bae706b0f9d195076b in the shared repository; the
+        provenance assertions below tie the two ends together. A regression to
+        the stale 1.1 copy — the failure mode #31 closes — fails here."""
         import hashlib
         data = (ROOT / "fhp.json").read_bytes()
         self.assertEqual(hashlib.sha256(data).hexdigest(),
-                         "2409739d4a223164ca368f93afa78c8f1e3809fb04ec46cc9a793cc5aaaba427")
+                         "92a0b3cbcfe69939ebfaac69f0c5958ce426c005873efe8d3e3eb0fc0dab6de5")
         self.assertEqual(data,
                          (ROOT / "tests" / "fixtures" / "releases"
-                          / "fhp-v0.5.0.json").read_bytes())
+                          / "fhp-v0.6.0.json").read_bytes())
         self.assertEqual(self.schema["$defs"]["FHP"]["properties"]["schemaVersion"]["enum"],
-                         ["1.0", "1.1"])
+                         ["1.0", "1.1", "1.2"])
+        prov = json.loads((ROOT / "provenance.json").read_text(encoding="utf-8"))
+        self.assertEqual(prov["fhpContract"]["schemaVersion"], "1.2")
+        self.assertEqual(prov["fhpContract"]["sharedRelease"], "v0.6.0")
+        by_local = {e["local"]: e for e in prov["copied"]}
+        contract_commit = "0ae18b00ee4bd71ab2dc28bae706b0f9d195076b"
+        for local in ("fhp.json", "tests/fixtures/releases/fhp-v0.6.0.json"):
+            entry = by_local[local]
+            self.assertEqual(entry.get("commit"), contract_commit, local)
+            self.assertEqual(entry["sha256"], hashlib.sha256(data).hexdigest(), local)
 
     def test_pinned_schema_is_the_released_fhp_1_0(self):
         import hashlib
