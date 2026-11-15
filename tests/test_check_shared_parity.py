@@ -31,7 +31,25 @@ class ProvenanceShapeTests(unittest.TestCase):
         self.assertEqual(source["commit"],
                          "170e677fbb6726a3f765373dbe1f214820000be7")
         self.assertEqual(source["tag"], "v0.5.0")
-        self.assertEqual(self.prov["fhpContract"]["schemaVersion"], "1.1")
+        self.assertEqual(self.prov["fhpContract"]["schemaVersion"], "1.2")
+        self.assertEqual(self.prov["fhpContract"]["sharedRelease"], "v0.6.0")
+
+    def test_fhp_contract_chain_is_re_pinned_to_the_v060_release_commit(self):
+        """FHP-Specification#31: the FHP contract chain carries per-entry commit
+        overrides to the shared v0.6.0 release commit; the rest of copied[]
+        keeps the package pin."""
+        contract_commit = "0ae18b00ee4bd71ab2dc28bae706b0f9d195076b"
+        by_local = {e["local"]: e for e in self.prov["copied"]}
+        for local in ("fhp.json", "fhp_linkml.yml", "schemas/shared-v0.6.yaml",
+                      "schemas/versions.json",
+                      "tests/fixtures/releases/fhp-v0.6.0.json"):
+            self.assertEqual(by_local[local].get("commit"), contract_commit, local)
+            self.assertIn("#31", by_local[local]["commitNote"], local)
+        # The v0.5.0 release fixture is immutable history: it stays at the
+        # package pin (no per-entry override), and so does the plain
+        # schemas/shared.yaml the frozen FHGFF3 generation reads.
+        self.assertNotIn("commit", by_local["tests/fixtures/releases/fhp-v0.5.0.json"])
+        self.assertNotIn("commit", by_local["schemas/shared.yaml"])
 
     def test_adjusted_entries_record_both_digests(self):
         for entry in self.prov["copied"]:
@@ -119,6 +137,17 @@ class AdjustmentTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             parity.apply_adjustment(b"a\n- schemas/core\nb\n- schemas/core\n",
                                     adjustment)
+
+    def test_import_retarget_accepts_several_pairs(self):
+        """#31: the FHP model retargets both vendored imports."""
+        adjustment = {"kind": "import-retarget",
+                      "from": ["- schemas/core\n", "- schemas/shared\n"],
+                      "to": ["- schemas/core-v0.5\n", "- schemas/shared-v0.6\n"]}
+        out = parity.apply_adjustment(
+            b"imports:\n- schemas/core\n- schemas/shared\n", adjustment)
+        self.assertEqual(out, b"imports:\n- schemas/core-v0.5\n- schemas/shared-v0.6\n")
+        with self.assertRaises(ValueError):
+            parity.apply_adjustment(b"imports:\n- schemas/core\n", adjustment)
 
     def test_unknown_kind_is_rejected(self):
         with self.assertRaises(ValueError):

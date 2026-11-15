@@ -1,14 +1,17 @@
-# Pinned snapshot of the shared core for FHP 1.1 (FAIR-bioHeaders-Specification
-# v0.5.0, release commit 170e677fbb6726a3f765373dbe1f214820000be7; the payload
-# below is byte-identical to schemas/core.yaml at that commit and at shared
+# Pinned snapshot of the shared core for the released FHP line (the payload
+# below is byte-identical to schemas/core.yaml at FAIR-bioHeaders-Specification
+# v0.5.0 release commit 170e677fbb6726a3f765373dbe1f214820000be7, at the v0.6.0
+# release commit 0ae18b00ee4bd71ab2dc28bae706b0f9d195076b, and at shared
 # origin/main, verified by scripts/check_shared_parity.py against provenance.json).
 #
-# FHP imports this snapshot because the released FHP 1.1 line builds on the v0.5
-# core: the x- extension-field rules (docs/FORMAT.md R15), the MAJOR.MINOR string
-# schemaVersion patterns and the optional author nameType. The inherited FHR and
-# FHGFF3 generation in this development tree still imports schemas/core.yaml
-# (the v0.3-era core) and their published compatibility copies are unchanged;
-# synchronizing them is the Q2 decision in docs/DEVELOPMENT-TREE-PROPOSAL.md.
+# FHP imports this snapshot because the released FHP 1.1 and 1.2 lines build on
+# the v0.5 core: the x- extension-field rules (docs/FORMAT.md R15), the
+# MAJOR.MINOR string schemaVersion patterns and the optional author nameType;
+# the FHP 1.2 dotted BUSCO dataset versions (#170) live in schemas/shared.yaml,
+# not in the core. The inherited FHR and FHGFF3 generation in this development
+# tree still imports schemas/core.yaml (the v0.3-era core) and their published
+# compatibility copies are unchanged; synchronizing them is the Q2 decision in
+# docs/DEVELOPMENT-TREE-PROPOSAL.md.
 # Do not edit: replace this file from a release, not by hand.
 id: https://w3id.org/fhr/core
 name: FAIRBioHeadersCore

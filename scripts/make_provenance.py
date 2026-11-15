@@ -1,8 +1,14 @@
-"""Generate SHA-256 provenance entries for the pinned FHP v0.5.0 artifacts.
+"""Generate SHA-256 provenance entries for the pinned shared-specification artifacts.
 
 The entries describe the byte-for-byte copies of FAIR-bioHeaders-Specification
 at the pinned v0.5.0 release commit that this development repository maintains
-(issue #3, docs/DEVELOPMENT-TREE-PROPOSAL.md section 3). Two copies carry a
+(issue #3, docs/DEVELOPMENT-TREE-PROPOSAL.md section 3). One subset — the FHP
+contract chain (``fhp.json``, ``fhp_linkml.yml``, ``schemas/shared.yaml``,
+``schemas/versions.json``) and the released-contract fixture
+``tests/fixtures/releases/fhp-v0.6.0.json`` — is instead taken from the shared
+v0.6.0 release commit (FHP-Specification#31: the tree must validate the FHP 1.2
+contract it owns; every other copy stays at v0.5.0 until a full resync). Each
+such entry records its per-entry ``commit``. Two copies carry a
 machine-checkable local adjustment instead of plain identity:
 
 - ``fhp_linkml.yml`` retargets the model import to the vendored core snapshot
@@ -37,6 +43,14 @@ DEFAULT_COMMIT = "170e677fbb6726a3f765373dbe1f214820000be7"
 # bytes equal shared origin/main for this path at audit time (issue #3).
 COMPANION_COMMIT = "e1e5998709a6df922b83bb89e6a2bf5c5d27d87d"
 COMPANION_FILES = ("examples/fhp/rich-predicted.fhp.yaml",)
+# Shared v0.6.0 release commit (tag v0.6.0 -> main): the FHP contract chain
+# (FHP 1.2, dotted BUSCO dataset versions, FAIR-bioHeaders-Specification#170)
+# is re-pinned here by FHP-Specification#31; everything else in copied[] stays
+# at DEFAULT_COMMIT (v0.5.0) until a deliberate full-package resync.
+CONTRACT_COMMIT = "0ae18b00ee4bd71ab2dc28bae706b0f9d195076b"
+CONTRACT_FILES = ("fhp.json", "fhp_linkml.yml", "schemas/versions.json")
+CONTRACT_NOTE = ("FHP contract chain re-pinned to the shared v0.6.0 release "
+                 "commit (FHP 1.2; FHP-Specification#31)")
 
 PINNED_FILES = (
     "fhp.json",
@@ -59,36 +73,72 @@ PINNED_FILES = (
 # The vendored core snapshot's provenance header, followed by the byte-for-byte
 # shared schemas/core.yaml. Keep in sync with schemas/core-v0.5.yaml itself;
 # scripts/check_shared_parity.py verifies the pair against upstream bytes.
+# The payload is identical at both pinned commits because the shared core did
+# not move between v0.5.0 and v0.6.0 (verified at FHP-Specification#31): the
+# FHP 1.2 delta lives in schemas/shared.yaml and the model, not the core.
 CORE_V05_HEADER = (
-    "# Pinned snapshot of the shared core for FHP 1.1 (FAIR-bioHeaders-Specification\n"
-    "# v0.5.0, release commit 170e677fbb6726a3f765373dbe1f214820000be7; the payload\n"
-    "# below is byte-identical to schemas/core.yaml at that commit and at shared\n"
+    "# Pinned snapshot of the shared core for the released FHP line (the payload\n"
+    "# below is byte-identical to schemas/core.yaml at FAIR-bioHeaders-Specification\n"
+    "# v0.5.0 release commit 170e677fbb6726a3f765373dbe1f214820000be7, at the v0.6.0\n"
+    "# release commit 0ae18b00ee4bd71ab2dc28bae706b0f9d195076b, and at shared\n"
     "# origin/main, verified by scripts/check_shared_parity.py against provenance.json).\n"
     "#\n"
-    "# FHP imports this snapshot because the released FHP 1.1 line builds on the v0.5\n"
-    "# core: the x- extension-field rules (docs/FORMAT.md R15), the MAJOR.MINOR string\n"
-    "# schemaVersion patterns and the optional author nameType. The inherited FHR and\n"
-    "# FHGFF3 generation in this development tree still imports schemas/core.yaml\n"
-    "# (the v0.3-era core) and their published compatibility copies are unchanged;\n"
-    "# synchronizing them is the Q2 decision in docs/DEVELOPMENT-TREE-PROPOSAL.md.\n"
+    "# FHP imports this snapshot because the released FHP 1.1 and 1.2 lines build on\n"
+    "# the v0.5 core: the x- extension-field rules (docs/FORMAT.md R15), the\n"
+    "# MAJOR.MINOR string schemaVersion patterns and the optional author nameType;\n"
+    "# the FHP 1.2 dotted BUSCO dataset versions (#170) live in schemas/shared.yaml,\n"
+    "# not in the core. The inherited FHR and FHGFF3 generation in this development\n"
+    "# tree still imports schemas/core.yaml (the v0.3-era core) and their published\n"
+    "# compatibility copies are unchanged; synchronizing them is the Q2 decision in\n"
+    "# docs/DEVELOPMENT-TREE-PROPOSAL.md.\n"
     "# Do not edit: replace this file from a release, not by hand.\n"
 )
 
-# Local adjustments, keyed by (upstream path, local target path).
+# The shared object-model snapshot for the FHP 1.2 contract, followed by the
+# byte-for-byte shared schemas/shared.yaml at v0.6.0. The FHP model imports this
+# snapshot (import-retarget, same mechanism as the core) because the frozen
+# FHGFF3 1.0 compatibility chain regenerates from the plain schemas/shared.yaml
+# and must keep its pre-1.2 bytes; Q2 froze it, #31 advances only FHP.
+SHARED_V06_HEADER = (
+    "# Pinned v0.6.0 snapshot of the shared FHP/FHGFF3 object model (the payload\n"
+    "# below is byte-identical to schemas/shared.yaml at FAIR-bioHeaders-Specification\n"
+    "# v0.6.0 release commit 0ae18b00ee4bd71ab2dc28bae706b0f9d195076b, verified by\n"
+    "# scripts/check_shared_parity.py against provenance.json).\n"
+    "#\n"
+    "# The FHP 1.2 model imports this snapshot: the dotted BUSCO dataset versions\n"
+    "# (FAIR-bioHeaders-Specification#170) widen Completeness here. This tree's\n"
+    "# schemas/shared.yaml stays at the v0.5.0 bytes because the frozen FHGFF3 1.0\n"
+    "# compatibility copy is generated from it (the Q2 decision in\n"
+    "# docs/DEVELOPMENT-TREE.md); advancing that chain is a shared-repository\n"
+    "# resync, not an FHP edit.\n"
+    "# Do not edit: replace this file from a release, not by hand.\n"
+)
+
+# Local adjustments, keyed by (upstream path, local target path). import-retarget
+# replaces each listed import line exactly once in order.
 ADJUSTMENTS = {
     ("fhp_linkml.yml", "fhp_linkml.yml"): {
         "kind": "import-retarget",
-        "from": "- schemas/core\n",
-        "to": "- schemas/core-v0.5\n",
-        "reason": ("the pinned shared model imports the shared root core; this tree "
-                   "vendors it as schemas/core-v0.5.yaml so the v0.3-era root core "
-                   "can stay intact for the inherited FHR/FHGFF3 generation (Q3)"),
+        "from": ["- schemas/core\n", "- schemas/shared\n"],
+        "to": ["- schemas/core-v0.5\n", "- schemas/shared-v0.6\n"],
+        "reason": ("the pinned shared model imports the shared root core and the "
+                   "shared object model; this tree vendors them as "
+                   "schemas/core-v0.5.yaml and schemas/shared-v0.6.yaml so the "
+                   "v0.3-era root core and the v0.5.0 shared.yaml can stay intact "
+                   "for the inherited FHR/FHGFF3 generation (Q3, extended for the "
+                   "FHP 1.2 shared delta by #31)"),
     },
     ("schemas/core.yaml", "schemas/core-v0.5.yaml"): {
         "kind": "provenance-header",
         "header": CORE_V05_HEADER,
         "reason": ("vendored snapshot with a provenance comment header, following "
                    "schemas/core-v0.4.yaml (docs/DEVELOPMENT-TREE-PROPOSAL.md 2d)"),
+    },
+    ("schemas/shared.yaml", "schemas/shared-v0.6.yaml"): {
+        "kind": "provenance-header",
+        "header": SHARED_V06_HEADER,
+        "reason": ("vendored v0.6.0 snapshot with a provenance comment header, "
+                   "following schemas/core-v0.5.yaml (#31)"),
     },
 }
 
@@ -128,37 +178,62 @@ def apply_adjustment(contents, adjustment):
     if kind == "provenance-header":
         return adjustment["header"].encode("utf-8") + contents
     if kind == "import-retarget":
-        if contents.count(adjustment["from"].encode("utf-8")) != 1:
-            raise ValueError("import-retarget: upstream line not found exactly once")
-        return contents.replace(adjustment["from"].encode("utf-8"),
-                                adjustment["to"].encode("utf-8"))
+        olds = adjustment["from"]
+        news = adjustment["to"]
+        if isinstance(olds, str):
+            olds, news = [olds], [news]
+        for old, new in zip(olds, news):
+            if contents.count(old.encode("utf-8")) != 1:
+                raise ValueError("import-retarget: upstream line not found exactly once")
+            contents = contents.replace(old.encode("utf-8"), new.encode("utf-8"))
+        return contents
     raise ValueError(f"unknown adjustment kind {kind}")
 
 
 def generate_entries(upstream, commit, core_target="schemas/core-v0.5.yaml"):
     entries = []
     for path in artifact_paths(upstream, commit):
-        entry_commit = commit if path not in COMPANION_FILES else COMPANION_COMMIT
-        contents = git(upstream, "show", f"{entry_commit}:{path}")
-        if path == "fhp.json":
-            targets = ("fhp.json", "tests/fixtures/releases/fhp-v0.5.0.json")
-        elif path == "schemas/core.yaml":
-            targets = (core_target,)
+        if path in CONTRACT_FILES:
+            source_commit = CONTRACT_COMMIT
+        elif path in COMPANION_FILES:
+            source_commit = COMPANION_COMMIT
         else:
-            targets = (path,)
-        upstream_digest = hashlib.sha256(contents).hexdigest()
-        for target in targets:
+            source_commit = commit
+        contents = git(upstream, "show", f"{source_commit}:{path}")
+        if path == "fhp.json":
+            # The working copy and the v0.6.0 release pin take the contract
+            # commit; the v0.5.0 release pin is immutable and keeps its own
+            # historical bytes (tests/fixtures/releases/README.md).
+            historical = (contents if source_commit == commit else
+                          git(upstream, "show", f"{commit}:fhp.json"))
+            targets = (("fhp.json", source_commit, contents),
+                       ("tests/fixtures/releases/fhp-v0.6.0.json", source_commit, contents),
+                       ("tests/fixtures/releases/fhp-v0.5.0.json", commit, historical))
+        elif path == "schemas/core.yaml":
+            targets = ((core_target, source_commit, contents),)
+        elif path == "schemas/shared.yaml":
+            # The plain copy stays at the package commit for the frozen FHGFF3
+            # generation (#31); the FHP 1.2 model reads the v0.6.0 snapshot.
+            snapshot = git(upstream, "show", f"{CONTRACT_COMMIT}:{path}")
+            targets = ((path, source_commit, contents),
+                       ("schemas/shared-v0.6.yaml", CONTRACT_COMMIT, snapshot))
+        else:
+            targets = ((path, source_commit, contents),)
+        for target, entry_commit, entry_bytes in targets:
             adjustment = ADJUSTMENTS.get((path, target))
-            local = apply_adjustment(contents, adjustment) if adjustment else contents
+            local = apply_adjustment(entry_bytes, adjustment) if adjustment else entry_bytes
             entry = {"local": target, "upstream": path,
                      "size": len(local),
                      "sha256": hashlib.sha256(local).hexdigest()}
             if entry_commit != commit:
                 entry["commit"] = entry_commit
-                entry["commitNote"] = ("post-v0.5.0 companion fix (shared #201); "
-                                       "identical to shared origin/main at audit")
+                if entry_commit == COMPANION_COMMIT:
+                    entry["commitNote"] = ("post-v0.5.0 companion fix (shared #201); "
+                                           "identical to shared origin/main at audit")
+                else:
+                    entry["commitNote"] = CONTRACT_NOTE
             if adjustment:
-                entry["upstreamSha256"] = upstream_digest
+                entry["upstreamSha256"] = hashlib.sha256(entry_bytes).hexdigest()
                 entry["adjustment"] = adjustment
             entries.append(entry)
     return entries

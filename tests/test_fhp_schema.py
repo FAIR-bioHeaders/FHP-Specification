@@ -23,6 +23,7 @@ spec.loader.exec_module(generator)
 
 FHP_URL = "https://w3id.org/fair-bioheaders/fhp/v0.4.0"
 FHP_URL_050 = "https://w3id.org/fair-bioheaders/fhp/v0.5.0"
+FHP_URL_060 = "https://w3id.org/fair-bioheaders/fhp/v0.6.0"
 CHECKSUM = "A" * 43 + "="
 MINIMAL = {
     "schema": FHP_URL,
@@ -40,6 +41,10 @@ MINIMAL = {
 MINIMAL_11 = dict(MINIMAL, schema=FHP_URL_050, schemaVersion="1.1",
                   **{"x-predictor-lineage": "lineage:1",
                      "x-annotation": {"nested": ["any", 1, None, True]}})
+# The FHP 1.2 minor (shared v0.6.0, FAIR-bioHeaders-Specification#170) admits
+# the dotted BUSCO dataset versions; the records below pair it with completeness
+# blocks and are built after RICH.
+MINIMAL_12 = dict(MINIMAL, schema=FHP_URL_060, schemaVersion="1.2")
 RICH = dict(
     MINIMAL,
     derivedFrom=[{"headerType": "FHR", "checksum": CHECKSUM, "relationship": "translatedFrom"},
@@ -61,6 +66,8 @@ RICH = dict(
                   "fragmented": 0, "missing": 1, "total": 2},
     documentation="Synthetic record for tests",
 )
+# The same rich record on the 1.2 minor, for the dotted lineage tests below.
+RICH_12 = dict(RICH, schema=FHP_URL_060, schemaVersion="1.2")
 
 
 def changed(path, value, base=RICH):
@@ -89,7 +96,7 @@ REJECTED = [
     ("schemaVersion", 1, "schemaVersion is a string, not a number"),
     ("schemaVersion", 1.0, "schemaVersion is a string, not a number"),
     ("schemaVersion", "1", "MAJOR.MINOR"),
-    ("schemaVersion", "1.2", "the FHP 1.1 contract lists the enum 1.0 and 1.1 only"),
+    ("schemaVersion", "1.3", "the released contract lists 1.0, 1.1 and 1.2 only"),
     ("schemaVersion", "2.0", "FHR's version is not FHP's"),
     ("schema", "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/"
      "0123abc/fhp.json", "only main and release tags are schema refs"),
@@ -122,6 +129,8 @@ REJECTED = [
     ("sequenceStats.sequenceCount", -1, "negative count"),
     ("sequenceStats.extra", 1, "SequenceStats is closed"),
     ("completeness.lineageDataset", "primates", "lineage dataset without its version"),
+    ("completeness.lineageDataset", "enterobacterales_odb12.2",
+     "a record stating schemaVersion 1.0 has no dotted dataset version (#170)"),
     ("completeness.lineageDataset", DELETE, "lineage dataset required"),
     ("completeness.missing", DELETE, "every count is required"),
     ("completeness.total", 0, "total is at least 1"),
@@ -150,6 +159,7 @@ ACCEPTED = [
     ("derivedFrom.0.headerType", "FHT", "translated from a transcriptome"),
     ("completeness.lineageDataset", "ascomycota_odb12", "another lineage version"),
     ("completeness.total", 13780, "counts that need not add up are not checked"),
+    ("schemaVersion", "1.2", "the released 1.2 minor (shared v0.6.0, #170)"),
 ]
 
 
@@ -204,19 +214,54 @@ class FHPSchemaTests(unittest.TestCase):
                             "a record stating schemaVersion 1.0 has no extension fields")
 
     def test_released_contract_fixtures_keep_the_compatibility_line(self):
-        """Historical fixtures are immutable: FHP 1.0 records stay valid against
-        the pinned v0.4.0 contract copy, and the pinned v0.5.0 copy equals the
-        working fhp.json (issue #3 sync set)."""
+        """Historical fixtures are immutable: FHP 1.0 and 1.1 records stay valid
+        against the working 1.2 contract (the minor is additive), the pinned
+        v0.6.0 copy equals the working fhp.json (#31 re-pin), and each older
+        pinned release still refuses the newer minors it never admitted."""
         released_10 = json.loads(
             (ROOT / "tests" / "fixtures" / "releases" / "fhp-v0.4.0.json").read_text())
         released_11 = json.loads(
             (ROOT / "tests" / "fixtures" / "releases" / "fhp-v0.5.0.json").read_text())
-        self.assertEqual(released_11, self.published)
+        released_12 = json.loads(
+            (ROOT / "tests" / "fixtures" / "releases" / "fhp-v0.6.0.json").read_text())
+        self.assertEqual(released_12, self.published)
+        self.assertEqual(released_11["$defs"]["FHP"]["properties"]["schemaVersion"]["enum"],
+                         ["1.0", "1.1"])
         validator_10 = Draft202012Validator(released_10, format_checker=FormatChecker())
+        validator_11 = Draft202012Validator(released_11, format_checker=FormatChecker())
         self.assertEqual(list(validator_10.iter_errors(MINIMAL)), [])
         self.assertEqual(list(validator_10.iter_errors(RICH)), [])
         self.assertTrue(list(validator_10.iter_errors(MINIMAL_11)),
                         "the released FHP 1.0 contract rejects 1.1 records")
+        self.assertTrue(list(validator_10.iter_errors(MINIMAL_12)),
+                        "the released FHP 1.0 contract rejects 1.2 records")
+        self.assertEqual(list(self.validator.iter_errors(MINIMAL_11)), [],
+                         "the 1.2 minor keeps every 1.1 record valid")
+        self.assertTrue(list(validator_11.iter_errors(MINIMAL_12)),
+                        "the released FHP 1.1 contract rejects 1.2 records")
+
+    def test_dotted_busco_dataset_versions_follow_the_minor(self):
+        """FHP 1.2 (shared v0.6.0, FAIR-bioHeaders-Specification#170): a record
+        may name a dotted dataset version such as enterobacterales_odb12.2; a
+        record that states schemaVersion 1.0 or 1.1 keeps the single-integer
+        suffix it saw, exactly the outcome of its own minor."""
+        for lineage in ("enterobacterales_odb12.2", "primates_odb10.1.3"):
+            with self.subTest(accepted=lineage):
+                record = changed("completeness.lineageDataset", lineage, base=RICH_12)
+                self.assertEqual(self.errors(record), [])
+        older = (("1.0", RICH),
+                 ("1.1", dict(RICH, schema=FHP_URL_050, schemaVersion="1.1")))
+        for version, base in older:
+            for lineage in ("enterobacterales_odb12.2", "primates_odb10.1"):
+                with self.subTest(rejected=lineage, schemaVersion=version):
+                    record = changed("completeness.lineageDataset", lineage, base=base)
+                    self.assertTrue(
+                        self.errors(record),
+                        f"a record stating schemaVersion {version} has no dotted "
+                        "dataset version")
+        with self.subTest(undotted=True):
+            self.assertEqual(self.errors(RICH_12), [],
+                             "the undotted forms keep their older outcome under 1.2")
 
     def test_rejected_values(self):
         for path, value, reason in REJECTED:

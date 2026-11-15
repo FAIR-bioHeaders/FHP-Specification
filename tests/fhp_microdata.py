@@ -57,6 +57,7 @@ SUPPORTED_RELEASES = {
     "v0.4.0": "fhp-v0.4.0.json",
     "v0.4.1": "fhp-v0.4.0.json",
     "v0.5.0": "fhp-v0.5.0.json",
+    "v0.6.0": "fhp-v0.6.0.json",
 }
 _RELEASE_CACHE = {}
 

@@ -5,9 +5,12 @@ FHP's and FHGFF3's outputs are the published fhp.json and fhgff3.json
 (specs/006-protein-header D-01, specs/007-gff3-header D-01).
 
 Development-tree state (FHP-Specification#3, frozen by the Q2 decision of
-FHP-Specification#2 recorded 2026-11-12): the FHP path follows the shared
-v0.5.0 generator byte-for-byte — schemaVersion enum with 1.1 and the
-top-level extension-field rules (docs/FORMAT.md R15). The FHR and FHGFF3 paths
+FHP-Specification#2 recorded 2026-11-12; contract chain re-synced to the
+shared v0.6.0 generator by FHP-Specification#31): the FHP path follows the
+shared v0.6.0 generator byte-for-byte — schemaVersion enum with 1.2, the
+top-level extension-field rules (docs/FORMAT.md R15) and the dotted-BUSCO
+lineage gates for the earlier minors (FAIR-bioHeaders-Specification#170). The
+FHR and FHGFF3 paths
 keep the pre-v0.5.0 shared generator's legacy behavior on purpose: this tree's
 inherited fhr.json/fhgff3.json compatibility copies carry the FHR 2.0 and
 FHGFF3 1.0 constraint lines (open legacy core objects, no extension fields),
@@ -119,6 +122,39 @@ def extension_gate(version):
     }
 
 
+# Dotted BUSCO dataset versions (FAIR-bioHeaders-Specification#170, FHP 1.2).
+# schemas/shared.yaml carries the widened 1.2 pattern; LinkML cannot condition a
+# nested slot on the record's schemaVersion, so the gates for the earlier minors
+# are added here, after generation, like the extension rule above. A record that
+# states "1.0" or "1.1" is held to that minor: the single-integer suffix it saw
+# (docs/SCHEMA-VERSIONS.md). FHR has no completeness slot, so only FHP gets this
+# rule in this tree; the FHGFF3 chain is frozen here (docs/DEVELOPMENT-TREE.md
+# Q2) and its 1.2 successor is published from the shared repository.
+LINEAGE_BASE_PATTERN = "^[a-z0-9_]+_odb[0-9]+$"
+MINORS_WITHOUT_DOTTED_LINEAGE = ("1.0", "1.1")
+
+
+def lineage_gate(version):
+    """The rule that a record stating ``version`` has no dotted dataset version."""
+    return {
+        "description": (
+            f"A record that states schemaVersion {version} has no dotted BUSCO dataset "
+            "version (#170; docs/SCHEMA-VERSIONS.md)"
+        ),
+        "if": {
+            "required": ["schemaVersion", "completeness"],
+            "properties": {"schemaVersion": {"const": version}},
+        },
+        "then": {
+            "properties": {
+                "completeness": {
+                    "properties": {"lineageDataset": {"pattern": LINEAGE_BASE_PATTERN}}
+                }
+            }
+        },
+    }
+
+
 def _nodes(generated, root_names):
     """The schema root plus the named ``$defs`` entries, without duplicates."""
     yield generated
@@ -156,6 +192,16 @@ def apply_extension_rules(generated, header_type, *root_names):
     return generated
 
 
+def apply_lineage_rules(generated, *root_names):
+    """Hold records stating FHP 1.0 or 1.1 to the undotted lineage pattern (#170)."""
+    for node in _nodes(generated, root_names):
+        if "completeness" not in node.get("properties", {}):
+            continue
+        for version in MINORS_WITHOUT_DOTTED_LINEAGE:
+            node.setdefault("allOf", []).append(lineage_gate(version))
+    return generated
+
+
 def apply_fhr_rules(generated, *root_names):
     """LinkML emits a scalar type beside a heterogeneous union. Retain the union.
 
@@ -179,8 +225,10 @@ def apply_fhgff3_rules(generated, *root_names):
 
 
 def apply_fhp_rules(generated, *root_names):
-    """Add the extension-field rules (R15) to the FHP root and any profile subclass root."""
-    return apply_extension_rules(generated, "FHP", *root_names)
+    """Add the extension-field rules (R15) and the #170 lineage gate to the FHP
+    root and any profile subclass root."""
+    apply_extension_rules(generated, "FHP", *root_names)
+    return apply_lineage_rules(generated, *root_names)
 
 
 def generate_from(schema_path, legacy_open=True):
