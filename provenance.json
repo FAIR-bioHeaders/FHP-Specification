@@ -851,6 +851,14 @@
     {
       "path": "tests/test_conformance.py",
       "note": "FHP-owned conformance package tests (Q4)"
+    },
+    {
+      "path": "examples/fhp/dmel-chr4/",
+      "note": "real-data example fixture (#29): the chromosome 4 subset of Drosophila melanogaster GCF_000001215.4 as an FHR 2.1 parent, its 298 chr4 protein records as an FHP 1.2 child, the metadata inputs and the derivation script. Headers were written by the released fair-bioheaders 0.11.0, never by hand; provenance, probes and digests are in examples/fhp/dmel-chr4/README.md. Pilot/teaching artifact, not a production reference, and not a conformance vector: conformance/ and its manifest are untouched."
+    },
+    {
+      "path": "tests/test_dmel_chr4_fixture.py",
+      "note": "standard-library integrity checks for the #29 fixture: both checksums recomputed from the committed bytes, the FHP derivedFrom digest compared against the recomputed parent checksum, and the measured record/base/masking counts the headers assert"
     }
   ]
 }

@@ -1,0 +1,78 @@
+# FHR header input for the chromosome 4 subset of Drosophila melanogaster
+# GCF_000001215.4 ("Release 6 plus ISO1 MT").
+#
+# Pilot and teaching artifact for FAIR-bioHeaders/FHP-Specification#29, not a
+# production reference: the file carries one sequence record (NC_004353.4), so
+# the checksum describes a single-chromosome subset of the assembly rather than
+# the assembly. A production FHP parent points at the whole-assembly FHR.
+#
+# Every value below is traceable to a probe recorded in README.md in this
+# directory. The sequence bytes are the NCBI delivery and are not relicensed
+# here; this header is an MPL-2.0 FAIR-bioHeaders contribution (March 2025
+# onward). Written for the released fair-bioheaders 0.11.0 toolkit
+# (`bioheaders combine`); the checksum is computed by the tool, never written
+# by hand.
+schema: https://w3id.org/fair-bioheaders/fhr/v0.6.0
+schemaVersion: '2.1'
+genome: Release 6 plus ISO1 MT chromosome 4 subset
+taxon:
+  name: Drosophila melanogaster
+  uri: https://identifiers.org/taxonomy:7227
+version: '4'
+metadataAuthor:
+  - name: David C Molik
+    uri: https://orcid.org/0000-0003-3192-6538
+    nameType: Personal
+assemblyAuthor:
+  - name: The FlyBase Consortium/Berkeley Drosophila Genome Project/Celera Genomics
+    nameType: Organizational
+dateCreated: '2014-08-01'
+masking: soft-masked
+accessionID:
+  name: GCF_000001215.4
+  url: https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/215/GCF_000001215.4_Release_6_plus_ISO1_MT/
+identifier:
+  - NCBI_Assembly:GCF_000001215.4
+  - GenBank_Assembly:GCA_000001215.4
+  - RefSeq_Molecule:NC_004353.4
+  - GenBank_Molecule:AE014135.4
+scholarlyArticle: 10.1101/gr.185579.114
+voucherSpecimen: >-
+  BioSample SAMN02803731 (uid 2803731), sample name and title "iso-1", owner
+  Lawrence Berkeley National Laboratory, submitted 2014-05-29 and live since
+  2014-07-23, linked to BioProject PRJNA13812: strain iso-1, tissue whole
+  embryo, dev_stage embryos, sex mixed, biomaterial provider "Roger Hoskins and
+  Gerry Rubin"; its comment describes it as the isogenic strain used for
+  sequencing of the reference genome by BDGP and Celera Genomics as described in
+  Adams et al 2000 (PubMed 10731132). The GenBank source feature of NC_004353.4
+  gives the stock genotype y[1]; Gr22b[1] Gr22d[1] cn[1] CG33964[R4.2] bw[1]
+  sp[1]; LysC[1] MstProx[1] GstD5[1] Rh6[1], identical to the BioSample genotype
+  attribute. No physical voucher accession is stated by either record.
+relatedLink:
+  - https://www.ncbi.nlm.nih.gov/nuccore/NC_004353.4
+  - https://www.ncbi.nlm.nih.gov/biosample/SAMN02803731
+  - https://www.ncbi.nlm.nih.gov/bioproject/PRJNA13812
+  - http://flybase.org
+reuseConditions: >-
+  Sequence bytes are the NCBI RefSeq delivery of GCF_000001215.4 and are not
+  relicensed by this header; the source record states no license. The header
+  fields are MPL-2.0 FAIR-bioHeaders contributions (March 2025 onward).
+documentation: >-
+  Pilot and teaching artifact, not a production reference. One sequence record:
+  chromosome 4, RefSeq NC_004353.4 (GenBank AE014135.4), 1348131 bases, taken
+  verbatim as defline plus sequence lines from
+  GCF_000001215.4_Release_6_plus_ISO1_MT_genomic.fna.gz (SHA-256
+  e69e907b5e87ce756236dcef93e82001cfd08f1a0ed5f22e36cbbd3a87ebc57d),
+  downloaded 2026-11-15. A real deployment links an FHP header to the
+  whole-assembly FHR, not to a single-chromosome subset. Masking is soft-masked
+  as measured on these bytes: 374633 of 1331131 ACGT characters are lowercase
+  (28.14 percent), and the only N characters are 17000 uppercase N, which
+  equals the one spanned gap NCBI reports for chromosome 4
+  (assembly_stats total-length 1348131 minus ungapped-length 1331131). The
+  masking agent is not documented in the delivery, so repeat-masked is not
+  claimed. version is the version suffix shared by GCF_000001215.4 and
+  NC_004353.4; dateCreated is the assembly report Date field (2014-08-01) and
+  the subset itself was extracted on 2026-11-15. vitalStats and seqcol_id are
+  absent: the published assembly statistics describe the whole assembly, not
+  this subset, and no GA4GH sequence collection digest was supplied. See
+  README.md in this directory for the probes, digests and commands.

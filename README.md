@@ -74,7 +74,20 @@ FHP versioned aliases; those Pages surfaces remain pending work.
   `metadataAuthor`, `dateCreated`, `checksum`. Field semantics and rules are
   in [docs/FHP.md](docs/FHP.md); examples — minimal and rich, for each of the
   three `sourceType` values — in [examples/fhp/](examples/fhp/), conformance
-  vectors in [conformance/](conformance/README.md).
+  vectors in [conformance/](conformance/README.md). The one real-data pair,
+  [examples/fhp/dmel-chr4/](examples/fhp/dmel-chr4/README.md), is a
+  chromosome 4 subset of *Drosophila melanogaster* `GCF_000001215.4` (FHR 2.1
+  parent plus FHP 1.2 child, headers written by the released toolkit); its
+  README records the source digests, the selection rule and the measurements,
+  and it is a pilot/teaching artifact rather than a production reference or a
+  conformance vector.
+- **Version pin.** This tree's contract copies are pinned to the shared v0.5.0
+  release (FHP `1.1`, and the frozen legacy FHR `1.0` copy), so
+  `scripts/validate_examples.py` and the unit suite here validate 1.0/1.1
+  instances only. The released line moved to FHP 1.2 in FAIR-bioHeaders-Specification
+  v0.6.0; the `examples/fhp/dmel-chr4/` fixture targets that released contract and is
+  therefore kept in a subdirectory the flat example glob does not read, until the
+  documented resync lands (`provenance.json` → `liveMain`).
 - **Use the toolkit, not a converter in this repository.**
   [FAIR-bioHeaders-Tools](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools)
   (`pip install fair-bioheaders`) is the single active family toolkit:

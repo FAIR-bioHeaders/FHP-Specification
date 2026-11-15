@@ -1,0 +1,108 @@
+# FHP header input for the chromosome 4 protein subset of Drosophila
+# melanogaster GCF_000001215.4 ("Release 6 plus ISO1 MT").
+#
+# Pilot and teaching artifact for FAIR-bioHeaders/FHP-Specification#29, not a
+# production reference: the protein set is the subset that the RefSeq annotation
+# places on one molecule (NC_004353.4), and its parent is the single-chromosome
+# FHR shipped beside it in this directory, not the whole assembly.
+#
+# Every value below is traceable to a probe recorded in README.md in this
+# directory. The sequence bytes are the NCBI delivery and are not relicensed
+# here; this header is an MPL-2.0 FAIR-bioHeaders contribution (March 2025
+# onward). Written for the released fair-bioheaders 0.11.0 toolkit
+# (`bioheaders combine`); the checksum is computed by the tool, never written by
+# hand, and the derivedFrom checksum below is the value the toolkit itself
+# reported for chr4.fhr.fasta (`bioheaders verify` and `bioheaders convert`
+# output quoted in README.md).
+schema: https://w3id.org/fair-bioheaders/fhp/v0.6.0
+schemaVersion: '1.2'
+proteome: Release 6 plus ISO1 MT chromosome 4 proteins
+sourceType: database
+taxon:
+  name: Drosophila melanogaster
+  uri: https://identifiers.org/taxonomy:7227
+version: '6.54'
+metadataAuthor:
+  - name: David C Molik
+    uri: https://orcid.org/0000-0003-3192-6538
+    nameType: Personal
+dateCreated: '2026-11-15'
+derivedFrom:
+  - headerType: FHR
+    checksum: fHGkIi8u8lJCJstnJoQXM7XsXp/HXEyOe6y8GyGZO1k=
+    relationship: translatedFrom
+    accessionID:
+      name: GCF_000001215.4
+      url: https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/215/GCF_000001215.4_Release_6_plus_ISO1_MT/
+source:
+  - name: NCBI RefSeq annotation delivery for GCF_000001215.4
+    release: FlyBase Release 6.54
+    url: https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/215/GCF_000001215.4_Release_6_plus_ISO1_MT/GCF_000001215.4_Release_6_plus_ISO1_MT_protein.faa.gz
+    assemblyAccession: GCF_000001215.4
+    sequenceCount: 298
+    description: >-
+      The 298 protein records whose accession appears as the protein_id of a CDS
+      feature on NC_004353.4 in this delivery's genomic.gff, copied verbatim from
+      GCF_000001215.4_Release_6_plus_ISO1_MT_protein.faa.gz (SHA-256
+      4bf959b02c5b4c58accb36552e30bbf77f5088713b155ef4e02f4e6edc2d9dff). The GFF
+      names its annotation source as FlyBase Release 6.54 and its genome build as
+      NCBI_Assembly:GCF_000001215.4; the assemblyAccession above restates what
+      the source asserts and is not a checksum link.
+isoformPolicy: all
+sequenceStats:
+  sequenceCount: 298
+  geneCount: 80
+  totalResidues: 319099
+identifier:
+  - RefSeq_Molecule:NC_004353.4
+  - GenBank_Molecule:AE014135.4
+relatedLink:
+  - https://www.ncbi.nlm.nih.gov/nuccore/NC_004353.4
+  - https://www.ncbi.nlm.nih.gov/biosample/SAMN02803731
+  - http://flybase.org
+reuseConditions: >-
+  Sequence bytes are the NCBI RefSeq delivery of GCF_000001215.4 and are not
+  relicensed by this header; the source record states no license. The header
+  fields are MPL-2.0 FAIR-bioHeaders contributions (March 2025 onward).
+voucherSpecimen: >-
+  BioSample SAMN02803731 (uid 2803731), sample name and title "iso-1", which the
+  record describes as the isogenic strain used for sequencing of the reference
+  genome by BDGP and Celera Genomics: strain iso-1, tissue whole embryo, dev_stage
+  embryos, sex mixed. The parent molecule's GenBank source feature gives the stock
+  genotype y[1]; Gr22b[1] Gr22d[1] cn[1] CG33964[R4.2] bw[1] sp[1]; LysC[1]
+  MstProx[1] GstD5[1] Rh6[1], identical to the BioSample genotype attribute. No
+  physical voucher accession is stated.
+documentation: >-
+  Pilot and teaching artifact, not a production reference. Every record is
+  copied verbatim, defline and sequence lines, from the RefSeq protein FASTA of
+  GCF_000001215.4 in delivery order; membership was decided by the genomic.gff of
+  the same delivery, which is the authority for which CDS lie on NC_004353.4:
+  2743 CDS lines, 298 distinct protein_id values, 298 records here, and the
+  delivery's cds_from_genomic FASTA names the same 298 accessions on that
+  molecule. The parent FHR beside this file is a chromosome 4 subset, so its
+  checksum covers that subset only; a production protein set taken from this
+  assembly links the whole-assembly FHR instead. Measured on the shipped bytes:
+  298 records, 319099 residues, alphabet ACDEFGHIKLMNPQRSTVWXY with one X (the
+  nonconsensus codon at residue 544 of NP_001368990.1, which the delivery's
+  GenBank record marks with a transl_except qualifier as aa OTHER), no stop
+  characters and no lower case, so a reader that expects a terminal stop must
+  not assume one. Measured linkage: those 298 CDS sit on 298 transcripts of 80
+  distinct gene features, every one of them gene_biotype protein_coding, with up
+  to 12 annotated transcripts per gene, and no isoform filter was applied, so
+  isoformPolicy is all for this subset of this delivery. geneticCode is absent
+  deliberately: the delivery states no translation table for these CDS (the
+  genomic.gff gives codon_start with no transl_table, the feature table records
+  no attributes for them, and the GenBank record carries a transl_except without
+  naming a table), and an unstated table is not an asserted one. accessionID and
+  scholarlyArticle are absent for the same reason: this protein set has no
+  accession of its own beyond the parent assembly and molecule, and the GenBank
+  record lists gene-model annotation articles (PubMed 26109357, 26109356)
+  without naming one as the publication of the 6.54 protein set.
+  predictionSoftware and predictionProtocol are absent because the delivery
+  attributes these models to FlyBase curation without a pipeline or software
+  version, and completeness is absent because no BUSCO run was done on this
+  subset. version is the annotation release the source names (FlyBase Release
+  6.54); dateCreated is the date this subset was derived, 2026-11-15, while the
+  delivery carries its own update dates (GenBank LOCUS 26-DEC-2023,
+  annotation_hashes 2023-12-27). See README.md in this directory for the probes,
+  digests and commands.
