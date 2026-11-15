@@ -20,9 +20,13 @@ What this guards:
 * the subset facts the headers assert (one genomic record of 1,348,131 bases,
   298 protein records, 319,099 residues, the soft-masked lower-case count, and
   the 17,000 `N` gap) still hold;
-* the headers still cite the released v0.6.0 contracts (FHR 2.1, FHP 1.2).
+* the headers still cite the released v0.6.0 contracts (FHR 2.1, FHP 1.2);
+* the FHP header validates against this repository's own working `fhp.json`
+  (FHP 1.2 since the #31 re-pin; the FHR side stays with the released toolkit,
+  because this tree's `fhr.json` is the frozen FHR 1.0 compatibility copy).
 """
 
+import json
 import re
 import sys
 import unittest
@@ -128,6 +132,29 @@ class ReleasedContractCitationTests(unittest.TestCase):
             text = path.read_text(encoding="utf-8")
             self.assertIn("not a production reference", text, path.name)
         self.assertIn("chromosome 4 subset", FHR.read_text(encoding="utf-8"))
+
+
+class WorkingContractValidationTests(unittest.TestCase):
+    """FHP-Specification#31: the FHP header validates against this
+    repository's own working contract. Before the re-pin, the same check
+    against the stale local copy measured
+    "$.schemaVersion: '1.2' is not one of ['1.0', '1.1']" — recorded in the
+    fixture README — which is exactly the gap #31 closes. The FHR header is
+    still not validated here: this tree's fhr.json is the frozen FHR 1.0
+    compatibility fixture (docs/DEVELOPMENT-TREE.md Q2), so the released
+    toolkit and the shared repository remain the FHR-side authority, as the
+    fixture README records."""
+
+    def test_fhp_header_validates_against_working_fhp_json(self):
+        from jsonschema import Draft202012Validator, FormatChecker
+        schema = json.loads((ROOT / "fhp.json").read_text(encoding="utf-8"))
+        self.assertEqual(schema["$defs"]["FHP"]["properties"]["schemaVersion"]["enum"],
+                         ["1.0", "1.1", "1.2"])
+        validator = Draft202012Validator(schema, format_checker=FormatChecker())
+        header = metadata_of(FHP.read_bytes())
+        self.assertEqual(header["schemaVersion"], "1.2")
+        errors = sorted(validator.iter_errors(header), key=lambda error: error.json_path)
+        self.assertEqual([f"{e.json_path}: {e.message}" for e in errors], [])
 
 
 class MeasuredContentTests(unittest.TestCase):
