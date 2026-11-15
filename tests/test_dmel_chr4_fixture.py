@@ -76,6 +76,15 @@ class ChecksumIntegrityTests(unittest.TestCase):
         stated, computed = check_conformance.fhr_checksum(self.fhr_bytes, "fasta")
         self.assertEqual(stated, computed, "chr4.fhr.fasta no longer matches its checksum")
 
+    def test_metadata_inputs_match_generated_headers(self):
+        for data, name in ((self.fhr_bytes, "metadata.fhr.yaml"),
+                           (self.fhp_bytes, "metadata.fhp.yaml")):
+            with self.subTest(metadata=name):
+                header = metadata_of(data)
+                header.pop("checksum")
+                source = yaml.safe_load((FIXTURE / name).read_text(encoding="utf-8"))
+                self.assertEqual(header, source)
+
     def test_fhp_checksum_matches_its_own_bytes(self):
         stated, computed = check_conformance.fhr_checksum(self.fhp_bytes, "fhp-fasta")
         self.assertEqual(stated, computed, "chr4.fhp.fasta no longer matches its checksum")
