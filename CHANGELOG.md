@@ -27,8 +27,8 @@
   and is **byte-identical to the released
   `FAIR-bioHeaders-Specification` `v0.6.0/fhp.json`**
   (sha256 `92a0b3cbcfe69939ebfaac69f0c5958ce426c005873efe8d3e3eb0fc0dab6de5`,
-  `cmp` against the tag's bytes silent): the release and the development model
-  did not diverge beyond the enum.
+  `cmp` against the tag's bytes silent): the updated model, shared snapshot and
+  generator rules now reproduce the released contract exactly.
   `provenance.json` re-pins the contract chain — `fhp.json`, `fhp_linkml.yml`,
   `schemas/shared-v0.6.yaml`, `schemas/versions.json` — and the new immutable
   `tests/fixtures/releases/fhp-v0.6.0.json` release pin to the shared v0.6.0
