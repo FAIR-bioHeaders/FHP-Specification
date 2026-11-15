@@ -34,9 +34,10 @@
   `tests/fixtures/releases/fhp-v0.6.0.json` release pin to the shared v0.6.0
   release commit `0ae18b00ee4bd71ab2dc28bae706b0f9d195076b` through per-entry
   `commit` overrides that `scripts/make_provenance.py` reproduces exactly (the
-  shared-parity workflow's regeneration step still passes); every other copied
-  path and the pinned/legacy FHR and FHGFF3 fixtures stay at the v0.5.0 package
-  pin. `fhpContract` records FHP `1.2` at v0.6.0. The regression guard against a
+  shared-parity workflow's regeneration step still passes); other copied paths
+  retain their existing package or companion pins, and the pinned/legacy FHR and
+  FHGFF3 fixtures retain their historical revisions. `fhpContract` records FHP
+  `1.2` at v0.6.0. The regression guard against a
   reopened lag is `tests/test_fhp_jsonld.py::ReleasedContractTests`: the working
   `fhp.json` must equal the release pin's bytes with the v0.6.0 digest, the
   pin's provenance entry must name the v0.6.0 commit, and
