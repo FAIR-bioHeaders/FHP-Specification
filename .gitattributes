@@ -5,6 +5,11 @@ conformance/**/*.gz binary
 conformance/** whitespace=cr-at-eol
 # FHGFF3 examples carry checksums over their exact bytes.
 examples/fhgff3/** -text
+# FHP examples carry checksums over their exact bytes, including the real-data
+# fixture pair under examples/fhp/dmel-chr4/ (issue #29): a CR inserted by an
+# eol-normalizing checkout would invalidate both file checksums and the
+# derivedFrom parent link.
+examples/fhp/** -text
 # Assessment fixtures are byte-exact too (specs/010-fair-header-assessment).
 assessment/** -text
 assessment/**/*.gz binary

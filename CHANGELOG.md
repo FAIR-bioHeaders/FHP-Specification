@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+- Add the first real-data FHP example pair, `examples/fhp/dmel-chr4/`
+  ([#29](https://github.com/FAIR-bioHeaders/FHP-Specification/issues/29)): the
+  chromosome 4 record (`NC_004353.4`, 1,348,131 bases) of *Drosophila
+  melanogaster* `GCF_000001215.4` "Release 6 plus ISO1 MT" as an FHR 2.1 parent,
+  and the 298 protein records that this delivery's `genomic.gff` places on that
+  molecule as an FHP 1.2 child citing the parent's computed checksum through
+  `derivedFrom` (`translatedFrom`). Both headers were written by the released
+  `fair-bioheaders` 0.11.0 (`bioheaders combine`) against the released v0.6.0
+  contracts; no checksum was written by hand. `README.md` in that directory
+  records the NCBI probes, the SHA-256 of every source file used, the selection
+  rule with its measured count, the masking measurement (374,633 of 1,331,131
+  ACGT characters lower case; 17,000 `N` equal to the one spanned gap NCBI
+  reports), the `verify`/`verify-links` output and an independent standard-library
+  re-derivation of the checksums, including the false-provenance control where a
+  valid parent digest for a different file still verifies but fails
+  `verify-links`. `derive_chr4.py` reproduces the sequence inputs from the
+  delivery, `tests/test_dmel_chr4_fixture.py` keeps the pair honest in CI, and
+  `provenance.json` classifies the directory as FHP-owned.
+  This is an example, not a conformance vector: `conformance/` and its manifest
+  are unchanged (77 vectors before and after), the sequence bytes are the NCBI
+  delivery and are not relicensed, and the fixture is a pilot/teaching artifact —
+  a production protein set links the whole-assembly FHR, not a single-chromosome
+  subset. Because this tree's pinned contracts are still FHP 1.1 and the frozen
+  FHR 1.0 copy (shared v0.5.0), the repository's own example gate cannot validate
+  a 1.2/2.1 header yet; the fixture therefore lives in a subdirectory that
+  `scripts/validate_examples.py` does not read, and `.gitattributes` now keeps
+  `examples/fhp/**` byte-exact. Closing that gap is the recorded resync, not an
+  edit to a digest-pinned copy.
+
 - Bring the JSON-LD hardening of FAIR-bioHeaders-Specification v0.4.2 into
   docs/JSONLD.md: J3 accepts only the FHR JSON-LD context (and no `@nest`), J5/J7
   follow the link-scheme rule R14 of the canonical FORMAT.md, and new rule J8 escapes

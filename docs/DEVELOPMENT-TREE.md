@@ -30,9 +30,12 @@ Establishment tracker:
 - The **published FHP metadata contract** is `fhp.json` in
   FAIR-bioHeaders-Specification at each release tag (w3id URLs:
   `https://w3id.org/fair-bioheaders/fhp/v0.4.0` for FHP 1.0,
-  `.../v0.5.0` for FHP 1.1). It is never edited here; this repository's root
-  `fhp.json` is the pinned v0.5.0 compatibility copy, regenerated only from
-  the shared bytes.
+  `.../v0.5.0` for FHP 1.1 and `.../v0.6.0` for FHP 1.2). It is never edited
+  here; this repository's root `fhp.json` is the pinned v0.5.0 compatibility
+  copy, regenerated only from the shared bytes. The FHP 1.2 line is therefore
+  **ahead of this tree's pinned copy**: an example that targets v0.6.0 (see the
+  real-data fixture below) is validated against the released contract, not
+  against this frozen local copy.
 - The **FHP LinkML model** develops in this repository on branches
   (`fhp_linkml.yml`), publishes through the shared repository by pull request,
   and the shared published copy is then synced back. On `main` it is now the
@@ -104,6 +107,36 @@ or an isolated digest bump. There is no `check_development_tree.py` here
 pair — `provenance.json` + `scripts/check_shared_parity.py` +
 `shared-parity.yml` — as **the** enforcement point, with the classification
 living in this document.
+
+## Real-data example fixture (issue #29)
+
+`examples/fhp/dmel-chr4/` is FHP-owned content under the `strictDirs` rule
+(above): one directory prefix entry in `provenance.json` `owned`, covering the
+fixture pair, its metadata inputs, `derive_chr4.py` and its README, plus an entry
+for `tests/test_dmel_chr4_fixture.py`. It is the repository's first example
+derived from published data — the chromosome 4 record
+of *Drosophila melanogaster* `GCF_000001215.4` as an FHR 2.1 parent, and the 298
+protein records that delivery's `genomic.gff` places on that molecule as an FHP
+1.2 child — and both headers were written by the released `fair-bioheaders`
+0.11.0, never by hand.
+
+Three consequences are recorded rather than absorbed:
+
+- It is an **example**, not a conformance vector: `conformance/` and
+  `conformance/manifest.json` are untouched at 77 vectors, because a vector's
+  `expected` outcome needs independent review rather than generation by the code
+  under test.
+- It targets the **released v0.6.0** contracts (FHP 1.2, FHR 2.1) while this
+  tree's pinned copies are FHP 1.1 and the frozen legacy FHR 1.0, so
+  `scripts/validate_examples.py` and `tests/test_fhp_schema.py` must not see it —
+  hence the subdirectory, which both read non-recursively. The fixture's
+  `README.md` records the measured rejection (`'1.2' is not one of ['1.0', '1.1']`)
+  and the released-contract validation actually performed; the local gap closes
+  with the re-pin below, not by editing a digest-pinned copy or by downgrading the
+  header.
+- `.gitattributes` now marks `examples/fhp/**` `-text`, extending the existing
+  `examples/fhgff3/**` protection: a checksum-bearing example must survive
+  checkout byte-for-byte.
 
 ## Post-sync re-pin task (live drift)
 
