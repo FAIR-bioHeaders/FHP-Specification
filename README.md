@@ -21,6 +21,7 @@ and is cited by versioned URLs — never invent one:
 | --- | --- | --- |
 | `"1.0"` | FAIR-bioHeaders-Specification v0.4.0–v0.4.2 | <https://w3id.org/fair-bioheaders/fhp/v0.4.0> |
 | `"1.1"` (optional `x-` extension fields) | FAIR-bioHeaders-Specification v0.5.0 | <https://w3id.org/fair-bioheaders/fhp/v0.5.0> |
+| `"1.2"` (dotted BUSCO dataset versions) | FAIR-bioHeaders-Specification v0.6.0 | <https://w3id.org/fair-bioheaders/fhp/v0.6.0> |
 
 This repository is **not an independent publication authority**. FHP model,
 documentation and example work happens here on branches and publishes through
@@ -29,19 +30,25 @@ the shared repository by pull request (family migration:
 establishment tracker:
 [#158](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/issues/158)).
 The tree started as a copy of the family publication tree; what belongs here,
-which files are pinned compatibility copies, and the canonical v0.5.0 pins are
+which files are pinned compatibility copies, and the canonical pins are
 classified in **[docs/DEVELOPMENT-TREE.md](docs/DEVELOPMENT-TREE.md)**
 (adopted from
 [docs/DEVELOPMENT-TREE-PROPOSAL.md](docs/DEVELOPMENT-TREE-PROPOSAL.md);
 issue [#2](https://github.com/FAIR-bioHeaders/FHP-Specification/issues/2)).
 The synchronization in issue
 [#3](https://github.com/FAIR-bioHeaders/FHP-Specification/issues/3) has
-landed: this root tree now carries the **FHP 1.1 line**. `fhp.json`,
-`fhp_linkml.yml` (importing the vendored `schemas/core-v0.5.yaml`),
-`docs/FHP.md`, `docs/SCHEMA-VERSIONS.md`, `schemas/versions.json`, the shared
-`examples/fhp/` files and the byte-unchanged `fhp-fasta` vectors are
-byte-pinned to the shared v0.5.0 release commit and verified against
-`provenance.json` by `scripts/check_shared_parity.py` in CI. The conformance
+landed, and issue
+[#31](https://github.com/FAIR-bioHeaders/FHP-Specification/issues/31) re-pinned
+the **FHP contract chain** — `fhp.json` (generated from `fhp_linkml.yml`, which
+imports the vendored `schemas/core-v0.5.yaml` and `schemas/shared-v0.6.yaml`
+snapshots), `schemas/versions.json` and the
+`tests/fixtures/releases/fhp-v0.6.0.json` release pin — to the shared **v0.6.0**
+release commit (FHP `1.2`). The regenerated `fhp.json` is byte-identical to the
+released `v0.6.0/fhp.json`. Everything else that issue #3 synced —
+`docs/FHP.md`, `docs/SCHEMA-VERSIONS.md`, the shared `examples/fhp/` files and
+the byte-unchanged `fhp-fasta` vectors — stays byte-pinned to the shared v0.5.0
+release commit, and all of it is verified against `provenance.json` by
+`scripts/check_shared_parity.py` in CI. The conformance
 package was wired as **FHP-owned** under the Q4 decision
 ([issue #2](https://github.com/FAIR-bioHeaders/FHP-Specification/issues/2),
 2026-11-12): `conformance/manifest.json` covers the complete v0.5.0
@@ -67,9 +74,12 @@ FHP versioned aliases; those Pages surfaces remain pending work.
   `fhp_linkml.yml` with
   `python json-schema-generator.py --type fhp --output fhp.json`;
   the model imports the pinned shared core `schemas/core-v0.5.yaml` and
-  `schemas/shared.yaml`.
-- Required fields (FHP 1.0 and 1.1 — 1.1 adds only optional `x-` extension
-  fields): `schema`, `schemaVersion`, `proteome`,
+  the v0.6.0 shared object-model snapshot `schemas/shared-v0.6.yaml`
+  (#31; the plain `schemas/shared.yaml` stays at v0.5.0 for the frozen
+  FHGFF3 compatibility copy).
+- Required fields (FHP 1.0, 1.1 and 1.2 — 1.1 adds only optional `x-` extension
+  fields, 1.2 only widens the BUSCO `lineageDataset` pattern): `schema`,
+  `schemaVersion`, `proteome`,
   `sourceType` (`predicted` | `database` | `mixed`), `taxon`, `version`,
   `metadataAuthor`, `dateCreated`, `checksum`. Field semantics and rules are
   in [docs/FHP.md](docs/FHP.md); examples — minimal and rich, for each of the
@@ -81,13 +91,16 @@ FHP versioned aliases; those Pages surfaces remain pending work.
   README records the source digests, the selection rule and the measurements,
   and it is a pilot/teaching artifact rather than a production reference or a
   conformance vector.
-- **Version pin.** This tree's contract copies are pinned to the shared v0.5.0
-  release (FHP `1.1`, and the frozen legacy FHR `1.0` copy), so
-  `scripts/validate_examples.py` and the unit suite here validate 1.0/1.1
-  instances only. The released line moved to FHP 1.2 in FAIR-bioHeaders-Specification
-  v0.6.0; the `examples/fhp/dmel-chr4/` fixture targets that released contract and is
-  therefore kept in a subdirectory the flat example glob does not read, until the
-  documented resync lands (`provenance.json` → `liveMain`).
+- **Version pin.** This tree's FHP contract chain is pinned to the shared
+  v0.6.0 release (FHP `1.2`, #31); the shared docs, examples and vectors are
+  still pinned at v0.5.0, and the frozen legacy FHR copy is FHR `1.0`. So
+  `scripts/validate_examples.py`, `scripts/check_conformance.py --schema` and
+  the unit suite here validate 1.0/1.1/1.2 instances against the released
+  bytes. The `examples/fhp/dmel-chr4/` fixture targets the released contracts;
+  its FHP header now validates against this repository's own working
+  `fhp.json` (`tests/test_dmel_chr4_fixture.py`), while its FHR header remains
+  outside this tree's gates (frozen FHR 1.0 copy) and is validated by the
+  released toolkit, as that fixture's README records.
 - **Use the toolkit, not a converter in this repository.**
   [FAIR-bioHeaders-Tools](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools)
   (`pip install fair-bioheaders`) is the single active family toolkit:
@@ -158,7 +171,7 @@ coordinated with
 [FHR-Citation](https://github.com/FAIR-bioHeaders/FHR-Citation/blob/main/citation.bib);
 until that lands, cite the released FHP contract as the
 FAIR-bioHeaders-Specification release carrying it (v0.4.0–v0.4.2 for FHP 1.0,
-v0.5.0 for FHP 1.1).
+v0.5.0 for FHP 1.1, v0.6.0 for FHP 1.2).
 
 **Historical issue numbers:** before 2026-10-14 this tree lived in the
 repository then named `FHR-Specification`; `#N` references inherited from that

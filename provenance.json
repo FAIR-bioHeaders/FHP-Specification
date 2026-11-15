@@ -872,7 +872,7 @@
     },
     {
       "path": "conformance/invalid/fhp-fasta-author-bad-name-type.fhp.fasta",
-      "note": "FHP-owned vector: this repository's local addition to the fhp-fasta set, absent from the shared manifest; still rejected by fhp.json 1.1 and the fair-bioheaders 0.9.0 reader"
+      "note": "FHP-owned vector: this repository's local addition to the fhp-fasta set, absent from the shared manifest; still rejected by fhp.json (at the 1.1 pin and under 1.2 since #31) and the fair-bioheaders 0.9.0 reader"
     },
     {
       "path": "scripts/make_conformance.py",

@@ -8,14 +8,18 @@ contract chain (``fhp.json``, ``fhp_linkml.yml``, ``schemas/shared.yaml``,
 ``tests/fixtures/releases/fhp-v0.6.0.json`` — is instead taken from the shared
 v0.6.0 release commit (FHP-Specification#31: the tree must validate the FHP 1.2
 contract it owns; every other copy stays at v0.5.0 until a full resync). Each
-such entry records its per-entry ``commit``. Two copies carry a
+such entry records its per-entry ``commit``. Copies carry a
 machine-checkable local adjustment instead of plain identity:
 
-- ``fhp_linkml.yml`` retargets the model import to the vendored core snapshot
-  (docs/DEVELOPMENT-TREE-PROPOSAL.md Q3), so the shared ``schemas/core`` import
-  line is replaced by ``schemas/core-v0.5``;
+- ``fhp_linkml.yml`` retargets the model imports to the vendored snapshots
+  (docs/DEVELOPMENT-TREE-PROPOSAL.md Q3, extended by #31), so the shared
+  ``schemas/core`` and ``schemas/shared`` import lines are replaced by
+  ``schemas/core-v0.5`` and ``schemas/shared-v0.6``;
 - ``schemas/core-v0.5.yaml`` is the shared core payload behind a pinned
-  provenance comment header, following this tree's ``schemas/core-v0.4.yaml``.
+  provenance comment header, following this tree's ``schemas/core-v0.4.yaml``;
+- ``schemas/shared-v0.6.yaml`` is the v0.6.0 shared object model behind its own
+  provenance header, so the FHP 1.2 model reads it while the plain
+  ``schemas/shared.yaml`` stays at v0.5.0 for the frozen FHGFF3 1.0 generation.
 
 Adjusted entries record both digests (``sha256`` for the local bytes,
 ``upstreamSha256`` for the pinned upstream bytes) plus the ``adjustment``;

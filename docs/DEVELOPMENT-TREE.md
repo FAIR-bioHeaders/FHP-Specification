@@ -31,15 +31,18 @@ Establishment tracker:
   FAIR-bioHeaders-Specification at each release tag (w3id URLs:
   `https://w3id.org/fair-bioheaders/fhp/v0.4.0` for FHP 1.0,
   `.../v0.5.0` for FHP 1.1 and `.../v0.6.0` for FHP 1.2). It is never edited
-  here; this repository's root `fhp.json` is the pinned v0.5.0 compatibility
-  copy, regenerated only from the shared bytes. The FHP 1.2 line is therefore
-  **ahead of this tree's pinned copy**: an example that targets v0.6.0 (see the
-  real-data fixture below) is validated against the released contract, not
-  against this frozen local copy.
+  here; this repository's root `fhp.json` is generated from the model and
+  re-pinned by #31 to the shared **v0.6.0** release commit
+  (`0ae18b00ee4bd71ab2dc28bae706b0f9d195076b`), where it is byte-identical to
+  the released bytes (sha256
+  `92a0b3cbcfe69939ebfaac69f0c5958ce426c005873efe8d3e3eb0fc0dab6de5`). The
+  immutable release copies `tests/fixtures/releases/fhp-v0.4.0.json`,
+  `fhp-v0.5.0.json` and `fhp-v0.6.0.json` keep each released line testable.
 - The **FHP LinkML model** develops in this repository on branches
   (`fhp_linkml.yml`), publishes through the shared repository by pull request,
   and the shared published copy is then synced back. On `main` it is now the
-  synchronized v0.5.0 (FHP 1.1) copy, subject to parity, not a free local file.
+  synchronized v0.6.0 (FHP 1.2) copy, subject to parity through the
+  contract-chain commit override, not a free local file.
 - The **FHP JSON-LD context/vocabulary, the microdata binding and their
   fixtures** (`jsonld/fhp.*`, [FHP-MICRODATA.md](FHP-MICRODATA.md),
   `examples/fhp/*.fhp.jsonld` and `*.microdata.fhp.html`, the FHP readers in
@@ -50,7 +53,13 @@ Establishment tracker:
   `docs/SCHEMA-VERSIONS.md`, the `fhp-fasta` vectors and the other
   digest-pinned shared copies) are published by the shared repository.
   Local files listed in `provenance.json`'s `copied[]` are
-  digest-verified pinned copies. Files listed under `pinned` are inherited
+  digest-verified pinned copies; the FHP contract chain
+  (`fhp.json`, `fhp_linkml.yml`, `schemas/versions.json`, the
+  `schemas/shared-v0.6.yaml` snapshot and the `fhp-v0.6.0.json` release pin)
+  carries per-entry `commit` overrides to the shared v0.6.0 release commit
+  (#31), while `schemas/shared.yaml` itself stays at the v0.5.0 package pin
+  because the frozen FHGFF3 1.0 compatibility copy is generated from it.
+  Files listed under `pinned` are inherited
   FHR/FHGFF3 artifacts frozen at their historical shared commit
   (Q2, implemented 2026-11-12); files listed only under `legacy` are the
   remaining frozen pre-v0.5.0 family state. Neither group is a
@@ -84,9 +93,13 @@ Establishment tracker:
 
 `provenance.json` (repository root) is the machine-readable truth of the pin:
 source commit `170e677fbb6726a3f765373dbe1f214820000be7` (shared tag
-`v0.5.0`), the `copied[]` digests with two machine-checkable adjustments
-(`fhp_linkml.yml` import retarget to `schemas/core-v0.5`; the provenance
-header on the vendored `schemas/core-v0.5.yaml`), the per-entry companion pin
+`v0.5.0`, the package pin), per-entry `commit` overrides carrying the FHP
+contract chain at `0ae18b00ee4bd71ab2dc28bae706b0f9d195076b` (shared tag
+`v0.6.0`, #31), the `copied[]` digests with three machine-checkable adjustments
+(`fhp_linkml.yml` import retarget to `schemas/core-v0.5` and
+`schemas/shared-v0.6`; the provenance headers on the vendored
+`schemas/core-v0.5.yaml` and `schemas/shared-v0.6.yaml` snapshots), the
+per-entry companion pin
 of `examples/fhp/rich-predicted.fhp.yaml` to `e1e5998` (shared #201), the
 `legacy` freeze, the `owned` classification and the `strictDirs` rule that an
 unclassified new path under `schemas/`, `conformance/valid/`,
@@ -100,8 +113,9 @@ digests (so silent drift of a frozen FHR/FHGFF3 file fails CI), the
 `imports` records and the `strictDirs` classification. That workflow
 additionally requires
 `copied[]` to equal exactly what `scripts/make_provenance.py` regenerates from
-the pinned commit plus its hard-wired companion set — so a copy changes only
-as part of a deliberate, generator-reproducible resync, never as a hand edit
+the pinned commits plus its hard-wired companion and contract-chain sets — so a
+copy changes only as part of a deliberate, generator-reproducible resync, never
+as a hand edit
 or an isolated digest bump. There is no `check_development_tree.py` here
 (FHR-Specification's counterpart): the Q7 decision (2026-11-12) keeps this
 pair — `provenance.json` + `scripts/check_shared_parity.py` +
@@ -126,14 +140,18 @@ Three consequences are recorded rather than absorbed:
   `conformance/manifest.json` are untouched at 77 vectors, because a vector's
   `expected` outcome needs independent review rather than generation by the code
   under test.
-- It targets the **released v0.6.0** contracts (FHP 1.2, FHR 2.1) while this
-  tree's pinned copies are FHP 1.1 and the frozen legacy FHR 1.0, so
-  `scripts/validate_examples.py` and `tests/test_fhp_schema.py` must not see it —
-  hence the subdirectory, which both read non-recursively. The fixture's
-  `README.md` records the measured rejection (`'1.2' is not one of ['1.0', '1.1']`)
-  and the released-contract validation actually performed; the local gap closes
-  with the re-pin below, not by editing a digest-pinned copy or by downgrading the
-  header.
+- It targets the **released v0.6.0** contracts (FHP 1.2, FHR 2.1). Since the
+  #31 re-pin this tree's working `fhp.json` **is** the released FHP 1.2 bytes,
+  and `tests/test_dmel_chr4_fixture.py` validates the FHP header against it
+  through the repository's own gates; before #31 the same check measured
+  `'1.2' is not one of ['1.0', '1.1']` against the stale 1.1 copy, and the
+  fixture's `README.md` still records that history and the
+  released-contract validation performed at #30. The pair stays in a
+  subdirectory that `scripts/validate_examples.py` and
+  `tests/test_fhp_schema.py` read non-recursively, because the FHR side is
+  still outside this tree's gates: the local `fhr.json` is the frozen FHR 1.0
+  compatibility copy (Q2), so a flat glob would try to validate FHR 2.1
+  metadata — and `metadata.fhr.yaml` — against the FHP contract.
 - `.gitattributes` now marks `examples/fhp/**` `-text`, extending the existing
   `examples/fhgff3/**` protection: a checksum-bearing example must survive
   checkout byte-for-byte.
@@ -151,6 +169,16 @@ with the next deliberate resync to a shared release that includes it: re-copy
 bytes + `scripts/make_provenance.py` + `provenance.json` update in one PR.
 Recorded in `provenance.json` → `liveMain`. [JSONLD.md](JSONLD.md#fhp-draft)
 notes the same divergence where local FHP text references `docs/FHP.md`.
+
+The #31 resync (FHP-Specification#31, FHP 1.2) deliberately did **not** take
+this doc with it: it re-pinned only the FHP contract chain
+(`fhp.json`, `fhp_linkml.yml`, `schemas/versions.json`, the
+`schemas/shared-v0.6.yaml` snapshot and the `fhp-v0.6.0.json` release pin),
+which is what #31's acceptance needs and what `make_provenance.py` reproduces
+through per-entry commit overrides. `docs/FHP.md`, `docs/SCHEMA-VERSIONS.md`,
+`docs/FORMAT.md`, the shared `examples/fhp/` files and the `fhp-fasta` vectors
+stay at the v0.5.0 package pin, and the F-01 re-pin above remains an open task
+for the next full-package resync.
 
 ## FHP-owned conformance package (Q4, implemented)
 
@@ -204,7 +232,10 @@ The Q2 decision (2026-11-12): **freeze**. FHP CI tests the FHP chain only:
   example-validation, equivalence, vocabulary and drift steps retired.
 - The inherited chain — `fhr.json`, `fhr_linkml.yml`, `fhgff3.json`,
   `fhgff3_linkml.yml`, root `schemas/core.yaml` (v0.3-era, kept frozen for
-  these fixtures only; FHP 1.1 builds solely on `schemas/core-v0.5.yaml`),
+  these fixtures only; the released FHP line builds solely on
+  `schemas/core-v0.5.yaml`, and since #31 the FHP 1.2 model additionally reads
+  the `schemas/shared-v0.6.yaml` snapshot while this plain
+  `schemas/shared.yaml` copy stays at v0.5.0 for the frozen FHGFF3 generation),
   the Pages-era `jsonld/fhr.context.jsonld`, `jsonld/terms.jsonld`,
   `jsonld/terms.ttl`, the generated `docs/TERMS.md`/`docs/MAPPINGS.md`, the
   FHR example serializations and the schema.org export expectations — is
@@ -243,7 +274,10 @@ implementation (recorded here for the audit trail):
   above). No files deleted.
 - **Q3** — the 1.1 model imports the vendored `schemas/core-v0.5.yaml` pin
   with the machine-checkable import retarget; the v0.3-era root core stays
-  intact for the pinned compatibility chain, per Q2.
+  intact for the pinned compatibility chain, per Q2. (#31 extends the same
+  mechanism: the 1.2 model retargets its `schemas/shared` import to the
+  vendored `schemas/shared-v0.6.yaml` snapshot, leaving the v0.5.0
+  `schemas/shared.yaml` that the frozen FHGFF3 copy generates from untouched.)
 - **Q4 — decided 2026-11-12: FHP-owned vector subset + pinned-upstream full
   run; implemented.** See "FHP-owned conformance package" above.
 - **Q5** — `CITATION.cff` carries the FHP development identity

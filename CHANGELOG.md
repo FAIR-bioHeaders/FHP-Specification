@@ -2,6 +2,59 @@
 
 ## Unreleased
 
+- **Contract re-sync (#31): this tree now carries the FHP 1.2 line, released in
+  FAIR-bioHeaders-Specification v0.6.0.** FHP `1.2` is the dotted BUSCO dataset
+  versions change (FAIR-bioHeaders-Specification#170): `Completeness.lineageDataset`
+  admits dot-separated numeric version components (`enterobacterales_odb12.2`),
+  and records that state `schemaVersion` `"1.0"` or `"1.1"` keep the
+  single-integer suffix they were validated with, so every older record keeps its
+  exact outcome. The release is additive; no field, requiredness or meaning
+  changes and no new version is created here. Previously `fhp.json` and
+  `fhp_linkml.yml` capped `schemaVersion` at `1.1` — uniformly, model and
+  generated copy, which is why the self-consistency gates passed — and this
+  repository therefore rejected the contract it owns and could not validate the
+  #30 chr4 fixture through its own gates.
+  The remedy advanced the model, not the artifact: `fhp_linkml.yml` carries the
+  v0.6.0 model bytes (schemaVersion enum with `1.2` and the released
+  description), the `Completeness` delta arrives as a new vendored
+  `schemas/shared-v0.6.yaml` snapshot reached by a second machine-checkable
+  import-retarget (the plain `schemas/shared.yaml` stays at v0.5.0 because the
+  frozen FHGFF3 1.0 compatibility copy is generated from it — Q2),
+  `schemas/versions.json` is the v0.6.0 registry, and
+  `json-schema-generator.py` gains the shared v0.6.0 generator's #170
+  version-gated lineage rules on the FHP path. `fhp.json` was regenerated
+  (`python json-schema-generator.py --type fhp --output fhp.json`, one command)
+  and is **byte-identical to the released
+  `FAIR-bioHeaders-Specification` `v0.6.0/fhp.json`**
+  (sha256 `92a0b3cbcfe69939ebfaac69f0c5958ce426c005873efe8d3e3eb0fc0dab6de5`,
+  `cmp` against the tag's bytes silent): the release and the development model
+  did not diverge beyond the enum.
+  `provenance.json` re-pins the contract chain — `fhp.json`, `fhp_linkml.yml`,
+  `schemas/shared-v0.6.yaml`, `schemas/versions.json` — and the new immutable
+  `tests/fixtures/releases/fhp-v0.6.0.json` release pin to the shared v0.6.0
+  release commit `0ae18b00ee4bd71ab2dc28bae706b0f9d195076b` through per-entry
+  `commit` overrides that `scripts/make_provenance.py` reproduces exactly (the
+  shared-parity workflow's regeneration step still passes); every other copied
+  path and the pinned/legacy FHR and FHGFF3 fixtures stay at the v0.5.0 package
+  pin. `fhpContract` records FHP `1.2` at v0.6.0. The regression guard against a
+  reopened lag is `tests/test_fhp_jsonld.py::ReleasedContractTests`: the working
+  `fhp.json` must equal the release pin's bytes with the v0.6.0 digest, the
+  pin's provenance entry must name the v0.6.0 commit, and
+  `scripts/check_shared_parity.py --upstream` (CI) verifies that pin against the
+  shared repository's tag bytes.
+  Tests: the enum rejection of `"1.2"` became an acceptance, `"1.3"` is the new
+  unreleased-minor rejection, new cases cover the version-gated dotted-lineage
+  rule and the immutable-release fixture chain, `tests/fhp_microdata.py` gains
+  the `v0.6.0` release, and `tests/test_dmel_chr4_fixture.py` now validates the
+  chr4 FHP header against the working contract — the #29 fixture passes this
+  repository's own gates (measured: `Ran 13 tests ... OK`, 0 schema errors).
+  Conformance is unchanged at 77 vectors (45 `fasta`, 32 `fhp-fasta`) with
+  identical bytes; `check_linkml`, `check_schema_drift`, `check_shared_parity`,
+  `check_conformance --schema` and the `fair-bioheaders` 0.9.0 converter lane
+  pass before and after. The FHP JSON-LD vocabulary picks up the two released
+  `Completeness` descriptions through `make_jsonld.py` regeneration; the context
+  and example serializations are byte-unchanged.
+
 - Add the first real-data FHP example pair, `examples/fhp/dmel-chr4/`
   ([#29](https://github.com/FAIR-bioHeaders/FHP-Specification/issues/29)): the
   chromosome 4 record (`NC_004353.4`, 1,348,131 bases) of *Drosophila
@@ -29,7 +82,9 @@
   a 1.2/2.1 header yet; the fixture therefore lives in a subdirectory that
   `scripts/validate_examples.py` does not read, and `.gitattributes` now keeps
   `examples/fhp/**` byte-exact. Closing that gap is the recorded resync, not an
-  edit to a digest-pinned copy.
+  edit to a digest-pinned copy. (Superseded in part by #31 above: the FHP side
+  is since validated by this repository's own gates; the FHR side still is not,
+  the local `fhr.json` remaining the frozen FHR 1.0 compatibility copy.)
 
 - Bring the JSON-LD hardening of FAIR-bioHeaders-Specification v0.4.2 into
   docs/JSONLD.md: J3 accepts only the FHR JSON-LD context (and no `@nest`), J5/J7
