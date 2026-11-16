@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Document FHP/PEFF scope, a conditional crosswalk with information loss, and
+  pinned placement experiments for #20. Synthetic payload-preserving fixtures
+  distinguish reader acceptance from PEFF validity; no contract changes.
+
 - **Reference form (#31 item 5, maintainer ruling 2026-11-16): the FHR review
   baseline no longer cites a floating branch on the legacy development
   repository.** `.github/schema-baseline.json` carried

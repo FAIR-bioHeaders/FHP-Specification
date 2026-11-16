@@ -901,6 +901,18 @@
     {
       "path": "tests/test_dmel_chr4_fixture.py",
       "note": "standard-library integrity checks for the #29 fixture: both checksums recomputed from the committed bytes, the FHP derivedFrom digest compared against the recomputed parent checksum, and the measured record/base/masking counts the headers assert"
+    },
+    {
+      "path": "docs/FHP-PEFF.md",
+      "note": "FHP-owned PEFF interoperability study (#20); no shared contract changes."
+    },
+    {
+      "path": "studies/peff/",
+      "note": "FHP-owned synthetic PEFF placement study, external-reader probes and captured evidence (#20); not conformance vectors."
+    },
+    {
+      "path": "tests/test_peff_study.py",
+      "note": "FHP-owned integrity and observation checks for the PEFF study (#20)."
     }
   ]
 }

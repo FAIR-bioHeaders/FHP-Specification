@@ -1,0 +1,19 @@
+;~schema: https://w3id.org/fair-bioheaders/fhp/v0.6.0
+;~schemaVersion: '1.2'
+;~proteome: Synthetic placement study (not biological data)
+;~sourceType: database
+;~taxon:
+;~  name: Homo sapiens
+;~  uri: https://identifiers.org/taxonomy:9606
+;~version: '1'
+;~metadataAuthor:
+;~- name: Synthetic study fixture
+;~dateCreated: '2026-11-16'
+;~source:
+;~- name: Synthetic fixture
+;~  release: '1'
+;~checksum: L0NL+n1je0UFFIFFbyIZGsaaqQ3N8vrXvOCf1Hrq66I=
+>syn:p1 \PName=Synthetic protein one \Length=19
+MPEPTIDEKACDEFGHIKR
+>syn:p2 \PName=Synthetic protein two \Length=17
+MSTNPKPQRKTKRNTNR

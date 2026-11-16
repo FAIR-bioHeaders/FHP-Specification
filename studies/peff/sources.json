@@ -1,0 +1,35 @@
+{
+  "measuredDate": "2026-11-16",
+  "PEFF": {
+    "repository": "https://github.com/HUPO-PSI/PEFF",
+    "commit": "4b41d2697f3e85e9ca9d93fdc6934735546c33f3"
+  },
+  "Comet": {
+    "repository": "https://github.com/UWPR/Comet",
+    "commit": "c990672cfd1aebb5b65a475731a0f4790dff5c77",
+    "version": "2026.03 rev. 1"
+  },
+  "validatorURL": "https://peptideatlas.org/export/PEFF/ProteomicsPEFF.zip",
+  "files": {
+    "peff-final-pdf": {
+      "bytes": 537467,
+      "sha256": "b710bc0007e443b36d52d9583d6312058b5b7904dfcbec720f3f77056b8aa05d"
+    },
+    "validator-archive": {
+      "bytes": 12661657,
+      "sha256": "85e43373d5c377e46e36826561ade4f7ffa8b2c39bc036a9ab1ef0b531f34891"
+    },
+    "pyteomics-peff.py": {
+      "bytes": 8927,
+      "sha256": "1f6dd57ca4a2a36f7900263b4b4990a9d91b9afa809e45b99584d9f526867560"
+    },
+    "pyteomics-fasta.py": {
+      "bytes": 38733,
+      "sha256": "37068889243ca0c28676fcccb112521f4e1573804eab0fa0383e37305e15ffa1"
+    },
+    "bioheaders-cli.py": {
+      "bytes": 64231,
+      "sha256": "f41b0e3596ff6ccd91f863966a02f0845477582a987505a9b3494aba9fe1a76b"
+    }
+  }
+}
