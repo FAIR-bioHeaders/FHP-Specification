@@ -2,6 +2,42 @@
 
 ## Unreleased
 
+- **Reference form (#31 item 5, maintainer ruling 2026-11-16): the FHR review
+  baseline no longer cites a floating branch on the legacy development
+  repository.** `.github/schema-baseline.json` carried
+  `$id: https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json`.
+  Measured 2026-11-16, that URL answers 200 with the **current** released
+  contract — FHR 2.1, 10,295 bytes, sha256 `694ab5afaf8c3743…`, byte-identical
+  to `FAIR-bioHeaders-Specification` `v0.6.0` and `main` — while this baseline
+  snapshots **FHR 1** (7,112 bytes, sha256 `e3d3843e1a1646e1…`, equal to `fhr.json`
+  here and to the shared tree at tags v0.3.0 and v0.3.1). So the defect was the
+  reference form *and* a document mismatch, not a wrong contract version. The
+  field now reads `https://w3id.org/fair-bioheaders/fhr/v0.3.1`: the publication
+  authority, an immutable tag, and — verified by following the alias (302 →
+  `v0.3.1/fhr.json` → 200, digest match; control `…/fhr/v9.9.9` 302s too and only
+  fails at the end of its chain, so a 302 alone is not evidence) — the bytes this
+  snapshot actually holds. Pointing it at the *current* release instead would have
+  asserted an identity whose bytes differ, which #241 forbids in the other
+  direction. The w3id form was chosen over the tag-anchored raw URL because
+  nothing in this tree dereferences an `$id` (all `$ref`s internal; every
+  validator is built from locally read bytes without a resolver; the Python under
+  `scripts/` and `tests/` imports no HTTP client — urllib, requests, httpx,
+  socket: no matches; and selection rules V1–V6 match strings rather than
+  fetching) and `docs/SCHEMA-VERSIONS.md` tells writers to pin exactly these bytes
+  with `https://w3id.org/fair-bioheaders/fhr/v0.3.1` (`[V3]` ≡ `[V2]`; the same
+  document fixes the tag choice: "v0.3.0 and v0.3.1 publish the same FHR schema;
+  v0.3.1 is named as the later release").
+  `.github/schema-baseline-refs.json` records the old→new value, the tag→commit
+  resolutions (`v0.3.1` → `378b534dda9c1d759f25b4b32287172402492233`,
+  `v0.6.0` → `0ae18b00ee4bd71ab2dc28bae706b0f9d195076b`), the measured release
+  line, the cross-repository sweep and the follow-up list;
+  `tests/test_schema_baseline_refs.py` (14 tests) guards it. No schema content,
+  contract version or released byte changed: `fhp.json` remains byte-identical to
+  the released `v0.6.0` contract (24,681 bytes, `92a0b3cbcfe69939…`) and `fhr.json`
+  keeps its immutable upstream `$id`, which is why the retired FHR drift pair now
+  reports exactly one intentional pointer, `/$id` (the CI gate runs the FHP pair,
+  unchanged and green). FHT and FHGM are untouched and remain drafts (rule V7).
+
 - **Contract re-sync (#31): this tree now carries the FHP 1.2 line, released in
   FAIR-bioHeaders-Specification v0.6.0.** FHP `1.2` is the dotted BUSCO dataset
   versions change (FAIR-bioHeaders-Specification#170): `Completeness.lineageDataset`
