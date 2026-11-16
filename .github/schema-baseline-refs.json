@@ -234,9 +234,9 @@
     "asserts": [
       "the FHR baseline's $id equals this record's citation, is a w3id release alias or a tag/commit-addressed raw URL, and names no branch and no legacy development repository",
       "the FHR baseline is still the frozen fhr.json document modulo $id, so the retarget cannot hide a constraint change in the frozen copy",
-      "the FHP and FHGFF3 baselines are still byte-for-byte canonical snapshots of their schemas, so no $id divergence creeps into the pair this repository's CI compares",
-      "every ref in this record is a tag (vX.Y.Z) or a 40-hex commit: no 'main', no branch",
-      "the digests and sizes this record states for fhr.json, the baseline, the v0.3.1 release bytes and the v0.6.0 release bytes still match the tree and the record",
+      "the FHP and FHGFF3 baselines have the same parsed JSON values as their schemas, including $id; their serialization bytes are not compared",
+      "recorded release tag names, commit IDs and tag-object IDs have the expected syntax, and the v0.3.1 and v0.6.0 commit IDs match pinned constants",
+      "the local fhr.json size and sha256 and the current FHR baseline's sha256 match their recorded values; the v0.3.1 authority size and sha256 and tag sha256 agree with the frozen copy, but other release bytes and the baseline's recorded size are not verified by this guard",
       "the floating-reference inventory of .github/ equals the knownExceptions list exactly, so a new branch-valued $id fails and a fixed one must be removed from the list",
       "negative control on a temp directory with an exact-case name: a synthetic baseline whose $id names a branch is reported by the same classifier the CI assertions use"
     ]
