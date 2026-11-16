@@ -153,32 +153,23 @@
   unchanged; `--check` covers the new files), and the reference FHP writer/canonical
   reader. The writer types inlined objects recursively, so
   `derivedFrom[].accessionID` gets the same `PropertyValue` class as the root
-<<<<<<< HEAD
-  `accessionID`, while array order and absent optional children are preserved.
-  `tests/test_fhp_jsonld.py` checks typed round trips, ordered authors, nested
-  `source`/`derivedFrom`, a parent-accession `derivedFrom[].accessionID` case in both
-  the writer and the PyLD processor round trip, scalar types, absent optional fields,
-  unknown-context and unsupported-`@version` rejection, offline operation and the
-  vocabulary ownership split. `docs/FHP.md` and `docs/JSONLD.md` state the draft
-  status, that the runtime reader/writer is coordinated with
-  FAIR-bioHeaders-Tools#58, the pinned shared-vocabulary revision, and that canonical
-  JSON-LD is loss-preserving while the schema.org export is one-way. FHP 1.0 is
-  released; the context and terms are published through
-  FAIR-bioHeaders-Specification#107. No toolkit support or adoption is claimed.
-=======
-  `accessionID`, and a supplied `nameType` selects the author `@type`. The reader
-  validates the expected nested `@type` instead of stripping any type.
-  `tests/test_fhp_jsonld.py` checks typed round trips against the pinned released
-  `fhp.json`, ordered authors, nested `source`/`derivedFrom`, scalar types (including
-  the string `"1.0"`), absent optional fields, unknown-context and
-  unsupported-`@version` rejection, wrong nested types, offline operation and the
-  vocabulary ownership split. `docs/FHP.md` and `docs/JSONLD.md` state the released
-  contract, the pin and the ownership split, that the runtime reader/writer is
-  coordinated with FAIR-bioHeaders-Tools#58, and that canonical JSON-LD is
-  loss-preserving while the schema.org export is one-way. Publication of the new
-  files goes through FAIR-bioHeaders-Specification#107. No toolkit support or
-  adoption is claimed.
->>>>>>> 5cf0613 (Align the FHP JSON-LD context with released FHP 1.0)
+  `accessionID`, while array order and absent optional children are preserved, and a
+  supplied `nameType` selects the author `@type` (a supplied DataCite `nameType` wins
+  over the identifier). The reader validates the expected nested `@type` instead of
+  stripping any type. `tests/test_fhp_jsonld.py` checks typed round trips against the
+  pinned released `fhp.json`, ordered authors, nested `source`/`derivedFrom`, a
+  parent-accession `derivedFrom[].accessionID` case in both the writer and the PyLD
+  processor round trip, scalar types (including the string `"1.0"`), absent optional
+  fields, unknown-context and unsupported-`@version` rejection, wrong nested types,
+  offline operation and the vocabulary ownership split. `docs/FHP.md` states the
+  released contract; `docs/JSONLD.md` heads its FHP section "(draft)", which refers to
+  the JSON-LD context and not to the contract. Both state the pin, the vocabulary
+  ownership split, that the runtime reader/writer is coordinated with
+  FAIR-bioHeaders-Tools#58, and that canonical JSON-LD is loss-preserving while the
+  schema.org export is one-way. The FHP contract line at this point was 1.0 (this tree
+  now carries the 1.2 line, see the v0.6.0 entry above); publication of the context
+  and terms is coordinated through FAIR-bioHeaders-Specification#107. No toolkit
+  support or adoption is claimed.
 - Rename the repository from `FHR-Specification` to `FAIR-bioHeaders-Specification`
   (#108). It holds the released specifications for every header type; each type is
   developed in its own repository (a new `FHR-Specification` for FHR). Links and
