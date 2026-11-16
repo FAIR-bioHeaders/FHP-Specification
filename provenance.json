@@ -662,7 +662,7 @@
     },
     {
       "path": ".github/schema-baseline.json",
-      "note": "FHR drift baseline for the frozen copy (Q2)"
+      "note": "FHR drift baseline for the frozen copy (Q2). Its $id was retargeted 2026-11-16 from https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json - a floating branch on the legacy FHR development repository, and not even this document: the URL serves FHR 2.1 (10,295 bytes) while this snapshot holds the canonicalized FHR 1 bytes (7,112, sha256 e3d3843e1a1646e1...) - to the w3id alias of tag v0.3.1, the newest release whose bytes equal this snapshot (FHP-Specification#31 acceptance item 5, class rule FAIR-bioHeaders-Specification#241). Measurements, the form decision and the untouched fhp/fhgff3 baselines: .github/schema-baseline-refs.json, guarded by tests/test_schema_baseline_refs.py. The pair is not a CI gate here (Q2 retired it), so check_schema_drift.py --schema fhr.json now reports exactly one intentional pointer, /$id: the $id inside the frozen fhr.json bytes is immutable upstream release material and is deliberately not rewritten by this development repository"
     },
     {
       "path": ".github/schema-baseline-fhgff3.json",
@@ -773,6 +773,14 @@
     {
       "path": ".github/schema-baseline-fhp.json",
       "note": "FHP drift baseline (regenerated with the 1.1 sync in this PR)"
+    },
+    {
+      "path": ".github/schema-baseline-refs.json",
+      "note": "reference-form record for the three .github schema baselines: the #31 item 5 ruling on the FHR baseline's $id, the tag-to-commit resolutions it rests on, and the documented disposition of the fhp/fhgff3 baselines. Provenance data, not a schema baseline: it carries no $id and no validation constraints, and tests/test_schema_baseline_refs.py reads it as its authority"
+    },
+    {
+      "path": "tests/test_schema_baseline_refs.py",
+      "note": "guard for that record and for the FHR baseline's reference form (#31 item 5, #241): keeps the retargeted $id immutable, keeps the baseline equal to the frozen fhr.json modulo $id, pins the one intentional /$id drift pointer, and pins the known-exception list for the two branch-valued $id fields this PR deliberately left alone"
     },
     {
       "path": ".github/workflows/",

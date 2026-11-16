@@ -230,6 +230,16 @@ The Q2 decision (2026-11-12): **freeze**. FHP CI tests the FHP chain only:
   `scripts/make_jsonld.py --check --fhp`; `check-schema-drift.yml`
   drift-checks only `.github/schema-baseline-fhp.json`. The FHR and FHGFF3
   example-validation, equivalence, vocabulary and drift steps retired.
+  Because the FHR pair is retired rather than deleted, its baseline is free to
+  carry a *corrected* reference form: `#31` item 5 (maintainer ruling
+  2026-11-16) retargeted `.github/schema-baseline.json`'s `$id` from
+  `https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json`
+  to `https://w3id.org/fair-bioheaders/fhr/v0.3.1`, the alias of the tag whose
+  bytes the snapshot holds (FAIR-bioHeaders-Specification#241 forbids a branch
+  URL for released material). Running the retired pair now reports exactly one
+  pointer, `/$id`: the frozen `fhr.json` keeps its immutable upstream `$id` and
+  is not rewritten. `.github/schema-baseline-refs.json` records the decision and
+  its measurements; `tests/test_schema_baseline_refs.py` guards both.
 - The inherited chain — `fhr.json`, `fhr_linkml.yml`, `fhgff3.json`,
   `fhgff3_linkml.yml`, root `schemas/core.yaml` (v0.3-era, kept frozen for
   these fixtures only; the released FHP line builds solely on

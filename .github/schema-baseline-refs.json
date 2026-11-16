@@ -1,0 +1,251 @@
+{
+  "registryVersion": 1,
+  "description": "Reference-form record for this repository's three JSON Schema review baselines under .github/ (FHP-Specification#31 acceptance item 5, maintainer ruling 2026-11-15). A baseline file is the frozen snapshot scripts/check_schema_drift.py compares a generated/published schema against; it is not a runtime input and nothing in this repository dereferences the $id it carries. Its $id is therefore a provenance statement, and the statement .github/schema-baseline.json used to make - $id https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json - named a mutable development branch on the legacy FHR development repository for material that is a released contract. That is the form FAIR-bioHeaders-Specification#241 forbids ('a record that names ref: main for released material is drift in its own right, independent of any digest match'). The field is retargeted here to the permanent w3id alias of the release whose bytes this snapshot actually holds; the choice, the measurements behind it and the files deliberately left unchanged are recorded below so a later reader can re-check them instead of trusting this prose. tests/test_schema_baseline_refs.py keeps this record honest in CI.",
+  "policy": "Released material resolves at a release tag or at that tag's w3id alias, never at a branch (#241). Raw main is a current-contract link, not an immutable version (AGENTS.md). This record describes released FHR bytes only.",
+  "authority": {
+    "repository": "FAIR-bioHeaders/FAIR-bioHeaders-Specification",
+    "url": "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification",
+    "pathNote": "Released contract files sit at the repository ROOT, so the reference paths here are '<tag>/fhr.json'. The 'schemas/' path is not a contract location: measured 2026-11-16, https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/v0.6.0/schemas/fhr.json returns HTTP 404 (14 bytes)."
+  },
+  "fhrReleaseLine": {
+    "note": "The FHR contract line at every tag of the publication authority, measured 2026-11-15 and re-checked 2026-11-16 from the tag objects themselves. It is what decides which reference is truthful for a snapshot: this repository's frozen FHR copy is the FHR 1 bytes, not the current 2.1 bytes.",
+    "tags": {
+      "v0.3.0": {
+        "tagObject": "0144786399ce69bf857a4409f6e92164a17b9d1f",
+        "commit": "f73b4423b2771e20496ddf6b2ac0a6b57d529a8b",
+        "path": "fhr.json",
+        "size": 7112,
+        "sha256": "e3d3843e1a1646e12495ccc9a615df94b7abe71b833c5f336c59444e0a49620a",
+        "embeddedDollarId": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json"
+      },
+      "v0.3.1": {
+        "tagObject": "1b556a0db20c9873a5d6f58302b020e09e3a9307",
+        "commit": "378b534dda9c1d759f25b4b32287172402492233",
+        "path": "fhr.json",
+        "size": 7112,
+        "sha256": "e3d3843e1a1646e12495ccc9a615df94b7abe71b833c5f336c59444e0a49620a",
+        "embeddedDollarId": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json"
+      },
+      "v0.4.0": {
+        "tagObject": "6d5b50c56f85d302de2debb8b5eb41a2608e33d9",
+        "commit": "84c2f90ab0e97c81d8afbf33eafe80ebade7a009",
+        "path": "fhr.json",
+        "size": 9550,
+        "sha256": "168a60467e3651dfdfe9855747f38257d5889bfcce6ec8661d9a378762a362dd",
+        "embeddedDollarId": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json"
+      },
+      "v0.4.1": {
+        "tagObject": "1dab0fe67ec0bc9f648fb1e1ba8749e40dfdbb97",
+        "commit": "f2d828c0f5a2e05ca02c58cb310f576d6a362ed5",
+        "path": "fhr.json",
+        "size": 9550,
+        "sha256": "168a60467e3651dfdfe9855747f38257d5889bfcce6ec8661d9a378762a362dd",
+        "embeddedDollarId": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json"
+      },
+      "v0.4.2": {
+        "tagObject": "1c2be29a0a224bd091ff44f0d32468b23157e970",
+        "commit": "91501619a1cb4626d609202dacabe337ccdeb7cb",
+        "path": "fhr.json",
+        "size": 9550,
+        "sha256": "168a60467e3651dfdfe9855747f38257d5889bfcce6ec8661d9a378762a362dd",
+        "embeddedDollarId": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json"
+      },
+      "v0.5.0": {
+        "tagObject": "7150f74cf447de5694b8938c705d5a5896eaeacd",
+        "commit": "170e677fbb6726a3f765373dbe1f214820000be7",
+        "path": "fhr.json",
+        "size": 10295,
+        "sha256": "694ab5afaf8c3743eacf9e2aacb5551f7cbe37073b6f4afc3ae4a65b47f9d4df",
+        "embeddedDollarId": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json"
+      },
+      "v0.6.0": {
+        "tagObject": "ab7e3ddd53bfccee9a31d59fc10524eadf32c1da",
+        "commit": "0ae18b00ee4bd71ab2dc28bae706b0f9d195076b",
+        "path": "fhr.json",
+        "size": 10295,
+        "sha256": "694ab5afaf8c3743eacf9e2aacb5551f7cbe37073b6f4afc3ae4a65b47f9d4df",
+        "embeddedDollarId": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json"
+      }
+    },
+    "identicalBytesAcrossTags": {
+      "v0.3.0:fhr.json": "v0.3.1:fhr.json (both e3d3843e1a16..., cmp silent)",
+      "v0.4.1 and v0.4.2 fhr.json": "equal to v0.4.0's bytes (releases changed no contract)",
+      "v0.6.0:fhr.json": "equal to v0.5.0's bytes (FHR 2.1 did not move at v0.6.0)"
+    },
+    "v060IsCurrentReleaseNote": "v0.6.0:fhr.json is 10295 bytes with sha256 694ab5afaf8c3743eacf9e2aacb5551f7cbe37073b6f4afc3ae4a65b47f9d4df - FHR 2.1, the current released contract, and a DIFFERENT document from the snapshot this record describes. Note that every release in the line, v0.3.0 through v0.6.0, embeds the same raw-main $id string inside its own bytes; that embedded identity is fixed release material and cannot be retargeted without a new FHR schemaVersion."
+  },
+  "baselines": [
+    {
+      "local": ".github/schema-baseline.json",
+      "role": "Review baseline of the frozen inherited FHR compatibility copy. Under the Q2 decision (docs/DEVELOPMENT-TREE.md, FHP-Specification#2, 2026-11-12) this repository drift-checks the FHP pair only, so this file is a frozen review artifact, not a CI input; its bytes are described by provenance.json's legacy[] entry, and the schema it mirrors (fhr.json) is one of the 24 digest-pinned files in provenance.json's pinned[] section.",
+      "reviewedSchema": {
+        "local": "fhr.json",
+        "size": 7112,
+        "sha256": "e3d3843e1a1646e12495ccc9a615df94b7abe71b833c5f336c59444e0a49620a",
+        "contract": "FHR 1 (properties.schemaVersion is {\"type\": \"number\"}, the pre-v0.4.0 contract). It is NOT FHR 2.0 and NOT the released 2.1.",
+        "recordedSourceCommit": "43f9067d0ce21e9ae63fd9eee64f9c2af0b73ff4",
+        "recordedSourceCommitNote": "provenance.json pinned[] names this shared-tree commit (the inherited fork state, v0.4.0~1) for the local bytes. Measured 2026-11-16: git show 43f9067d:fhr.json is byte-identical to git show v0.3.1:fhr.json (cmp silent), so the same bytes are also available at a TAG, which is the form #241 requires for released material."
+      },
+      "dollarId": {
+        "before": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json",
+        "after": "https://w3id.org/fair-bioheaders/fhr/v0.3.1",
+        "baselineBytesBefore": {
+          "size": 7112,
+          "sha256": "d83013c3f0fff22734bf577598148d063370eae401cc692206b819a8c7911211"
+        },
+        "baselineBytesAfter": {
+          "size": 7074,
+          "sha256": "6356b4f53d057960391f558cab647febb2025b44be9e725289ed015e0f6bcb8e"
+        },
+        "canonicalization": "Before the retarget, the baseline was scripts/check_schema_drift.py --update output: the same JSON value as fhr.json, re-serialized with indent=2 and sorted keys. The current baseline retains that serialization but overrides $id with the v0.3.1 w3id alias; its parsed value agrees with fhr.json only modulo $id. Running --update on the FHR pair would restore the legacy $id, not reproduce the retargeted baseline."
+      },
+      "authority": {
+        "citation": "https://w3id.org/fair-bioheaders/fhr/v0.3.1",
+        "ref": "v0.3.1",
+        "refType": "annotated tag",
+        "tagObject": "1b556a0db20c9873a5d6f58302b020e09e3a9307",
+        "commit": "378b534dda9c1d759f25b4b32287172402492233",
+        "path": "fhr.json",
+        "pinnedSourceUrl": "https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/v0.3.1/fhr.json",
+        "size": 7112,
+        "sha256": "e3d3843e1a1646e12495ccc9a615df94b7abe71b833c5f336c59444e0a49620a",
+        "retrieved": "2026-11-16",
+        "retrievalCommand": "git -C /path/to/FAIR-bioHeaders-Specification show v0.3.1:fhr.json > /tmp/fhr-v0.3.1.json",
+        "verification": "Measured 2026-11-16. First hop of the alias, requested without following redirects (curl -s -o /dev/null -w '%{http_code} %{redirect_url}', no -L): HTTP 302, redirecting to https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/v0.3.1/fhr.json. Following the chain to its end (a full download, not a ranged read) -> HTTP 200 at https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/v0.3.1/fhr.json, 7112 bytes, sha256 e3d3843e1a1646e12495ccc9a615df94b7abe71b833c5f336c59444e0a49620a; byte-identical to the tag's git blob (git show v0.3.1:fhr.json, e3d3843e1a1646e12495ccc9a615df94b7abe71b833c5f336c59444e0a49620a) and to this tree's fhr.json, so the alias names exactly the bytes this snapshot holds. Control: https://w3id.org/fair-bioheaders/fhr/v9.9.9 answers the SAME first-hop shape - HTTP 302, redirecting to https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/v9.9.9/fhr.json - and only the end of the chain distinguishes them: HTTP 404. The 302 alone is therefore not evidence that a release exists; the followed 200 plus a matching digest is. Second control: the same chain for v0.6.0 ends at HTTP 200 with 10295 bytes, sha256 694ab5afaf8c3743eacf9e2aacb5551f7cbe37073b6f4afc3ae4a65b47f9d4df - a real but different document.",
+        "formDecision": "w3id alias rather than the tag-anchored raw URL, and v0.3.1 rather than v0.3.0, for measured reasons. (1) Nothing in this repository resolves an $id: every $ref in fhr.json, fhp.json, fhgff3.json and the three baselines is an internal absolute fragment (#/definitions/..., #/$defs/...) with no external $ref, and every validator builds Draft202012Validator from locally read bytes without a resolver or registry, so no check can break because an identifier is a network URI. The Python checks under scripts/ and tests/ import no HTTP client at all (urllib, requests, httpx, socket: no matches, measured 2026-11-15 and re-checked 2026-11-16), scripts/check_shared_parity.py states its offline design in its own docstring, and this tree's pinned docs/SCHEMA-VERSIONS.md (provenance.json copied[], 15,127 bytes) records the same design in the rules themselves: 'Readers use copies of the released schemas (tags are the source) and say which release their current copy is; they do not fetch schemas at run time.' (2) The maintainer's preferred form is the permanent identifier rather than a mutable host path, and the offline condition attached to that preference does not bind here: neither a w3id URL nor a raw URL resolves without a network, so 'offline' could not have selected the raw form either. (3) The alias is the form this repository's own guidance tells writers to use to pin exactly these bytes: the same document's 'Migrating files that cite raw-main with schemaVersion 1' section says 'Pin v0.3.1: set schema to https://w3id.org/fair-bioheaders/fhr/v0.3.1, keep schemaVersion: 1', rule [V3] accepts that form as naming release v0.3.1's schema, and rule [V2] reaches the identical bytes through the raw tag URL - the two forms are selection-rule equivalent, which is why this change states no new contract version and changes no schema content. (4) Between the two tags that publish these bytes the document itself decides: 'v0.3.0 and v0.3.1 publish the same FHR schema; v0.3.1 is named as the later release.'",
+        "whyNotTheCurrentRelease": "Pointing this snapshot's $id at the current released contract (the v0.6.0 tag or https://w3id.org/fair-bioheaders/fhr/v0.6.0, 10295 bytes, sha256 694ab5afaf8c3743...) would assert an identity whose bytes are not this document: v0.6.0 holds FHR 2.1, this snapshot holds FHR 1, and #241 requires a reference to resolve to the authoritative bytes of its own class. The ruling - stop naming a floating legacy branch - is satisfied by v0.3.1, which is a tag, is immutable, is the publication authority rather than the legacy development repository, and is content-true. The current release is still recorded above (fhrReleaseLine) so a reader can see both, and this repository's FHP lane is unaffected."
+      },
+      "defectMeasured": {
+        "legacyUrlServesToday": {
+          "url": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json",
+          "http": 200,
+          "bytes": 10295,
+          "sha256": "694ab5afaf8c3743eacf9e2aacb5551f7cbe37073b6f4afc3ae4a65b47f9d4df",
+          "note": "The old-name compatibility URL still answers 200 and serves the CURRENT released contract (FHR 2.1, byte-identical to FAIR-bioHeaders-Specification v0.6.0 and main; measured 2026-11-16: 694ab5afaf8c3743...). So the defect is NOT a wrong contract version, and it is also not only a reference-form defect: the string named a document that is not the one this baseline snapshots (7,112 bytes of FHR 1 here versus 10,295 bytes of FHR 2.1 at the URL), on a repository whose current role is FHR development plus serving established raw URLs (its own published-files.yml copies it from shared main), through a branch whose bytes are whatever shared main holds next."
+        }
+      },
+      "driftPairConsequence": "check_schema_drift.py compares whole parsed documents, $id included, so the retarget makes the FHR pair report exactly one pointer - /$id - when run explicitly ('python scripts/check_schema_drift.py --schema fhr.json --baseline .github/schema-baseline.json') or bare, because bare defaults are the retired FHR pair. That pair is not a gate in this repository (Q2 retired it; CI runs the FHP pair with explicit arguments), and the divergence is the deliberate content of this ruling: the $id inside the released FHR 1 bytes is immutable upstream material this repository must not rewrite, while the baseline is this repository's own review artifact. The review capacity the pair provided is preserved by tests/test_schema_baseline_refs.py, which asserts the two documents are still equal modulo $id, so a real constraint change to the frozen copy still fails. A future maintainer who runs 'check_schema_drift.py --update' on the FHR pair would silently restore the legacy string; that too fails the guard."
+    },
+    {
+      "local": ".github/schema-baseline-fhp.json",
+      "dollarId": "https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/main/fhp.json",
+      "disposition": "unchanged in this PR - reported",
+      "reason": "Same #241 form (a floating branch: '.../FAIR-bioHeaders-Specification/main/fhp.json'), but it cannot be corrected here without breaking a live gate or faking a contract change. Measured 2026-11-16: the released authority's own bytes embed that string - 'git show v0.6.0:fhp.json' declares https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/main/fhp.json - and this repository's CI (.github/workflows/check-schema-drift.yml) compares this baseline against the working fhp.json, which #32 made byte-identical to the release (24681 bytes, sha256 92a0b3cbcfe69939ebfaac69f0c5958ce426c005873efe8d3e3eb0fc0dab6de5); the baseline is its canonicalized snapshot (24681 bytes, sha256 81dd5dce8f4db9457bfe34d47a49eaf34ff2274b75c21727d5a2988f4d1b1f05, canonicalization confirmed), so the parsed values, $id included, agree. Editing the baseline alone would report /$id as drift on the one drift gate that runs, and editing fhp.json to match would make this tree's contract copy disagree with the released v0.6.0 bytes and fail tests/test_fhp_jsonld.py::ReleasedContractTests and check_shared_parity. Fixing the form for FHP means changing the contract's own $id, which is a new FHP schemaVersion and a joint maintainer release decision in FAIR-bioHeaders-Specification - not a baseline edit in a development repository."
+    },
+    {
+      "local": ".github/schema-baseline-fhgff3.json",
+      "dollarId": "https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/main/fhgff3.json",
+      "disposition": "unchanged in this PR - reported",
+      "reason": "Same floating-branch form as the FHP baseline, and a second reason not to touch it unilaterally: this tree's frozen fhgff3.json (21540 bytes, sha256 22d4ecaf604f9fcc34b7e8bcb47f34655b9a416a73250aaef93dd0f429b4fd83) matches NO release tag. Measured 2026-11-16 from the tag objects: v0.3.0 absent, v0.3.1 absent, v0.4.0 f89635f252f6/22500 B, v0.4.1 f89635f252f6/22500 B, v0.4.2 f89635f252f6/22500 B, v0.5.0 20ce320f5d70/24080 B, v0.6.0 1942be4cefc8/26955 B; 'git show 43f9067d:fhgff3.json' is 22d4ecaf604f9fcc34b7e8bcb47f34655b9a416a73250aaef93dd0f429b4fd83 (21540 bytes), i.e. byte-equal to the local copy, and that commit is not a tag: v0.3.x publishes no fhgff3.json at all and v0.4.0 already publishes a different one. Its only truthful immutable reference is therefore commit-addressed (the byte-copied-tree class resolving at its recorded source revision), which is a different ruling from the tag-or-alias form given for the FHR baseline. Reported for maintainer disposition together with the FHP entry rather than answered twice in two places (#107)."
+    }
+  ],
+  "knownExceptions": [
+    {
+      "local": ".github/schema-baseline-fhp.json",
+      "dollarId": "https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/main/fhp.json",
+      "state": "accepted defect, deliberately unchanged (see baselines[1])"
+    },
+    {
+      "local": ".github/schema-baseline-fhgff3.json",
+      "dollarId": "https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/main/fhgff3.json",
+      "state": "accepted defect, deliberately unchanged (see baselines[2])"
+    }
+  ],
+  "sweep": {
+    "date": "2026-11-16",
+    "method": "Read-only: the contents API at ref=main for each repository (GET repos/FAIR-bioHeaders/<repo>/contents/.github%2Fschema-baseline*.json, base64 blob decoded locally) plus each repository's .github/workflows/check-schema-drift.yml. No sibling repository was written to, and no raw.githubusercontent.com read was used as evidence of landed content.",
+    "measuredAtMain": {
+      "FAIR-bioHeaders-Specification/.github/schema-baseline.json": {
+        "size": 10295,
+        "sha256": "8a032a262cec16ae37563ea0947234edb70e22ab25640026444914299b002d97",
+        "dollarId": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json"
+      },
+      "FAIR-bioHeaders-Specification/.github/schema-baseline-fhp.json": {
+        "size": 24681,
+        "sha256": "81dd5dce8f4db9457bfe34d47a49eaf34ff2274b75c21727d5a2988f4d1b1f05",
+        "dollarId": "https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/main/fhp.json"
+      },
+      "FAIR-bioHeaders-Specification/.github/schema-baseline-fhgff3.json": {
+        "size": 26955,
+        "sha256": "615c8ea9fc0b781982bfe463dc6a8f878472b558ae697bec3ab9e76f659a04a8",
+        "dollarId": "https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/main/fhgff3.json"
+      },
+      "FHR-Specification/.github/schema-baseline.json": {
+        "size": 10295,
+        "sha256": "8a032a262cec16ae37563ea0947234edb70e22ab25640026444914299b002d97",
+        "dollarId": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json"
+      },
+      "FHR-Specification/.github/schema-baseline-fhp.json": {
+        "size": 24681,
+        "sha256": "81dd5dce8f4db9457bfe34d47a49eaf34ff2274b75c21727d5a2988f4d1b1f05",
+        "dollarId": "https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/main/fhp.json"
+      },
+      "FHR-Specification/.github/schema-baseline-fhgff3.json": {
+        "size": 26955,
+        "sha256": "615c8ea9fc0b781982bfe463dc6a8f878472b558ae697bec3ab9e76f659a04a8",
+        "dollarId": "https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/main/fhgff3.json"
+      }
+    },
+    "absentAtMain": {
+      "FHT-Specification/.github/schema-baseline.json": "HTTP 404 at main (contents API)",
+      "FHT-Specification/.github/schema-baseline-fhp.json": "HTTP 404 at main (contents API)",
+      "FHT-Specification/.github/schema-baseline-fhgff3.json": "HTTP 404 at main (contents API)",
+      "FHGFF3/.github/schema-baseline.json": "HTTP 404 at main (contents API)",
+      "FHGFF3/.github/schema-baseline-fhp.json": "HTTP 404 at main (contents API)",
+      "FHGFF3/.github/schema-baseline-fhgff3.json": "HTTP 404 at main (contents API)",
+      "FHGM-Specification/.github/schema-baseline.json": "HTTP 404 at main (contents API)",
+      "FHGM-Specification/.github/schema-baseline-fhp.json": "HTTP 404 at main (contents API)",
+      "FHGM-Specification/.github/schema-baseline-fhgff3.json": "HTTP 404 at main (contents API)"
+    },
+    "sharedRepositoryNote": "In FAIR-bioHeaders-Specification the FHR baseline's parsed value is identical to that repository's own fhr.json INCLUDING $id (measured 2026-11-16: True), and its fhr.json is the current release's bytes (10,295 bytes, sha256 694ab5afaf8c3743...): there the branch URL is truthful about content and wrong only about form. In FHP-Specification it was wrong about both, which is the extra finding of this PR. check-schema-drift.yml in the shared repository runs 'python scripts/check_schema_drift.py' bare - the FHR pair - as a live gate, and the same holds in FHR-Specification, whose baseline files are byte-identical copies (same digests, measuredAtMain above). That is why the retarget performed here cannot simply be copied into those repositories: their drift gate compares whole documents, so a baseline-only $id edit there reports /$id as drift and fails their CI. A class fix has to move the contract's own $id or the checker, which is release-cycle work for the publication authority.",
+    "liveGatesFoundThere": {
+      "FAIR-bioHeaders-Specification/.github/workflows/check-schema-drift.yml": [
+        "python scripts/check_schema_drift.py",
+        "python scripts/check_schema_drift.py --schema fhp.json --baseline .github/schema-baseline-fhp.json",
+        "python scripts/check_schema_drift.py --schema fhgff3.json --baseline .github/schema-baseline-fhgff3.json"
+      ],
+      "FHR-Specification/.github/workflows/check-schema-drift.yml": [
+        "python scripts/check_schema_drift.py",
+        "python scripts/check_schema_drift.py --schema fhp.json --baseline .github/schema-baseline-fhp.json",
+        "python scripts/check_schema_drift.py --schema fhgff3.json --baseline .github/schema-baseline-fhgff3.json"
+      ],
+      "FHP-Specification/.github/workflows/check-schema-drift.yml": [
+        "python scripts/check_schema_drift.py --schema fhp.json --baseline .github/schema-baseline-fhp.json (FHP only: the Q2 freeze)"
+      ]
+    },
+    "carriesTheSamePattern": {
+      "FAIR-bioHeaders-Specification": "All three baselines, and measuredAtMain above is its bytes: the FHR baseline names the legacy .../FHR-Specification/main/fhr.json URL, the other two name .../FAIR-bioHeaders-Specification/main/*. Unlike this repository, all three drift pairs are live CI gates there (liveGatesFoundThere), so a baseline-only $id edit would fail its own drift check: see sharedRepositoryNote.",
+      "FHR-Specification": "The same three files with the same digests and the same three live drift steps, plus published-files.yml, which compares its fhr.json/fhp.json/fhgff3.json/jsonld/* against FAIR-bioHeaders-Specification main (read 2026-11-16) - so it inherits whatever the shared repository decides."
+    },
+    "doesNotCarryThePattern": {
+      "FHT-Specification": "no .github/schema-baseline*.json at main (.github holds workflows/ only)",
+      "FHGFF3": "no .github/schema-baseline*.json at main (.github holds workflows/ only)",
+      "FHGM-Specification": "no .github/schema-baseline*.json at main (.github holds workflows/ only)"
+    },
+    "followUpListForMaintainers": [
+      "Decide the class fix once, in FAIR-bioHeaders-Specification, for all three released contracts: either change the $id each contract declares about itself at the next labeled schemaVersion of that type (FHR, FHP, FHGFF3 each need their own cycle), or teach check_schema_drift.py to treat $id and $schema as non-contractual annotations the way scripts/check_linkml.py already does (ANNOTATIONS in that file), and refresh the baselines' identity metadata with the drift gate's agreement. Doing neither leaves six baseline files in three repositories naming branch URLs for released contracts.",
+      "FHR-Specification inherits whichever decision the shared repository makes, because its compatibility copies are synchronized against shared main by published-files.yml.",
+      "FHP-Specification's FHR baseline is now the only one of the six whose $id is immutable; if the shared repository adopts a class fix, re-derive this file from it rather than maintaining two answers (the #107 coordination note).",
+      "This tree's frozen fhgff3.json matches no release tag (digests above), so the FHGFF3 baseline's truthful reference is commit-addressed; a maintainer should say whether the byte-copied-tree class allows that or whether the copy should be retired."
+    ]
+  },
+  "guard": {
+    "file": "tests/test_schema_baseline_refs.py",
+    "asserts": [
+      "the FHR baseline's $id equals this record's citation, is a w3id release alias or a tag/commit-addressed raw URL, and names no branch and no legacy development repository",
+      "the FHR baseline is still the frozen fhr.json document modulo $id, so the retarget cannot hide a constraint change in the frozen copy",
+      "the FHP and FHGFF3 baselines have the same parsed JSON values as their schemas, including $id; their serialization bytes are not compared",
+      "recorded release tag names, commit IDs and tag-object IDs have the expected syntax, and the v0.3.1 and v0.6.0 commit IDs match pinned constants",
+      "the local fhr.json size and sha256 and the current FHR baseline's sha256 match their recorded values; the v0.3.1 authority size and sha256 and tag sha256 agree with the frozen copy, but other release bytes and the baseline's recorded size are not verified by this guard",
+      "the floating-reference inventory of .github/ equals the knownExceptions list exactly, so a new branch-valued $id fails and a fixed one must be removed from the list",
+      "negative control on a temp directory with an exact-case name: a synthetic baseline whose $id names a branch is reported by the same classifier the CI assertions use"
+    ]
+  },
+  "notVerified": [
+    "Whether GitHub Pages or the w3id .htaccess registry for fair-bioheaders is configured to keep answering the fhr/v0.3.x aliases: this record measures today's resolution only and asserts no service-level promise about the alias host.",
+    "Whether the released FHR/FHP/FHGFF3 $id strings are consumed by any external reader (the toolkit, the website, the per-language libraries or third parties). Inside this repository nothing dereferences them; outside it was not probed, which is why no sibling repository was edited.",
+    "Whether the shared check_schema_drift.py in FAIR-bioHeaders-Specification will accept the annotation-exemption option named in followUpListForMaintainers; that is a design proposal for its maintainers, not an evaluated change.",
+    "Negative controls on a case-sensitive filesystem: the guard's temp paths are exact-case and this run is macOS/APFS (case-insensitive), so the missing-file behavior is only proven on Linux CI."
+  ],
+  "v7Statement": "Nothing in this record touches FHT or FHGM. Both remain drafts under selection rule V7: no released contract, no schemas/versions.json row, no w3id alias, no support claim. Retargeting an FHR reference is not FHT or FHGM work, and FHT is scheduled as specification v0.7.0 and FHGM as v0.8.0 by maintainer decision; no file listed here resolves at either."
+}
