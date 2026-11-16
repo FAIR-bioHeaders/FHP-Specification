@@ -255,8 +255,8 @@ actually downloaded; a ranged read truncates a `.gz` stream — download whole
 files before asserting on their contents; `diff <(…) <(…)` prints nothing when
 the process substitution fails, which reads exactly like agreement — extract
 to temp files, require each extraction to succeed, then print `wc -l` and compare
-those files; `$?` after a pipe reports the
-last pipeline element only; zsh applies `:A`/`:s` modifiers to a bare
+those files; with `pipefail` disabled, `$?` after a pipeline reports only the
+last command's status; zsh applies `:A`/`:s` modifiers to a bare
 `$var:path` — brace the variable — and does not word-split an unquoted
 `$var`; and a case-insensitive filesystem can resolve a path whose case is
 wrong, so negative controls for missing files must also run on Linux CI.
