@@ -167,9 +167,9 @@
   ownership split, that the runtime reader/writer is coordinated with
   FAIR-bioHeaders-Tools#58, and that canonical JSON-LD is loss-preserving while the
   schema.org export is one-way. The FHP contract line at this point was 1.0 (this tree
-  now carries the 1.2 line, see the v0.6.0 entry above); the context and terms were
-  published through FAIR-bioHeaders-Specification#107. No toolkit support or adoption
-  is claimed.
+  now carries the 1.2 line, see the v0.6.0 entry above); publication of the context
+  and terms is coordinated through FAIR-bioHeaders-Specification#107. No toolkit
+  support or adoption is claimed.
 - Rename the repository from `FHR-Specification` to `FAIR-bioHeaders-Specification`
   (#108). It holds the released specifications for every header type; each type is
   developed in its own repository (a new `FHR-Specification` for FHR). Links and
