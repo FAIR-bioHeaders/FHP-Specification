@@ -1,0 +1,47 @@
+{
+  "plain.faa": {
+    "bytes": 134,
+    "sha256": "cbb003463011e04832f53831bd6e9d411a8e764772a33ebf69a5d8f1620dd125",
+    "toolkitChecksum": null
+  },
+  "peff-only.faa": {
+    "bytes": 296,
+    "sha256": "47c86ec6e780ab0208ee3d139feb1405a394835b74eac7c4d0fd5375576a2be2",
+    "toolkitChecksum": null
+  },
+  "fhp-only.faa": {
+    "bytes": 580,
+    "sha256": "f45045ca461e50db2e1673b122c09ed5b9723e5bc929e8846e12e56194533782",
+    "toolkitChecksum": "L0NL+n1je0UFFIFFbyIZGsaaqQ3N8vrXvOCf1Hrq66I="
+  },
+  "fhp-before-peff.faa": {
+    "bytes": 742,
+    "sha256": "8c885056acdd47902be8b2a41a622dc2b68fdba519322bf5f44be541bea8bb82",
+    "toolkitChecksum": "GR2ESZQsrOOJbMlxv4C+EWO1Mkn/dD/AjKOq9JKJS4c="
+  },
+  "peff-before-fhp.faa": {
+    "bytes": 742,
+    "sha256": "51cef721b2b6662845c5a8f02b029795a7fdb1caf909b78189db3d1451f9fa33",
+    "toolkitChecksum": "TGLirDi2uoNtT7oIMmogiaKRmA7Q0+pZa30H/qqR/qM="
+  },
+  "fhp-inside-peff.faa": {
+    "bytes": 742,
+    "sha256": "4d4eda62676f7bedc7800b855b98231133b6fc7df60a783a9e8fdf33359a0203",
+    "toolkitChecksum": "ue91blbQmOIi0e61KIY+z0KiHPPNDCmqqldrr0QYXi4="
+  },
+  "peff-missing-prefix.faa": {
+    "bytes": 283,
+    "sha256": "463f6512aeee89b3fc47269afad373ac8baa7cd119d657c804003017f528a960",
+    "toolkitChecksum": null
+  },
+  "peff-wrong-count.faa": {
+    "bytes": 296,
+    "sha256": "f7382849f7d923c276c44077f113c7ef34451e253f933bc52a889fc215bfd086",
+    "toolkitChecksum": null
+  },
+  "fhp-tampered.faa": {
+    "bytes": 580,
+    "sha256": "7b8e5ffecdc9ad0dccf5fe15735521aa1fe0af602a62b78f234dfcae93b98dc9",
+    "toolkitChecksum": "CYxGF82iQFgPoywiw5ypr2AHcIWLgCs7QJXLOa9pIJQ="
+  }
+}

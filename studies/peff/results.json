@@ -1,0 +1,929 @@
+{
+  "platform": "macOS-27.2.1-arm64-arm-64bit-Mach-O",
+  "python": "3.15.0",
+  "packages": {
+    "pyteomics": "5.0",
+    "fair-bioheaders": "0.11.0"
+  },
+  "executableDigests": {
+    "validatePEFF": "b83e26114e791eff46a5d63f809d19e2cabea93eeceffa1da89097780ff06dd9",
+    "PSI-MOD.obo": "2b48578dba0d7f7460fb5a2497039a13ff4adff135bd32bf8ecc26fbd2552504",
+    "comet.exe": "5b025759c4854b1ef03ade2239b46519ee9a17c60941b0435fb3e8f2432a6cf8"
+  },
+  "cases": {
+    "fhp-before-peff.faa": {
+      "pyteomics": {
+        "error": "ValueError: Not a PEFF File"
+      },
+      "validator": {
+        "exit": 5,
+        "stdout": "=============================================================\nstatus=NOTSET\nerrorCode=\nmessage=Reading input file '<fixtures>/fhp-before-peff.faa'\n",
+        "stderr": ""
+      },
+      "bioheaders": {
+        "exit": 0,
+        "stdout": "Checksum verified.\n",
+        "stderr": ""
+      },
+      "comet": {
+        "exit": 0,
+        "stdout": "\n Comet version \"2026.03 rev. 1\"\n\n Creating index file: 100%\n - writing file\n - created: <work>/fhp-before-peff.faa.idx (10 unmodified peptides)\n - done. (timing/memory omitted)\n\n",
+        "stderr": "",
+        "peptides": [
+          [
+            "MPEPTIDEKACDEFGHIK",
+            "-",
+            "R",
+            2116.96780359688,
+            1
+          ],
+          [
+            "MPEPTIDEKACDEFGHIKR",
+            "-",
+            "-",
+            2273.06891464688,
+            1
+          ],
+          [
+            "RNTNR",
+            "K",
+            "-",
+            660.3535967118794,
+            1
+          ],
+          [
+            "TKRNTNR",
+            "K",
+            "-",
+            889.4962382668793,
+            1
+          ],
+          [
+            "MSTNPKPQR",
+            "-",
+            "K",
+            1058.54113961188,
+            1
+          ],
+          [
+            "MPEPTIDEK",
+            "-",
+            "A",
+            1059.50268846688,
+            1
+          ],
+          [
+            "ACDEFGHIK",
+            "K",
+            "R",
+            1076.4829562968796,
+            1
+          ],
+          [
+            "MSTNPKPQRK",
+            "-",
+            "T",
+            1186.63610266188,
+            1
+          ],
+          [
+            "ACDEFGHIKR",
+            "K",
+            "-",
+            1232.5840673468797,
+            1
+          ],
+          [
+            "MSTNPKPQRKTK",
+            "-",
+            "R",
+            1415.7787442168799,
+            1
+          ]
+        ]
+      }
+    },
+    "fhp-inside-peff.faa": {
+      "pyteomics": {
+        "records": [
+          {
+            "header": "Header({'Prefix': 'syn', 'Tag': 'p1', 'PName': 'Synthetic protein one', 'Length': 19})",
+            "sequence": "MPEPTIDEKACDEFGHIKR"
+          },
+          {
+            "header": "Header({'Prefix': 'syn', 'Tag': 'p2', 'PName': 'Synthetic protein two', 'Length': 17})",
+            "sequence": "MSTNPKPQRKTKRNTNR"
+          }
+        ],
+        "databaseBlocks": []
+      },
+      "validator": {
+        "exit": 0,
+        "stdout": "=============================================================\nstatus=OK\nfilename=<fixtures>/fhp-inside-peff.faa\nversion=1.0\nisValid=0\nnDatabases=1\nnEntries=2\nExecution Errors (N=0):\n  (none)\nExecution Warnings (N=0):\n  (none)\nValidation Errors (N=15):\n  - ERROR (IllegalPEFFLine): Line ';~schema: https://w3id.org/fair-bioheaders/fhp/v0.6.0' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~schemaVersion: '1.2'' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~proteome: Synthetic placement study (not biological data)' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~sourceType: database' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~taxon:' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~  name: Homo sapiens' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~  uri: https://identifiers.org/taxonomy:9606' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~version: '1'' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~metadataAuthor:' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~- name: Synthetic study fixture' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~dateCreated: '2026-11-16'' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~source:' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~- name: Synthetic fixture' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~  release: '1'' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~checksum: ue91blbQmOIi0e61KIY+z0KiHPPNDCmqqldrr0QYXi4=' within or after header does not begin with # nor >, which is illegal PEFF in file header\nValidation Warnings (N=0):\n  (none)\n",
+        "stderr": ""
+      },
+      "bioheaders": {
+        "exit": 0,
+        "stdout": "Checksum verified.\n",
+        "stderr": ""
+      },
+      "comet": {
+        "exit": 0,
+        "stdout": "\n Comet version \"2026.03 rev. 1\"\n\n Creating index file: 100%\n - writing file\n - created: <work>/fhp-inside-peff.faa.idx (10 unmodified peptides)\n - done. (timing/memory omitted)\n\n",
+        "stderr": "",
+        "peptides": [
+          [
+            "MPEPTIDEKACDEFGHIK",
+            "-",
+            "R",
+            2116.96780359688,
+            1
+          ],
+          [
+            "MPEPTIDEKACDEFGHIKR",
+            "-",
+            "-",
+            2273.06891464688,
+            1
+          ],
+          [
+            "RNTNR",
+            "K",
+            "-",
+            660.3535967118794,
+            1
+          ],
+          [
+            "TKRNTNR",
+            "K",
+            "-",
+            889.4962382668793,
+            1
+          ],
+          [
+            "MSTNPKPQR",
+            "-",
+            "K",
+            1058.54113961188,
+            1
+          ],
+          [
+            "MPEPTIDEK",
+            "-",
+            "A",
+            1059.50268846688,
+            1
+          ],
+          [
+            "ACDEFGHIK",
+            "K",
+            "R",
+            1076.4829562968796,
+            1
+          ],
+          [
+            "MSTNPKPQRK",
+            "-",
+            "T",
+            1186.63610266188,
+            1
+          ],
+          [
+            "ACDEFGHIKR",
+            "K",
+            "-",
+            1232.5840673468797,
+            1
+          ],
+          [
+            "MSTNPKPQRKTK",
+            "-",
+            "R",
+            1415.7787442168799,
+            1
+          ]
+        ]
+      }
+    },
+    "fhp-only.faa": {
+      "pyteomics": {
+        "error": "ValueError: Not a PEFF File"
+      },
+      "validator": {
+        "exit": 5,
+        "stdout": "=============================================================\nstatus=NOTSET\nerrorCode=\nmessage=Reading input file '<fixtures>/fhp-only.faa'\n",
+        "stderr": ""
+      },
+      "bioheaders": {
+        "exit": 0,
+        "stdout": "Checksum verified.\n",
+        "stderr": ""
+      },
+      "comet": {
+        "exit": 0,
+        "stdout": "\n Comet version \"2026.03 rev. 1\"\n\n Creating index file: 100%\n - writing file\n - created: <work>/fhp-only.faa.idx (10 unmodified peptides)\n - done. (timing/memory omitted)\n\n",
+        "stderr": "",
+        "peptides": [
+          [
+            "MPEPTIDEKACDEFGHIK",
+            "-",
+            "R",
+            2116.96780359688,
+            1
+          ],
+          [
+            "MPEPTIDEKACDEFGHIKR",
+            "-",
+            "-",
+            2273.06891464688,
+            1
+          ],
+          [
+            "RNTNR",
+            "K",
+            "-",
+            660.3535967118794,
+            1
+          ],
+          [
+            "TKRNTNR",
+            "K",
+            "-",
+            889.4962382668793,
+            1
+          ],
+          [
+            "MSTNPKPQR",
+            "-",
+            "K",
+            1058.54113961188,
+            1
+          ],
+          [
+            "MPEPTIDEK",
+            "-",
+            "A",
+            1059.50268846688,
+            1
+          ],
+          [
+            "ACDEFGHIK",
+            "K",
+            "R",
+            1076.4829562968796,
+            1
+          ],
+          [
+            "MSTNPKPQRK",
+            "-",
+            "T",
+            1186.63610266188,
+            1
+          ],
+          [
+            "ACDEFGHIKR",
+            "K",
+            "-",
+            1232.5840673468797,
+            1
+          ],
+          [
+            "MSTNPKPQRKTK",
+            "-",
+            "R",
+            1415.7787442168799,
+            1
+          ]
+        ]
+      }
+    },
+    "fhp-tampered.faa": {
+      "pyteomics": {
+        "error": "ValueError: Not a PEFF File"
+      },
+      "validator": {
+        "exit": 5,
+        "stdout": "=============================================================\nstatus=NOTSET\nerrorCode=\nmessage=Reading input file '<fixtures>/fhp-tampered.faa'\n",
+        "stderr": ""
+      },
+      "bioheaders": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "FHR: Checksum verification failed\n"
+      },
+      "comet": {
+        "exit": 0,
+        "stdout": "\n Comet version \"2026.03 rev. 1\"\n\n Creating index file: 100%\n - writing file\n - created: <work>/fhp-tampered.faa.idx (10 unmodified peptides)\n - done. (timing/memory omitted)\n\n",
+        "stderr": "",
+        "peptides": [
+          [
+            "APEPTIDEKACDEFGHIK",
+            "-",
+            "R",
+            2056.96443275688,
+            1
+          ],
+          [
+            "APEPTIDEKACDEFGHIKR",
+            "-",
+            "-",
+            2213.0655438068798,
+            1
+          ],
+          [
+            "RNTNR",
+            "K",
+            "-",
+            660.3535967118794,
+            1
+          ],
+          [
+            "TKRNTNR",
+            "K",
+            "-",
+            889.4962382668793,
+            1
+          ],
+          [
+            "APEPTIDEK",
+            "-",
+            "A",
+            999.4993176268799,
+            1
+          ],
+          [
+            "MSTNPKPQR",
+            "-",
+            "K",
+            1058.54113961188,
+            1
+          ],
+          [
+            "ACDEFGHIK",
+            "K",
+            "R",
+            1076.4829562968796,
+            1
+          ],
+          [
+            "MSTNPKPQRK",
+            "-",
+            "T",
+            1186.63610266188,
+            1
+          ],
+          [
+            "ACDEFGHIKR",
+            "K",
+            "-",
+            1232.5840673468797,
+            1
+          ],
+          [
+            "MSTNPKPQRKTK",
+            "-",
+            "R",
+            1415.7787442168799,
+            1
+          ]
+        ]
+      }
+    },
+    "peff-before-fhp.faa": {
+      "pyteomics": {
+        "records": [
+          {
+            "header": "Header({'Prefix': 'syn', 'Tag': 'p1', 'PName': 'Synthetic protein one', 'Length': 19})",
+            "sequence": "MPEPTIDEKACDEFGHIKR"
+          },
+          {
+            "header": "Header({'Prefix': 'syn', 'Tag': 'p2', 'PName': 'Synthetic protein two', 'Length': 17})",
+            "sequence": "MSTNPKPQRKTKRNTNR"
+          }
+        ],
+        "databaseBlocks": [
+          {
+            "DbName": "Synthetic placement study",
+            "Prefix": "syn",
+            "DbSource": "https://example.org/synthetic",
+            "DbVersion": "1",
+            "SequenceType": "AA",
+            "NumberOfEntries": "2"
+          }
+        ]
+      },
+      "validator": {
+        "exit": 0,
+        "stdout": "=============================================================\nstatus=OK\nfilename=<fixtures>/peff-before-fhp.faa\nversion=1.0\nisValid=0\nnDatabases=1\nnEntries=2\nExecution Errors (N=0):\n  (none)\nExecution Warnings (N=0):\n  (none)\nValidation Errors (N=15):\n  - ERROR (IllegalPEFFLine): Line ';~schema: https://w3id.org/fair-bioheaders/fhp/v0.6.0' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~schemaVersion: '1.2'' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~proteome: Synthetic placement study (not biological data)' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~sourceType: database' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~taxon:' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~  name: Homo sapiens' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~  uri: https://identifiers.org/taxonomy:9606' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~version: '1'' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~metadataAuthor:' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~- name: Synthetic study fixture' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~dateCreated: '2026-11-16'' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~source:' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~- name: Synthetic fixture' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~  release: '1'' within or after header does not begin with # nor >, which is illegal PEFF in file header\n  - ERROR (IllegalPEFFLine): Line ';~checksum: TGLirDi2uoNtT7oIMmogiaKRmA7Q0+pZa30H/qqR/qM=' within or after header does not begin with # nor >, which is illegal PEFF in file header\nValidation Warnings (N=0):\n  (none)\n",
+        "stderr": ""
+      },
+      "bioheaders": {
+        "exit": 0,
+        "stdout": "Checksum verified.\n",
+        "stderr": ""
+      },
+      "comet": {
+        "exit": 0,
+        "stdout": "\n Comet version \"2026.03 rev. 1\"\n\n Creating index file: 100%\n - writing file\n - created: <work>/peff-before-fhp.faa.idx (10 unmodified peptides)\n - done. (timing/memory omitted)\n\n",
+        "stderr": "",
+        "peptides": [
+          [
+            "MPEPTIDEKACDEFGHIK",
+            "-",
+            "R",
+            2116.96780359688,
+            1
+          ],
+          [
+            "MPEPTIDEKACDEFGHIKR",
+            "-",
+            "-",
+            2273.06891464688,
+            1
+          ],
+          [
+            "RNTNR",
+            "K",
+            "-",
+            660.3535967118794,
+            1
+          ],
+          [
+            "TKRNTNR",
+            "K",
+            "-",
+            889.4962382668793,
+            1
+          ],
+          [
+            "MSTNPKPQR",
+            "-",
+            "K",
+            1058.54113961188,
+            1
+          ],
+          [
+            "MPEPTIDEK",
+            "-",
+            "A",
+            1059.50268846688,
+            1
+          ],
+          [
+            "ACDEFGHIK",
+            "K",
+            "R",
+            1076.4829562968796,
+            1
+          ],
+          [
+            "MSTNPKPQRK",
+            "-",
+            "T",
+            1186.63610266188,
+            1
+          ],
+          [
+            "ACDEFGHIKR",
+            "K",
+            "-",
+            1232.5840673468797,
+            1
+          ],
+          [
+            "MSTNPKPQRKTK",
+            "-",
+            "R",
+            1415.7787442168799,
+            1
+          ]
+        ]
+      }
+    },
+    "peff-missing-prefix.faa": {
+      "pyteomics": {
+        "records": [
+          {
+            "header": "Header({'Prefix': 'syn', 'Tag': 'p1', 'PName': 'Synthetic protein one', 'Length': 19})",
+            "sequence": "MPEPTIDEKACDEFGHIKR"
+          },
+          {
+            "header": "Header({'Prefix': 'syn', 'Tag': 'p2', 'PName': 'Synthetic protein two', 'Length': 17})",
+            "sequence": "MSTNPKPQRKTKRNTNR"
+          }
+        ],
+        "databaseBlocks": [
+          {
+            "DbName": "Synthetic placement study",
+            "DbSource": "https://example.org/synthetic",
+            "DbVersion": "1",
+            "SequenceType": "AA",
+            "NumberOfEntries": "2"
+          }
+        ]
+      },
+      "validator": {
+        "exit": 0,
+        "stdout": "=============================================================\nstatus=OK\nfilename=<fixtures>/peff-missing-prefix.faa\nversion=1.0\nisValid=0\nnDatabases=1\nnEntries=2\nExecution Errors (N=0):\n  (none)\nExecution Warnings (N=0):\n  (none)\nValidation Errors (N=4):\n  - ERROR: Mandatory header attribute 'Prefix' is missing in header\n  - ERROR: The database key in the accession is not defined from 'syn:p1'\n  - ERROR: The database key in the accession is not defined from 'syn:p2'\n  - ERROR (IncorrectNumberOfEntries): Stated NumberOfEntries for database '' is 2, but 0 were counted in the file in file header\nValidation Warnings (N=0):\n  (none)\n",
+        "stderr": ""
+      },
+      "bioheaders": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "FHR: No ;~ FHR metadata header found\n"
+      },
+      "comet": {
+        "exit": 0,
+        "stdout": "\n Comet version \"2026.03 rev. 1\"\n\n Creating index file: 100%\n - writing file\n - created: <work>/peff-missing-prefix.faa.idx (10 unmodified peptides)\n - done. (timing/memory omitted)\n\n",
+        "stderr": "",
+        "peptides": [
+          [
+            "MPEPTIDEKACDEFGHIK",
+            "-",
+            "R",
+            2116.96780359688,
+            1
+          ],
+          [
+            "MPEPTIDEKACDEFGHIKR",
+            "-",
+            "-",
+            2273.06891464688,
+            1
+          ],
+          [
+            "RNTNR",
+            "K",
+            "-",
+            660.3535967118794,
+            1
+          ],
+          [
+            "TKRNTNR",
+            "K",
+            "-",
+            889.4962382668793,
+            1
+          ],
+          [
+            "MSTNPKPQR",
+            "-",
+            "K",
+            1058.54113961188,
+            1
+          ],
+          [
+            "MPEPTIDEK",
+            "-",
+            "A",
+            1059.50268846688,
+            1
+          ],
+          [
+            "ACDEFGHIK",
+            "K",
+            "R",
+            1076.4829562968796,
+            1
+          ],
+          [
+            "MSTNPKPQRK",
+            "-",
+            "T",
+            1186.63610266188,
+            1
+          ],
+          [
+            "ACDEFGHIKR",
+            "K",
+            "-",
+            1232.5840673468797,
+            1
+          ],
+          [
+            "MSTNPKPQRKTK",
+            "-",
+            "R",
+            1415.7787442168799,
+            1
+          ]
+        ]
+      }
+    },
+    "peff-only.faa": {
+      "pyteomics": {
+        "records": [
+          {
+            "header": "Header({'Prefix': 'syn', 'Tag': 'p1', 'PName': 'Synthetic protein one', 'Length': 19})",
+            "sequence": "MPEPTIDEKACDEFGHIKR"
+          },
+          {
+            "header": "Header({'Prefix': 'syn', 'Tag': 'p2', 'PName': 'Synthetic protein two', 'Length': 17})",
+            "sequence": "MSTNPKPQRKTKRNTNR"
+          }
+        ],
+        "databaseBlocks": [
+          {
+            "DbName": "Synthetic placement study",
+            "Prefix": "syn",
+            "DbSource": "https://example.org/synthetic",
+            "DbVersion": "1",
+            "SequenceType": "AA",
+            "NumberOfEntries": "2"
+          }
+        ]
+      },
+      "validator": {
+        "exit": 0,
+        "stdout": "=============================================================\nstatus=OK\nfilename=<fixtures>/peff-only.faa\nversion=1.0\nisValid=1\nnDatabases=1\nnEntries=2\nExecution Errors (N=0):\n  (none)\nExecution Warnings (N=0):\n  (none)\nValidation Errors (N=0):\n  (none)\nValidation Warnings (N=0):\n  (none)\n",
+        "stderr": ""
+      },
+      "bioheaders": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "FHR: No ;~ FHR metadata header found\n"
+      },
+      "comet": {
+        "exit": 0,
+        "stdout": "\n Comet version \"2026.03 rev. 1\"\n\n Creating index file: 100%\n - writing file\n - created: <work>/peff-only.faa.idx (10 unmodified peptides)\n - done. (timing/memory omitted)\n\n",
+        "stderr": "",
+        "peptides": [
+          [
+            "MPEPTIDEKACDEFGHIK",
+            "-",
+            "R",
+            2116.96780359688,
+            1
+          ],
+          [
+            "MPEPTIDEKACDEFGHIKR",
+            "-",
+            "-",
+            2273.06891464688,
+            1
+          ],
+          [
+            "RNTNR",
+            "K",
+            "-",
+            660.3535967118794,
+            1
+          ],
+          [
+            "TKRNTNR",
+            "K",
+            "-",
+            889.4962382668793,
+            1
+          ],
+          [
+            "MSTNPKPQR",
+            "-",
+            "K",
+            1058.54113961188,
+            1
+          ],
+          [
+            "MPEPTIDEK",
+            "-",
+            "A",
+            1059.50268846688,
+            1
+          ],
+          [
+            "ACDEFGHIK",
+            "K",
+            "R",
+            1076.4829562968796,
+            1
+          ],
+          [
+            "MSTNPKPQRK",
+            "-",
+            "T",
+            1186.63610266188,
+            1
+          ],
+          [
+            "ACDEFGHIKR",
+            "K",
+            "-",
+            1232.5840673468797,
+            1
+          ],
+          [
+            "MSTNPKPQRKTK",
+            "-",
+            "R",
+            1415.7787442168799,
+            1
+          ]
+        ]
+      }
+    },
+    "peff-wrong-count.faa": {
+      "pyteomics": {
+        "records": [
+          {
+            "header": "Header({'Prefix': 'syn', 'Tag': 'p1', 'PName': 'Synthetic protein one', 'Length': 19})",
+            "sequence": "MPEPTIDEKACDEFGHIKR"
+          },
+          {
+            "header": "Header({'Prefix': 'syn', 'Tag': 'p2', 'PName': 'Synthetic protein two', 'Length': 17})",
+            "sequence": "MSTNPKPQRKTKRNTNR"
+          }
+        ],
+        "databaseBlocks": [
+          {
+            "DbName": "Synthetic placement study",
+            "Prefix": "syn",
+            "DbSource": "https://example.org/synthetic",
+            "DbVersion": "1",
+            "SequenceType": "AA",
+            "NumberOfEntries": "3"
+          }
+        ]
+      },
+      "validator": {
+        "exit": 0,
+        "stdout": "=============================================================\nstatus=OK\nfilename=<fixtures>/peff-wrong-count.faa\nversion=1.0\nisValid=0\nnDatabases=1\nnEntries=2\nExecution Errors (N=0):\n  (none)\nExecution Warnings (N=0):\n  (none)\nValidation Errors (N=1):\n  - ERROR (IncorrectNumberOfEntries): Stated NumberOfEntries for database 'syn' is 3, but 2 were counted in the file in file header\nValidation Warnings (N=0):\n  (none)\n",
+        "stderr": ""
+      },
+      "bioheaders": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "FHR: No ;~ FHR metadata header found\n"
+      },
+      "comet": {
+        "exit": 0,
+        "stdout": "\n Comet version \"2026.03 rev. 1\"\n\n Creating index file: 100%\n - writing file\n - created: <work>/peff-wrong-count.faa.idx (10 unmodified peptides)\n - done. (timing/memory omitted)\n\n",
+        "stderr": "",
+        "peptides": [
+          [
+            "MPEPTIDEKACDEFGHIK",
+            "-",
+            "R",
+            2116.96780359688,
+            1
+          ],
+          [
+            "MPEPTIDEKACDEFGHIKR",
+            "-",
+            "-",
+            2273.06891464688,
+            1
+          ],
+          [
+            "RNTNR",
+            "K",
+            "-",
+            660.3535967118794,
+            1
+          ],
+          [
+            "TKRNTNR",
+            "K",
+            "-",
+            889.4962382668793,
+            1
+          ],
+          [
+            "MSTNPKPQR",
+            "-",
+            "K",
+            1058.54113961188,
+            1
+          ],
+          [
+            "MPEPTIDEK",
+            "-",
+            "A",
+            1059.50268846688,
+            1
+          ],
+          [
+            "ACDEFGHIK",
+            "K",
+            "R",
+            1076.4829562968796,
+            1
+          ],
+          [
+            "MSTNPKPQRK",
+            "-",
+            "T",
+            1186.63610266188,
+            1
+          ],
+          [
+            "ACDEFGHIKR",
+            "K",
+            "-",
+            1232.5840673468797,
+            1
+          ],
+          [
+            "MSTNPKPQRKTK",
+            "-",
+            "R",
+            1415.7787442168799,
+            1
+          ]
+        ]
+      }
+    },
+    "plain.faa": {
+      "pyteomics": {
+        "error": "ValueError: Not a PEFF File"
+      },
+      "validator": {
+        "exit": 5,
+        "stdout": "=============================================================\nstatus=NOTSET\nerrorCode=\nmessage=Reading input file '<fixtures>/plain.faa'\n",
+        "stderr": ""
+      },
+      "bioheaders": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "FHR: No ;~ FHR metadata header found\n"
+      },
+      "comet": {
+        "exit": 0,
+        "stdout": "\n Comet version \"2026.03 rev. 1\"\n\n Creating index file: 100%\n - writing file\n - created: <work>/plain.faa.idx (10 unmodified peptides)\n - done. (timing/memory omitted)\n\n",
+        "stderr": "",
+        "peptides": [
+          [
+            "MPEPTIDEKACDEFGHIK",
+            "-",
+            "R",
+            2116.96780359688,
+            1
+          ],
+          [
+            "MPEPTIDEKACDEFGHIKR",
+            "-",
+            "-",
+            2273.06891464688,
+            1
+          ],
+          [
+            "RNTNR",
+            "K",
+            "-",
+            660.3535967118794,
+            1
+          ],
+          [
+            "TKRNTNR",
+            "K",
+            "-",
+            889.4962382668793,
+            1
+          ],
+          [
+            "MSTNPKPQR",
+            "-",
+            "K",
+            1058.54113961188,
+            1
+          ],
+          [
+            "MPEPTIDEK",
+            "-",
+            "A",
+            1059.50268846688,
+            1
+          ],
+          [
+            "ACDEFGHIK",
+            "K",
+            "R",
+            1076.4829562968796,
+            1
+          ],
+          [
+            "MSTNPKPQRK",
+            "-",
+            "T",
+            1186.63610266188,
+            1
+          ],
+          [
+            "ACDEFGHIKR",
+            "K",
+            "-",
+            1232.5840673468797,
+            1
+          ],
+          [
+            "MSTNPKPQRKTK",
+            "-",
+            "R",
+            1415.7787442168799,
+            1
+          ]
+        ]
+      }
+    }
+  },
+  "cometParameters": "# comet_version 2026.03 rev. 1\n# Comet MS/MS search engine parameters file.\n# Everything following the '#' symbol is treated as a comment.\n#\ndatabase_name = /some/path/db.fasta\ndecoy_search = 0                       # 0=no (default), 1=internal decoy concatenated, 2=internal decoy separate; .idx searches use the value the index was built with\n\n# index_search_type matters only when database_name names an .idx file that does not\n# exist yet: Comet then digests the corresponding FASTA and this picks the index type to\n# build, 0 = peptide index, 1 = fragment ion index. -1 (the default) means not set, which\n# builds a fragment ion index. An existing .idx records its own type (-i builds a fragment\n# ion index, -j a peptide index) and a plain FASTA search has no index, so in both cases a\n# 0 or 1 set here is ignored and Comet warns. To auto-build a peptide index, set it to 0.\nindex_search_type = -1                 # 0=create peptide index, 1=create fragment ion index; if .idx specified but not present\n\nnum_threads = 0                        # 0=poll CPU to set num threads; else specify num threads directly (max 128)\n\n#\n# PEFF - PSI Extended FASTA Format\n#\npeff_format = 1                        # 0=no (normal fasta, default), 1=PEFF PSI-MOD, 2=PEFF Unimod\npeff_obo = <validator-root>/var/CV/PSI-MOD.obo                             # path to PSI Mod or Unimod OBO file\n\ncompoundmods_file =                    # path to compound mods mass file, one mass per line, for multi-mod search on 'J' residues\nspectral_library_name =\nspectral_library_ms_level = 1\n\n#\n# masses\n#\npeptide_mass_tolerance_upper = 20.0    # upper bound of the precursor mass tolerance\npeptide_mass_tolerance_lower = -20.0   # lower bound of the precursor mass tolerance; USUALLY NEGATIVE TO BE LOWER THAN 0\npeptide_mass_units = 2                 # 0=amu, 1=mmu, 2=ppm\nprecursor_tolerance_type = 1           # 0=MH+ (default), 1=precursor m/z; only valid for amu/mmu tolerances\nisotope_error = 2                      # 0=off, 1=0/1 (C13 error), 2=0/1/2, 3=0/1/2/3, 4=-1/0/1/2/3, 5=-1/0/1\nmass_type_parent = 1                   # 0=average masses, 1=monoisotopic masses\nmass_type_fragment = 1                 # 0=average masses, 1=monoisotopic masses\n\n#\n# search enzyme\n#\nsearch_enzyme_number = 1               # choose from list at end of this params file\nsearch_enzyme2_number = 0              # second enzyme; set to 0 if no second enzyme\nsample_enzyme_number = 1               # specifies the sample enzyme which is possibly different than the one applied to the search;\n                                       # used by PeptideProphet to calculate NTT & NMC in pepXML output (default=1 for trypsin).\nnum_enzyme_termini = 2                 # 1 (semi-digested), 2 (fully digested, default), 8 C-term unspecific , 9 N-term unspecific\nallowed_missed_cleavage = 2            # maximum value is 5; for enzyme search\n\n#\n# Up to 15 variable_mod entries are supported for a standard search; manually add additional entries as needed\n# format:  <mass> <residues> <0=variable/else binary> <max_mods_per_peptide> <term_distance> <n/c-term> <required> <neutral_loss>\n#     e.g. 79.966331 STY 0 3 -1 0 0 97.976896\n#     <residues> may also contain terminal codes: n = any peptide N-terminus, c = any peptide C-terminus,\n#     ^ = protein N-terminus only, $ = protein C-terminus only (e.g. 42.010565 ^ 0 1 -1 0 0 0.0).\n#     <term_distance>: -1 = no restriction, -2 = not on the peptide C-terminal residue, N = within N residues\n#     of the <n/c-term> terminus: 0 = protein N, 1 = protein C, 2 = peptide N, 3 = peptide C\n#     (e.g. N-terminal pyroglutamate from Q: -17.026549 Q 0 1 0 2 0 0.0)\n#\nvariable_mod01 = 15.9949 M 0 3 -1 0 0 0.0\nvariable_mod02 = 0.0 X 0 3 -1 0 0 0.0\nvariable_mod03 = 0.0 X 0 3 -1 0 0 0.0\nvariable_mod04 = 0.0 X 0 3 -1 0 0 0.0\nvariable_mod05 = 0.0 X 0 3 -1 0 0 0.0\nvariable_mod06 = 0.0 X 0 3 -1 0 0 0.0\nvariable_mod07 = 0.0 X 0 3 -1 0 0 0.0\nvariable_mod08 = 0.0 X 0 3 -1 0 0 0.0\nvariable_mod09 = 0.0 X 0 3 -1 0 0 0.0\nvariable_mod10 = 0.0 X 0 3 -1 0 0 0.0\nvariable_mod11 = 0.0 X 0 3 -1 0 0 0.0\nvariable_mod12 = 0.0 X 0 3 -1 0 0 0.0\nvariable_mod13 = 0.0 X 0 3 -1 0 0 0.0\nvariable_mod14 = 0.0 X 0 3 -1 0 0 0.0\nvariable_mod15 = 0.0 X 0 3 -1 0 0 0.0\nmax_variable_mods_in_peptide = 5\nrequire_variable_mod = 0\nprotein_modslist_file =                # limit variable mods to subset of specified proteins if this file is specified & present\n\n#\n# fragment ions\n# ion trap ms/ms:  1.0005 tolerance, 0.4 offset (mono masses), theoretical_fragment_ions = 1\n# high res ms/ms:    0.02 tolerance, 0.0 offset (mono masses), theoretical_fragment_ions = 0, spectrum_batch_size = 15000\n#\nfragment_bin_tol = 0.02                # binning to use on fragment ions\nfragment_bin_offset = 0.0              # offset position to start the binning (0.0 to 1.0)\ntheoretical_fragment_ions = 0          # 0=use flanking peaks, 1=M peak only\nuse_A_ions = 0\nuse_B_ions = 1\nuse_C_ions = 0\nuse_X_ions = 0\nuse_Y_ions = 1\nuse_Z_ions = 0\nuse_Z1_ions = 0\nuse_NL_ions = 0                        # 0=no, 1=yes to consider NH3/H2O neutral loss peaks\n\n#\n# fragment ion index; limited to 5 variable mods and up to 5 modified residues per mod\n#\nfragindex_min_ions_score = 3           # minimum number of matched fragment ion index peaks for scoring\nfragindex_min_ions_report = 3          # minimum number of matched fragment ion index peaks for reporting(>= fragindex_min_ions_score)\nfragindex_num_spectrumpeaks = 150      # number of peaks from spectrum to use for fragment ion index matching\nfragindex_histogram_fill = 100         # also score the best-supported candidates below fragindex_min_ions_score, up to this many per spectrum, into the E-value histogram (0 = off)\nfragindex_min_fragmentmass = 200.0     # low mass cutoff for fragment ions\nfragindex_max_fragmentmass = 2000.0    # high mass cutoff for fragment ions\nfragindex_skipreadprecursors = 1       # 0=read precursors to limit fragment ion index, 1=skip reading precursors (default)\n\n#\n# output\n#\noutput_sqtfile = 0                     # 0=no, 1=yes  write sqt file\noutput_txtfile = 0                     # 0=no, 1=yes, 2=Crux-formatted  write tab-delimited txt file\noutput_pepxmlfile = 1                  # 0=no, 1=yes  write pepXML file\noutput_mzidentmlfile = 0               # 0=no, 1=yes  write mzIdentML file\noutput_percolatorfile = 0              # 0=no, 1=yes  write Percolator pin file\nprint_expect_score = 1                 # 0=no, 1=yes to replace Sp with expect in out & sqt\nprint_ascorepro_score = 1              # 0=no, 0 to 5 to localize variable_mod01 to _mod05; -1 to localize all variable mods\nnum_output_lines = 5                   # num peptide results to show\n\n#\n# mzXML/mzML/raw file parameters\n#\nscan_range = 0 0                       # start and end scan range to search; either entry can be set independently\nprecursor_charge = 0 0                 # precursor charge range to analyze; does not override any existing charge; 0 as 1st entry ignores parameter\noverride_charge = 0                    # 0=no, 1=override precursor charge states, 2=ignore precursor charges outside precursor_charge range, 3=see online\nms_level = 2                           # MS level to analyze, valid are levels 2 (default) or 3\nactivation_method = ALL                # activation method; used if activation method set; allowed ALL, CID, ECD, ETD, ETD+SA, PQD, HCD, IRMPD, SID\n\n#\n# misc parameters\n#\ndigest_mass_range = 600.0 5000.0       # MH+ peptide mass range to analyze\npeptide_length_range = 5 50            # minimum and maximum peptide length to analyze (default min 1 to allowed max 51)\npinfile_protein_delimiter =            # blank = default 'tab' delimiter between proteins; enter a char/string to use in place of the tab; Percolator pin output only\nnum_results = 100                      # number of results to store internally for Sp rank only; if Sp rank is not used, set this to num_output_lines\nmax_duplicate_proteins = 10            # maximum number of additional duplicate protein names to report for each peptide ID; -1 reports all duplicates\nmax_fragment_charge = 3                # set maximum fragment charge state to analyze (allowed max 5)\nmin_precursor_charge = 1               # set minimum precursor charge state to analyze (1 if missing)\nmax_precursor_charge = 6               # set maximum precursor charge state to analyze (allowed max 9)\nclip_nterm_methionine = 0              # 0=leave protein sequences as-is; 1=also consider sequence w/o N-term methionine\nspectrum_batch_size = 15000            # max. # of spectra to search at a time; 0 to search the entire scan range in one loop\ndecoy_prefix = DECOY_                  # decoy entries are denoted by this string which is pre-pended to each protein accession\nequal_I_and_L = 1                      # 0=treat I and L as different; 1=treat I and L as same\nmass_offsets =                         # one or more mass offsets to search (values substracted from deconvoluted precursor mass)\n\n#\n# spectral processing\n#\nminimum_peaks = 10                     # required minimum number of peaks in spectrum to search (default 10); counts only peaks at or above the minimum_intensity/percentage_base_peak cutoff\nminimum_intensity = 0                 # minimum intensity value to read in\nremove_precursor_peak = 0              # 0=no, 1=yes, 2=all charge reduced precursor peaks (for ETD), 3=phosphate neutral loss peaks\nremove_precursor_tolerance = 1.5       # +- Da tolerance for precursor removal\nclear_mz_range = 0.0 0.0               # clear out all peaks in the specified m/z range e.g. remove reporter ion region of TMT spectra\npercentage_base_peak = 0.0             # specify a percentage (e.g. \"0.05\" for 5%) of the base peak intensity as a minimum intensity threshold\n\n#\n# static modifications\n#\nadd_Cterm_peptide = 0.0\nadd_Nterm_peptide = 0.0\nadd_Cterm_protein = 0.0\nadd_Nterm_protein = 0.0\n\nadd_G_glycine = 0.0000                 # added to G - avg.  57.0513, mono.  57.02146\nadd_A_alanine = 0.0000                 # added to A - avg.  71.0779, mono.  71.03711\nadd_S_serine = 0.0000                  # added to S - avg.  87.0773, mono.  87.03203\nadd_P_proline = 0.0000                 # added to P - avg.  97.1152, mono.  97.05276\nadd_V_valine = 0.0000                  # added to V - avg.  99.1311, mono.  99.06841\nadd_T_threonine = 0.0000               # added to T - avg. 101.1038, mono. 101.04768\nadd_C_cysteine = 57.021464             # added to C - avg. 103.1429, mono. 103.00918\nadd_L_leucine = 0.0000                 # added to L - avg. 113.1576, mono. 113.08406\nadd_I_isoleucine = 0.0000              # added to I - avg. 113.1576, mono. 113.08406\nadd_N_asparagine = 0.0000              # added to N - avg. 114.1026, mono. 114.04293\nadd_D_aspartic_acid = 0.0000           # added to D - avg. 115.0874, mono. 115.02694\nadd_Q_glutamine = 0.0000               # added to Q - avg. 128.1292, mono. 128.05858\nadd_K_lysine = 0.0000                  # added to K - avg. 128.1723, mono. 128.09496\nadd_E_glutamic_acid = 0.0000           # added to E - avg. 129.1140, mono. 129.04259\nadd_M_methionine = 0.0000              # added to M - avg. 131.1961, mono. 131.04048\nadd_H_histidine = 0.0000               # added to H - avg. 137.1393, mono. 137.05891\nadd_F_phenylalanine = 0.0000           # added to F - avg. 147.1739, mono. 147.06841\nadd_U_selenocysteine = 0.0000          # added to U - avg. 150.0379, mono. 150.95363\nadd_R_arginine = 0.0000                # added to R - avg. 156.1857, mono. 156.10111\nadd_Y_tyrosine = 0.0000                # added to Y - avg. 163.0633, mono. 163.06333\nadd_W_tryptophan = 0.0000              # added to W - avg. 186.0793, mono. 186.07931\nadd_O_pyrrolysine = 0.0000             # added to O - avg. 237.2982, mono  237.14773\nadd_B_user_amino_acid = 0.0000         # added to B - avg.   0.0000, mono.   0.00000\nadd_J_user_amino_acid = 0.0000         # added to J - avg.   0.0000, mono.   0.00000\nadd_X_user_amino_acid = 0.0000         # added to X - avg.   0.0000, mono.   0.00000\nadd_Z_user_amino_acid = 0.0000         # added to Z - avg.   0.0000, mono.   0.00000\n\n#\n# COMET_ENZYME_INFO _must_ be at the end of this parameters file\n# Enzyme entries can be added/deleted/edited\n#\n[COMET_ENZYME_INFO]\n0.  Cut_everywhere         0      -           -\n1.  Trypsin                1      KR          P\n2.  Trypsin/P              1      KR          -\n3.  Lys_C                  1      K           P\n4.  Lys_N                  0      K           -\n5.  Arg_C                  1      R           P\n6.  Asp_N                  0      DN          -\n7.  CNBr                   1      M           -\n8.  Asp-N_ambic            1      DE          -\n9.  PepsinA                1      FL          -\n10. Chymotrypsin           1      FWYL        P\n11. No_cut                 1      @           @\n\n"
+}

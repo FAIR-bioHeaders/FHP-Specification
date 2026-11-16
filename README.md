@@ -184,3 +184,8 @@ not to this repository's own issues ([#107](https://github.com/FAIR-bioHeaders/F
 [![License: MPL-2.0](https://img.shields.io/badge/License-MPL--2.0-blue.svg)](LICENSE)
 
 New project contributions from March 2025 onward use [MPL-2.0](LICENSE). David Molik left USDA in February 2025. Historical USDA public-domain material remains public domain within the United States; its original notice is preserved in LICENSE. Previously granted permissions and third-party terms remain intact. The project includes both historical material and subsequent MPL-2.0 contributions; file notices and history identify provenance.
+
+## Relationship with PSI PEFF
+
+See [the PEFF scope, crosswalk and measured placement study](docs/FHP-PEFF.md)
+for interoperability results and reproducible synthetic probes (FHP #20).

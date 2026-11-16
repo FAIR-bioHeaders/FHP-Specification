@@ -1,0 +1,13 @@
+# PEFF 1.0
+# //
+# DbName=Synthetic placement study
+# Prefix=syn
+# DbSource=https://example.org/synthetic
+# DbVersion=1
+# SequenceType=AA
+# NumberOfEntries=2
+# //
+>syn:p1 \PName=Synthetic protein one \Length=19
+MPEPTIDEKACDEFGHIKR
+>syn:p2 \PName=Synthetic protein two \Length=17
+MSTNPKPQRKTKRNTNR
