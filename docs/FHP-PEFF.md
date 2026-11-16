@@ -82,7 +82,7 @@ need their own explicit mapping and loss report.
 | `completeness` | No exact equivalent | Preserve BUSCO counts, lineage and version together. NumberOfEntries is not completeness. |
 | `checksum`, `derivedFrom` | No equivalent FHP byte-identity contract | Retain SHA-512/256 and parent checksum relationships in their own typed form; PEFF identifiers cannot substitute for them. Recompute after serialization changes. |
 | `schema`, `schemaVersion` | No equivalent | FHP contract selectors differ from the PEFF format-version line. |
-| `metadataAuthor`, `dateCreated` | No exact equivalent | Metadata authorship/date is not automatically the database producer, source or release date. |
+| `metadataAuthor`, `dateCreated` | No exact equivalent | FHP metadata authorship and the protein-set creation date are distinct from the database producer, source and release date; no automatic mapping. |
 | `documentation`, `scholarlyArticle`, `relatedLink` | `GeneralComment` as human-readable fallback only | Flattening loses typed URL/citation roles and structure; it is not a reversible field mapping. |
 | `funding`, `reuseConditions`, `voucherSpecimen` | No exact equivalent | Preserve grant, provenance-era reuse terms and specimen structure externally; a free-text comment does not retain machine semantics. |
 
