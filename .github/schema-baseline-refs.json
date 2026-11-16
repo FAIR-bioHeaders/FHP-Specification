@@ -97,7 +97,7 @@
           "size": 7074,
           "sha256": "6356b4f53d057960391f558cab647febb2025b44be9e725289ed015e0f6bcb8e"
         },
-        "canonicalization": "Before the retarget, the baseline was scripts/check_schema_drift.py --update output: the same JSON value as fhr.json, re-serialized with indent=2 and sorted keys. The current baseline retains that serialization but overrides $id with the v0.3.1 w3id alias; its parsed value agrees with fhr.json only modulo $id. Running --update on the FHR pair would restore the legacy $id, not reproduce the retargeted baseline.",
+        "canonicalization": "Before the retarget, the baseline was scripts/check_schema_drift.py --update output: the same JSON value as fhr.json, re-serialized with indent=2 and sorted keys. The current baseline retains that serialization but overrides $id with the v0.3.1 w3id alias; its parsed value agrees with fhr.json only modulo $id. Running --update on the FHR pair would restore the legacy $id, not reproduce the retargeted baseline."
       },
       "authority": {
         "citation": "https://w3id.org/fair-bioheaders/fhr/v0.3.1",
