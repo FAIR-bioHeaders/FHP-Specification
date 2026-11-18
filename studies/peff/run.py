@@ -13,12 +13,8 @@ import struct
 import subprocess
 import sys
 import tempfile
+import zipfile
 from pathlib import Path
-
-import bioheaders.cli
-import pyteomics.fasta
-import pyteomics.peff
-from pyteomics import peff
 
 ROOT = Path(__file__).resolve().parent
 
@@ -32,6 +28,61 @@ def command(args, cwd=None):
         args, cwd=cwd, capture_output=True, text=True, timeout=120, check=False
     )
     return {"exit": p.returncode, "stdout": p.stdout, "stderr": p.stderr}
+
+
+def verify_validator_archive(archive, pin, destination):
+    """Check the downloaded validator archive against its pin, then extract it.
+
+    Nothing from the archive runs before its size and SHA-256 match
+    sources.json; extraction is done here (zipfile drops absolute and
+    parent-directory member paths), not by an external unzip.
+    """
+    content = archive.read_bytes()
+    if len(content) != pin["bytes"] or sha(content) != pin["sha256"]:
+        raise RuntimeError(
+            "Validator archive differs from study pin: "
+            f"{len(content)} bytes, sha256 {sha(content)}"
+        )
+    with zipfile.ZipFile(archive) as bundle:
+        bundle.extractall(destination)
+    return destination
+
+
+def verify_comet(comet, pin, expected_sha256=None):
+    """Check that the Comet binary was built from the pinned, unmodified source.
+
+    The binary digest is build-specific, so the source checkout is the pin: the
+    binary must sit in a git checkout whose HEAD is the pinned commit with no
+    tracked-file changes. ``expected_sha256`` additionally pins one build when a
+    rerun must use the same binary.
+    """
+    checkout = comet.parent
+    head = command(["git", "-C", str(checkout), "rev-parse", "HEAD"])
+    if head["exit"] or head["stdout"].strip() != pin["commit"]:
+        raise RuntimeError(
+            "Comet binary is not inside a checkout of the pinned commit "
+            + pin["commit"]
+        )
+    dirty = command(
+        ["git", "-C", str(checkout), "status", "--porcelain", "--untracked-files=no"]
+    )
+    if dirty["exit"] or dirty["stdout"].strip():
+        raise RuntimeError("Comet checkout has local changes to tracked files")
+    digest = sha(comet.read_bytes())
+    if expected_sha256 and digest != expected_sha256:
+        raise RuntimeError("Comet binary differs from --comet-sha256: " + digest)
+    return digest
+
+
+def verify_perl_json(pin):
+    """Check the one non-core Perl module the validator loads (JSON) before use."""
+    found = command(["perl", "-MJSON", "-e", "print $JSON::VERSION"])
+    if found["exit"] or found["stdout"].strip() != pin["version"]:
+        raise RuntimeError(
+            "Perl JSON module is not the pinned " + pin["version"] + ": "
+            + (found["stdout"] or found["stderr"]).strip()
+        )
+    return found["stdout"].strip()
 
 
 def peptide_table(content):
@@ -57,16 +108,39 @@ def peptide_table(content):
 
 def main():
     parser = argparse.ArgumentParser(__doc__)
-    parser.add_argument("--validator-root", type=Path, required=True)
-    parser.add_argument("--comet", type=Path, required=True)
+    parser.add_argument(
+        "--validator-archive",
+        type=Path,
+        required=True,
+        help="the downloaded ProteomicsPEFF.zip; checked against sources.json, "
+        "then extracted to a temporary directory",
+    )
+    parser.add_argument(
+        "--comet",
+        type=Path,
+        required=True,
+        help="comet.exe built inside a clean checkout of the pinned Comet commit",
+    )
+    parser.add_argument(
+        "--comet-sha256",
+        help="optionally require this exact Comet binary digest (same build)",
+    )
     parser.add_argument("--output", type=Path, default=ROOT / "results.json")
     args = parser.parse_args()
+    # The pinned experiment packages are imported here, not at module level, so
+    # the unit suite can test the pin checks above without installing them.
+    import bioheaders.cli
+    import pyteomics.fasta
+    import pyteomics.peff
+    from pyteomics import peff
+
     if sys.byteorder != "little" or struct.calcsize("P") != 8:
         raise RuntimeError("Comet table probe requires little-endian 64-bit platform")
     for package, version in [("pyteomics", "5.0"), ("fair-bioheaders", "0.11.0")]:
         if importlib.metadata.version(package) != version:
             raise RuntimeError("Unexpected package version: " + package)
-    pins = json.loads((ROOT / "sources.json").read_text())["files"]
+    sources = json.loads((ROOT / "sources.json").read_text())
+    pins = sources["files"]
     for label, module in [
         ("pyteomics-peff.py", pyteomics.peff),
         ("pyteomics-fasta.py", pyteomics.fasta),
@@ -74,9 +148,22 @@ def main():
     ]:
         if sha(Path(module.__file__).read_bytes()) != pins[label]["sha256"]:
             raise RuntimeError("Installed source differs from study pin: " + label)
-    validator = args.validator_root.resolve() / "bin/PEFF/validatePEFF"
-    obo = args.validator_root.resolve() / "var/CV/PSI-MOD.obo"
     comet = args.comet.resolve()
+    comet_digest = verify_comet(comet, sources["Comet"], args.comet_sha256)
+    perl_json = verify_perl_json(sources["perlModules"]["JSON"])
+    extracted = tempfile.TemporaryDirectory(prefix="fhp-peff-validator-")
+    validator_root = verify_validator_archive(
+        args.validator_archive.resolve(), pins["validator-archive"], Path(extracted.name)
+    )
+    validator = validator_root / "bin/PEFF/validatePEFF"
+    obo = validator_root / "var/CV/PSI-MOD.obo"
+    extracted_pins = sources["validatorFiles"]
+    for path, digest in [
+        (validator, extracted_pins["bin/PEFF/validatePEFF"]),
+        (obo, extracted_pins["var/CV/PSI-MOD.obo"]),
+    ]:
+        if sha(path.read_bytes()) != digest:
+            raise RuntimeError("Extracted validator file differs from pin: " + path.name)
     result = {
         "platform": platform.platform(),
         "python": platform.python_version(),
@@ -84,8 +171,11 @@ def main():
             n: importlib.metadata.version(n) for n in ["pyteomics", "fair-bioheaders"]
         },
         "executableDigests": {
-            str(p.name): sha(p.read_bytes()) for p in [validator, obo, comet]
+            validator.name: sha(validator.read_bytes()),
+            obo.name: sha(obo.read_bytes()),
+            comet.name: comet_digest,
         },
+        "perlModules": {"JSON": perl_json},
         "cases": {},
     }
     with tempfile.TemporaryDirectory(prefix="fhp-peff-") as temp:
@@ -141,13 +231,12 @@ def main():
                         .replace(str(ROOT), "<fixtures>")
                         .replace(temp, "<work>")
                     )
-                    text = text.replace(
-                        str(args.validator_root.resolve()), "<validator-root>"
-                    )
+                    text = text.replace(str(validator_root), "<validator-root>")
                     record[tool][stream] = re.sub(
                         r"\(\d+s, \d+MB\)", "(timing/memory omitted)", text
                     )
             result["cases"][source.name] = record
+    extracted.cleanup()
     args.output.write_text(json.dumps(result, indent=2) + "\n")
 
 

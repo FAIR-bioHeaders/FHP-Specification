@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+- **PEFF study pins are checked before anything runs; drift-check defaults are
+  safe.** `studies/peff/run.py` now takes the downloaded validator archive,
+  checks its size and SHA-256 against `sources.json` before extracting it itself,
+  checks the extracted `validatePEFF` and `PSI-MOD.obo` digests, requires the
+  pinned Perl `JSON` 4.11 module, and refuses a Comet binary that is not inside a
+  clean checkout of the pinned commit (`--comet-sha256` can pin one build). The
+  README recipe uses a private directory instead of `/tmp`, a portable
+  `sha256sum`/`shasum` check, `pip --require-hashes` with the new
+  `studies/peff/requirements.txt`, and a digest-checked JSON 4.11 tarball; the
+  docs note that the Comet column shows payload survival and cannot distinguish
+  placements. `scripts/check_schema_drift.py` with no arguments now checks the
+  FHP pair CI gates, and `--update` refuses to rewrite the frozen FHR and FHGFF3
+  baselines (#36). AGENTS.md ports the shared "real-data cases" paragraph
+  (FAIR-bioHeaders-Specification e11a9bf) and restores the required-fields
+  sentence in a form true for this tree.
 - **Full-package resync to shared v0.6.0; toolkit pin 0.12.0.** `provenance.json`
   `source` is now the shared v0.6.0 release commit `0ae18b00` (tag `v0.6.0`),
   closing the re-pin task #31 left open: `docs/FHP.md` (FHP `1.2`, the corrected

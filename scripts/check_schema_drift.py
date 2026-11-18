@@ -1,4 +1,13 @@
-"""Require explicit baseline updates for changes to the published FHR schema."""
+"""Require explicit baseline updates for changes to the FHP schema.
+
+Without arguments this checks the pair CI gates (Q2: the FHP pair only):
+``fhp.json`` against ``.github/schema-baseline-fhp.json``. The inherited FHR and
+FHGFF3 baselines are frozen review artifacts: ``--update`` refuses to rewrite
+them, because the FHR baseline deliberately carries the retargeted ``$id`` of
+FHP-Specification#36 (``.github/schema-baseline-refs.json``) that an update
+from the frozen ``fhr.json`` would silently revert. They can still be compared
+explicitly with ``--schema``/``--baseline``.
+"""
 
 import argparse
 import json
@@ -6,6 +15,13 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_SCHEMA = ROOT / "fhp.json"
+DEFAULT_BASELINE = ROOT / ".github" / "schema-baseline-fhp.json"
+# Frozen review artifacts (Q2; #36): compared on request, never rewritten here.
+FROZEN_BASELINES = {
+    ROOT / ".github" / "schema-baseline.json",
+    ROOT / ".github" / "schema-baseline-fhgff3.json",
+}
 
 
 def unique_object(pairs):
@@ -49,11 +65,20 @@ def differences(before, after, pointer=""):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--schema", type=Path, default=ROOT / "fhr.json")
-    parser.add_argument("--baseline", type=Path, default=ROOT / ".github/schema-baseline.json")
+    parser.add_argument("--schema", type=Path, default=DEFAULT_SCHEMA,
+                        help="schema to check (default: fhp.json)")
+    parser.add_argument("--baseline", type=Path, default=DEFAULT_BASELINE,
+                        help="review baseline (default: .github/schema-baseline-fhp.json)")
     parser.add_argument("--update", action="store_true",
-                        help="Explicitly accept the schema as the new review baseline")
+                        help="Explicitly accept the schema as the new review baseline "
+                             "(refused for the frozen FHR and FHGFF3 baselines)")
     args = parser.parse_args()
+    if args.update and args.baseline.resolve() in {path.resolve() for path in FROZEN_BASELINES}:
+        print(f"Refusing to update {args.baseline}: it is a frozen review artifact "
+              "(Q2 in docs/DEVELOPMENT-TREE.md; its $id is recorded in "
+              ".github/schema-baseline-refs.json, FHP-Specification#36). Only the FHP "
+              "baseline is updated here.", file=sys.stderr)
+        return 1
     try:
         schema = load(args.schema)
         if not isinstance(schema, dict):
@@ -75,7 +100,8 @@ def main():
         for change in changes:
             print(change, file=sys.stderr)
         print("For an intentional change, review compatibility and update the baseline "
-              "with python scripts/check_schema_drift.py --update. "
+              f"with python scripts/check_schema_drift.py --schema {args.schema} "
+              f"--baseline {args.baseline} --update. "
               "Commit both files and explain the change in the PR.", file=sys.stderr)
         return 1
     print(f"{args.schema}: matches the schema baseline")

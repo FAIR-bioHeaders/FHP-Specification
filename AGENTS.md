@@ -194,10 +194,15 @@ material. That implementation moved the FHGM transport overlay (1,363 → 2,613
 bytes, `dd9f69274f26…` → `d1619cced91b…`) and the FHGM suite manifest (35,269 →
 36,001 bytes, `31f14f022ff0…` → `5620f00cbb4b…`) **with the vector count
 unchanged at 31** — which is why suite references must be pinned by digest and
-never by count. Promoting the real-data cases to normative vectors is still in
-progress (FHGM-Specification #18). Re-verify before restating: this paragraph
-was written 2026-11-16 and its own status claim goes stale the moment upstream
-moves, as it did once already. FHGM remains a draft under rule V7 and is not a
+never by count. Promotion of the real-data cases into the
+normative suite went through FHGM-Specification #18 (merged 2026-11-16); read
+that repository's `development/conformance/manifest.json` for the current vector
+count and digest rather than trusting any figure in this paragraph. **Status
+sentences decay faster than the guidance around them:** this line originally said
+promotion was "still in progress" and was contradicted by a merge about 3 hours 35 minutes
+later, the second such event in two days. So the durable form is *where to look*,
+not *what was true when written* - every byte count and digest quoted above is a
+dated measurement, not a live value. FHGM remains a draft under rule V7 and is not a
 header type: no `schemaVersion`, no `schemas/versions.json` row, no w3id URL.
 
 ## Using FAIR-bioHeaders in another project
@@ -213,7 +218,9 @@ For assistants and people adding FAIR-bioHeaders headers to data elsewhere (summ
 - Cite a versioned schema in `schema` (`https://w3id.org/fair-bioheaders/fhr/v0.6.0`,
   `.../fhp/v0.6.0`, `.../fhgff3/v0.6.0`) with its `schemaVersion` from the shared
   [v0.6.0 registry](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/blob/v0.6.0/schemas/versions.json).
-  Required fields are defined by those versioned schemas; never invent values for them.
+  Required fields are in `fhr.json`, `fhp.json` and `fhgff3.json` at that release
+  (this tree's own `fhr.json` and `fhgff3.json` are frozen older copies); never
+  invent values for them.
 - Strict FASTA readers (samtools faidx and the rest of htslib, Picard, Biopython's default
   `fasta` format and others in `docs/TOOL_COMPATIBILITY.md`) reject a leading `;~`
   block: strip it first, or use Biopython's `fasta-pearson`.
