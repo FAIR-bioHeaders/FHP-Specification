@@ -89,5 +89,33 @@ class SchemaDriftTests(unittest.TestCase):
                 self.assertIn("Schema drift check failed", result.stderr)
 
 
+
+class RepositoryDefaultsTests(unittest.TestCase):
+    """The bare command checks the FHP pair CI gates; frozen baselines stay frozen (#36)."""
+
+    def run_script(self, *extra):
+        return subprocess.run(
+            [sys.executable, str(ROOT / "scripts/check_schema_drift.py"), *extra],
+            cwd=ROOT, capture_output=True, text=True,
+        )
+
+    def test_bare_command_checks_the_fhp_pair(self):
+        result = self.run_script()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("fhp.json: matches the schema baseline", result.stdout)
+
+    def test_update_refuses_the_frozen_baselines(self):
+        for schema, baseline in (("fhr.json", ".github/schema-baseline.json"),
+                                 ("fhgff3.json", ".github/schema-baseline-fhgff3.json")):
+            with self.subTest(baseline=baseline):
+                before = (ROOT / baseline).read_bytes()
+                result = self.run_script("--schema", str(ROOT / schema),
+                                         "--baseline", str(ROOT / baseline), "--update")
+                self.assertEqual(result.returncode, 1)
+                self.assertIn("Refusing to update", result.stderr)
+                self.assertIn("#36", result.stderr)
+                self.assertEqual((ROOT / baseline).read_bytes(), before)
+
+
 if __name__ == "__main__":
     unittest.main()

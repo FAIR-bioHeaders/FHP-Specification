@@ -46,6 +46,10 @@ flanks, masses and modification filters; matching an exit code or peptide count
 alone is insufficient. These are indexing results for two unmodified synthetic
 proteins, **not** a mass-spectrometry search, modification/variant coverage,
 PEFF-header validation, or evidence that every Comet version accepts a hybrid.
+The Comet column therefore **cannot distinguish placements**: every placement
+and control except the changed residue gives the same table, because indexing
+reads only the protein records. It shows that each placement keeps the records
+intact; it says nothing about which placement a PEFF reader accepts.
 The downloadable validator snapshot predates the final 2019 document; its
 observations are reported separately from the final specification requirements.
 No file was submitted to the online validator.

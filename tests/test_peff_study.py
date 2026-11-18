@@ -12,6 +12,93 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1] / "studies" / "peff"
 
 
+def load_runner():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("peff_run", ROOT / "run.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+class PEFFRunnerPinTests(unittest.TestCase):
+    """run.py checks external tools against their pins before executing them."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.runner = load_runner()
+
+    def setUp(self):
+        import tempfile
+
+        self._tmp = tempfile.TemporaryDirectory()
+        self.tmp = Path(self._tmp.name)
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def git(self, *args):
+        import subprocess
+
+        return subprocess.run(
+            ["git", "-C", str(self.tmp / "comet"), *args],
+            check=True, capture_output=True, text=True,
+            env={"GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@example.org",
+                 "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@example.org",
+                 "PATH": "/usr/bin:/bin:/usr/local/bin:/opt/homebrew/bin"},
+        ).stdout.strip()
+
+    def test_sources_pin_the_validator_files_and_perl_module(self):
+        sources = json.loads((ROOT / "sources.json").read_text())
+        self.assertEqual(set(sources["validatorFiles"]),
+                         {"bin/PEFF/validatePEFF", "var/CV/PSI-MOD.obo"})
+        result = json.loads((ROOT / "results.json").read_text())
+        for path, digest in sources["validatorFiles"].items():
+            self.assertEqual(result["executableDigests"][Path(path).name], digest)
+        self.assertEqual(sources["perlModules"]["JSON"]["version"], "4.11")
+        self.assertRegex(sources["perlModules"]["JSON"]["sha256"], r"^[0-9a-f]{64}$")
+
+    def test_archive_is_checked_before_extraction(self):
+        import zipfile
+
+        archive = self.tmp / "validator.zip"
+        with zipfile.ZipFile(archive, "w") as bundle:
+            bundle.writestr("bin/PEFF/validatePEFF", "#!/usr/bin/env perl\n")
+        data = archive.read_bytes()
+        pin = {"bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+        out = self.runner.verify_validator_archive(archive, pin, self.tmp / "ok")
+        self.assertTrue((out / "bin/PEFF/validatePEFF").is_file())
+        with self.assertRaises(RuntimeError):
+            self.runner.verify_validator_archive(
+                archive, dict(pin, sha256="0" * 64), self.tmp / "bad")
+        self.assertFalse((self.tmp / "bad").exists())
+
+    def test_comet_must_be_built_from_the_clean_pinned_checkout(self):
+        (self.tmp / "comet").mkdir()
+        self.git("init", "-q", ".")
+        (self.tmp / "comet" / "source.cpp").write_text("int main() {}\n")
+        self.git("add", ".")
+        self.git("commit", "-qm", "pinned")
+        binary = self.tmp / "comet" / "comet.exe"
+        binary.write_bytes(b"binary")  # untracked build output is allowed
+        pin = {"commit": self.git("rev-parse", "HEAD")}
+        digest = self.runner.verify_comet(binary, pin)
+        self.assertEqual(digest, hashlib.sha256(b"binary").hexdigest())
+        self.assertEqual(self.runner.verify_comet(binary, pin, digest), digest)
+        with self.assertRaises(RuntimeError):
+            self.runner.verify_comet(binary, pin, "0" * 64)
+        with self.assertRaises(RuntimeError):
+            self.runner.verify_comet(binary, {"commit": "0" * 40})
+        (self.tmp / "comet" / "source.cpp").write_text("int main() { return 1; }\n")
+        with self.assertRaises(RuntimeError):
+            self.runner.verify_comet(binary, pin)
+        outside = self.tmp / "elsewhere"
+        outside.mkdir()
+        (outside / "comet.exe").write_bytes(b"binary")
+        with self.assertRaises(RuntimeError):
+            self.runner.verify_comet(outside / "comet.exe", pin)
+
+
 class PEFFStudyTests(unittest.TestCase):
     def test_fixture_integrity_and_payload(self):
         manifest = json.loads((ROOT / "fixtures.json").read_text())

@@ -31,5 +31,18 @@
       "bytes": 64231,
       "sha256": "f41b0e3596ff6ccd91f863966a02f0845477582a987505a9b3494aba9fe1a76b"
     }
+  },
+  "validatorFiles": {
+    "bin/PEFF/validatePEFF": "b83e26114e791eff46a5d63f809d19e2cabea93eeceffa1da89097780ff06dd9",
+    "var/CV/PSI-MOD.obo": "2b48578dba0d7f7460fb5a2497039a13ff4adff135bd32bf8ecc26fbd2552504"
+  },
+  "perlModules": {
+    "JSON": {
+      "version": "4.11",
+      "distribution": "https://cpan.metacpan.org/authors/id/I/IS/ISHIGAKI/JSON-4.11.tar.gz",
+      "bytes": 92419,
+      "sha256": "713bdbe724dbb915ed50265ffe47e079a511980cb2427aa19076788bb64c3182",
+      "note": "the only non-core module the validator loads (lib/Proteomics/Response.pm: use JSON); pinned 2026-11-18, after the 2026-11-16 measurement, which did not record its JSON version"
+    }
   }
 }
