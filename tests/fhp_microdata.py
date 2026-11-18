@@ -49,13 +49,15 @@ FHP_W3ID_URL = re.compile(
     r"^https://w3id\.org/fair-bioheaders/fhp/v[0-9]+\.[0-9]+\.[0-9]+/?$"
 )
 
-# Fixed releases this reader carries. They are copies of released schemas, not
-# fetched at run time (docs/SCHEMA-VERSIONS.md V2 to V4). v0.4.1 carries the
-# same FHP schema contract as v0.4.0.
+# Fixed releases this reader carries: every release with an FHP row in the
+# shared registry (schemas/versions.json). They are copies of released schemas,
+# not fetched at run time (docs/SCHEMA-VERSIONS.md V2 to V4). v0.4.1 and v0.4.2
+# carry the same FHP schema bytes as v0.4.0 (FHP 1.0).
 RELEASES_DIR = Path(__file__).resolve().parent / "fixtures" / "releases"
 SUPPORTED_RELEASES = {
     "v0.4.0": "fhp-v0.4.0.json",
     "v0.4.1": "fhp-v0.4.0.json",
+    "v0.4.2": "fhp-v0.4.0.json",
     "v0.5.0": "fhp-v0.5.0.json",
     "v0.6.0": "fhp-v0.6.0.json",
 }

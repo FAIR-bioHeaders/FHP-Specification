@@ -44,16 +44,18 @@ imports the vendored `schemas/core-v0.5.yaml` and `schemas/shared-v0.6.yaml`
 snapshots), `schemas/versions.json` and the
 `tests/fixtures/releases/fhp-v0.6.0.json` release pin — to the shared **v0.6.0**
 release commit (FHP `1.2`). The regenerated `fhp.json` is byte-identical to the
-released `v0.6.0/fhp.json`. Everything else that issue #3 synced —
-`docs/FHP.md`, `docs/SCHEMA-VERSIONS.md`, the shared `examples/fhp/` files and
-the byte-unchanged `fhp-fasta` vectors — stays byte-pinned to the shared v0.5.0
-release commit, and all of it is verified against `provenance.json` by
-`scripts/check_shared_parity.py` in CI. The conformance
+released `v0.6.0/fhp.json`. The full-package resync that followed moved
+everything else issue #3 synced — `docs/FHP.md`, `docs/FORMAT.md`,
+`docs/SCHEMA-VERSIONS.md`, the shared `examples/fhp/` files and every
+`fhp-fasta` vector — to the same v0.6.0 release commit; only the plain
+`schemas/shared.yaml` (read by the frozen FHGFF3 generation) and the immutable
+`fhp-v0.5.0.json` release pin stay at v0.5.0. All of it is verified against
+`provenance.json` by `scripts/check_shared_parity.py` in CI. The conformance
 package was wired as **FHP-owned** under the Q4 decision
 ([issue #2](https://github.com/FAIR-bioHeaders/FHP-Specification/issues/2),
-2026-11-12): `conformance/manifest.json` covers the complete v0.5.0
-`fhp-fasta` vector set — byte-pinned to the shared release commit, the former
-deferred additions included — plus this repository's own
+2026-11-12): `conformance/manifest.json` covers the complete v0.6.0
+`fhp-fasta` vector set — byte-pinned to the shared release commit, including the
+five `fhp-fasta-busco-lineage-*` vectors v0.6.0 added — plus this repository's own
 `fhp-fasta-author-bad-name-type` and the shared FASTA-container vectors that
 exercise the `docs/FORMAT.md` rules on the same FASTA header reader. The
 complete family manifest is not maintained here; it runs from the pinned
@@ -92,8 +94,8 @@ FHP versioned aliases; those Pages surfaces remain pending work.
   and it is a pilot/teaching artifact rather than a production reference or a
   conformance vector.
 - **Version pin.** This tree's FHP contract chain is pinned to the shared
-  v0.6.0 release (FHP `1.2`, #31); the shared docs, examples and vectors are
-  still pinned at v0.5.0, and the frozen legacy FHR copy is FHR `1.0`. So
+  v0.6.0 release (FHP `1.2`, #31), and so are the shared docs, examples and
+  vectors since the full-package resync; the frozen legacy FHR copy is FHR `1.0`. So
   `scripts/validate_examples.py`, `scripts/check_conformance.py --schema` and
   the unit suite here validate 1.0/1.1/1.2 instances against the released
   bytes. The `examples/fhp/dmel-chr4/` fixture targets the released contracts;

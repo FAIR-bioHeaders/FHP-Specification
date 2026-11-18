@@ -2,7 +2,7 @@
 
 The package is FHP-owned (docs/DEVELOPMENT-TREE.md Q4, FAIR-bioHeaders/
 FHP-Specification#2): the manifest covers the complete ``fhp-fasta`` vector set
-— the shared v0.5.0 bytes plus this repository's own
+— the shared v0.6.0 bytes plus this repository's own
 ``fhp-fasta-author-bad-name-type`` — and the shared FASTA-container ``fasta``
 vectors, which exercise the docs/FORMAT.md R rules on the same FASTA header
 reader. The complete family manifest (GFA, microdata, JSON-LD and FHGFF3
@@ -15,14 +15,17 @@ Without options this needs only the Python standard library: it regenerates the
 FHP-owned vectors in a temporary directory and compares bytes, and recomputes
 each valid vector's SHA-512/256 checksum with its own reading of
 docs/FORMAT.md. The rule ids must equal the [..] tokens of the documents in
-RULE_DOCUMENTS: docs/FORMAT.md and docs/SCHEMA-VERSIONS.md at the pinned
-v0.5.0 bytes, the rest at their frozen pre-v0.5.0 copies; rules the FHP-owned
+RULE_DOCUMENTS: docs/FORMAT.md, docs/FHP.md and docs/SCHEMA-VERSIONS.md at
+the pinned v0.6.0 bytes, the rest at their frozen pre-v0.5.0 copies; rules the FHP-owned
 vectors do not cover in both directions carry an explicit ``notApplicable``
 note pointing at the family manifest.
 ``--schema`` also validates valid vectors' metadata against fhr.json (needs
 PyYAML and jsonschema); JSON-LD vectors are read by rule J1 first.
 ``--converter`` runs fhr-fasta-validate on every FASTA and FHP-FASTA vector:
-valid vectors must exit 0 and invalid vectors nonzero. A converter that
+valid vectors must exit 0 and invalid vectors nonzero, except that a vector
+with ``converterResults`` accepts any outcome it lists (the shared v0.6.0
+manifest allows ``unsupported-version`` for a vector citing a release the
+converter predates). A converter that
 rejects every vector of a format as an unsupported file extension predates
 that format; those vectors are left out and reported, unless
 ``--require-format`` names the format. ``--skip-format`` leaves out a format
@@ -382,11 +385,23 @@ def check_converter(conformance, manifest, location, skip=(), require=(), unsupp
             problems.append((vector["format"], f"{vector['id']}: converter does not support "
                              f"the {vector['format']} format"))
             continue
-        if accepted != (vector["expected"] == "valid"):
+        # converterResults (shared v0.6.0) lists every outcome a released
+        # converter may give a vector that cites the newest release: a reader
+        # that predates it answers unsupported-version, never plain invalid.
+        converter_results = vector.get("converterResults")
+        output_text = (result.stderr + result.stdout).casefold()
+        observed = "valid" if accepted else (
+            "unsupported-version" if any(marker.casefold() in output_text for marker
+                                         in RESULT_MARKERS["unsupported-version"])
+            else "invalid")
+        matches = (observed in converter_results if converter_results
+                   else accepted == (vector["expected"] == "valid"))
+        if not matches:
             detail = (result.stderr or result.stdout).strip().splitlines()
             detail = detail[-1] if detail else f"exit {result.returncode}"
             outcome = "accepted" if accepted else f"rejected ({detail})"
-            expected = vector["expected"] + (f", {vector['rule']}" if "rule" in vector else "")
+            expected = (f"one of {', '.join(converter_results)}" if converter_results else
+                        vector["expected"] + (f", {vector['rule']}" if "rule" in vector else ""))
             problems.append(f"{vector['id']}: converter {outcome}; expected {expected}")
         elif not accepted and vector.get("result"):
             output = (result.stderr + result.stdout).casefold()

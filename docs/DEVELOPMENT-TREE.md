@@ -41,8 +41,8 @@ Establishment tracker:
 - The **FHP LinkML model** develops in this repository on branches
   (`fhp_linkml.yml`), publishes through the shared repository by pull request,
   and the shared published copy is then synced back. On `main` it is now the
-  synchronized v0.6.0 (FHP 1.2) copy, subject to parity through the
-  contract-chain commit override, not a free local file.
+  synchronized v0.6.0 (FHP 1.2) copy, subject to parity at the package pin,
+  not a free local file.
 - The **FHP JSON-LD context/vocabulary, the microdata binding and their
   fixtures** (`jsonld/fhp.*`, [FHP-MICRODATA.md](FHP-MICRODATA.md),
   `examples/fhp/*.fhp.jsonld` and `*.microdata.fhp.html`, the FHP readers in
@@ -53,12 +53,11 @@ Establishment tracker:
   `docs/SCHEMA-VERSIONS.md`, the `fhp-fasta` vectors and the other
   digest-pinned shared copies) are published by the shared repository.
   Local files listed in `provenance.json`'s `copied[]` are
-  digest-verified pinned copies; the FHP contract chain
-  (`fhp.json`, `fhp_linkml.yml`, `schemas/versions.json`, the
-  `schemas/shared-v0.6.yaml` snapshot and the `fhp-v0.6.0.json` release pin)
-  carries per-entry `commit` overrides to the shared v0.6.0 release commit
-  (#31), while `schemas/shared.yaml` itself stays at the v0.5.0 package pin
-  because the frozen FHGFF3 1.0 compatibility copy is generated from it.
+  digest-verified pinned copies at the shared v0.6.0 release commit (the
+  package pin since the full-package resync that followed #31), while
+  `schemas/shared.yaml` itself carries a per-entry `commit` override to the
+  v0.5.0 release commit because the frozen FHGFF3 1.0 compatibility copy is
+  generated from it, and so does the immutable `fhp-v0.5.0.json` release pin.
   Files listed under `pinned` are inherited
   FHR/FHGFF3 artifacts frozen at their historical shared commit
   (Q2, implemented 2026-11-12); files listed only under `legacy` are the
@@ -92,16 +91,16 @@ Establishment tracker:
 ## Enforcement point
 
 `provenance.json` (repository root) is the machine-readable truth of the pin:
-source commit `170e677fbb6726a3f765373dbe1f214820000be7` (shared tag
-`v0.5.0`, the package pin), per-entry `commit` overrides carrying the FHP
-contract chain at `0ae18b00ee4bd71ab2dc28bae706b0f9d195076b` (shared tag
-`v0.6.0`, #31), the `copied[]` digests with three machine-checkable adjustments
-(`fhp_linkml.yml` import retarget to `schemas/core-v0.5` and
-`schemas/shared-v0.6`; the provenance headers on the vendored
-`schemas/core-v0.5.yaml` and `schemas/shared-v0.6.yaml` snapshots), the
-per-entry companion pin
-of `examples/fhp/rich-predicted.fhp.yaml` to `e1e5998` (shared #201), the
-`legacy` freeze, the `owned` classification and the `strictDirs` rule that an
+source commit `0ae18b00ee4bd71ab2dc28bae706b0f9d195076b` (shared tag
+`v0.6.0`, the package pin; `source.tag` must resolve to it in the upstream
+check), per-entry `commit` overrides to `170e677fbb6726a3f765373dbe1f214820000be7`
+(shared tag `v0.5.0`) for exactly two entries — the plain
+`schemas/shared.yaml` the frozen FHGFF3 generation reads and the immutable
+`tests/fixtures/releases/fhp-v0.5.0.json` — the `copied[]` digests with three
+machine-checkable adjustments (`fhp_linkml.yml` import retarget to
+`schemas/core-v0.5` and `schemas/shared-v0.6`; the provenance headers on the
+vendored `schemas/core-v0.5.yaml` and `schemas/shared-v0.6.yaml` snapshots),
+the `legacy` freeze, the `owned` classification and the `strictDirs` rule that an
 unclassified new path under `schemas/`, `conformance/valid/`,
 `conformance/invalid/` or `examples/fhp/` fails the check.
 
@@ -113,7 +112,7 @@ digests (so silent drift of a frozen FHR/FHGFF3 file fails CI), the
 `imports` records and the `strictDirs` classification. That workflow
 additionally requires
 `copied[]` to equal exactly what `scripts/make_provenance.py` regenerates from
-the pinned commits plus its hard-wired companion and contract-chain sets — so a
+the pinned commit plus its hard-wired v0.5.0 exceptions — so a
 copy changes only as part of a deliberate, generator-reproducible resync, never
 as a hand edit
 or an isolated digest bump. There is no `check_development_tree.py` here
@@ -136,8 +135,8 @@ protein records that delivery's `genomic.gff` places on that molecule as an FHP
 
 Three consequences are recorded rather than absorbed:
 
-- It is an **example**, not a conformance vector: `conformance/` and
-  `conformance/manifest.json` are untouched at 77 vectors, because a vector's
+- It is an **example**, not a conformance vector: #30 left `conformance/` and
+  `conformance/manifest.json` untouched (then 77 vectors), because a vector's
   `expected` outcome needs independent review rather than generation by the code
   under test.
 - It targets the **released v0.6.0** contracts (FHP 1.2, FHR 2.1). Since the
@@ -156,29 +155,25 @@ Three consequences are recorded rather than absorbed:
   `examples/fhgff3/**` protection: a checksum-bearing example must survive
   checkout byte-for-byte.
 
-## Post-sync re-pin task (live drift)
+## Post-sync re-pin task (closed by the v0.6.0 resync)
 
 The shared repository corrected the F-01 serialization bullet in
-`docs/FHP.md` after the v0.5.0 tag (shared PR #218, commit `29034bf`), so
-this repository's digest-pinned `docs/FHP.md` is the v0.5.0 text while shared
-`origin/main` carries the corrected text. It must not be hand-edited (parity)
-and must not be re-pinned in isolation (the regeneration step above, plus
-`tests/test_make_provenance.py`, tie `copied[]` to the generator's
-release-commit output and the single companion file). The correction arrives
-with the next deliberate resync to a shared release that includes it: re-copy
-bytes + `scripts/make_provenance.py` + `provenance.json` update in one PR.
-Recorded in `provenance.json` → `liveMain`. [JSONLD.md](JSONLD.md#fhp-draft)
-notes the same divergence where local FHP text references `docs/FHP.md`.
-
-The #31 resync (FHP-Specification#31, FHP 1.2) deliberately did **not** take
-this doc with it: it re-pinned only the FHP contract chain
-(`fhp.json`, `fhp_linkml.yml`, `schemas/versions.json`, the
-`schemas/shared-v0.6.yaml` snapshot and the `fhp-v0.6.0.json` release pin),
-which is what #31's acceptance needs and what `make_provenance.py` reproduces
-through per-entry commit overrides. `docs/FHP.md`, `docs/SCHEMA-VERSIONS.md`,
-`docs/FORMAT.md`, the shared `examples/fhp/` files and the `fhp-fasta` vectors
-stay at the v0.5.0 package pin, and the F-01 re-pin above remains an open task
-for the next full-package resync.
+`docs/FHP.md` after the v0.5.0 tag (shared PR #218, commit `29034bf`), and
+#31 deliberately re-pinned only the FHP contract chain, so this tree carried
+the v0.5.0 text of `docs/FHP.md` (and of `docs/SCHEMA-VERSIONS.md`, the shared
+`examples/fhp/` files and the `fhp-fasta` vectors) until a deliberate
+full-package resync. That resync is done: `provenance.json` `source.commit` is
+the v0.6.0 release commit, the bytes were re-copied from it and
+`scripts/make_provenance.py` regenerates `copied[]` from it. `docs/FHP.md` now
+carries the corrected F-01 bullet and FHP `1.2`; `docs/SCHEMA-VERSIONS.md`
+carries the v0.6.0 row, the dotted-version rule and V7; the
+`examples/fhp/` copies state FHP `1.2`; and the five
+`fhp-fasta-busco-lineage-*` vectors joined the FHP-owned package. The
+companion pin of `examples/fhp/rich-predicted.fhp.yaml` to `e1e5998` retired
+with it, because the v0.6.0 release carries that fix. Post-tag changes on
+shared `main` (the FORMAT.md R16 numbering of #255, whose release is
+FAIR-bioHeaders-Specification#257) are unreleased and stay out until a release
+includes them; `provenance.json` → `liveMain` records the audit.
 
 ## FHP-owned conformance package (Q4, implemented)
 
@@ -187,33 +182,35 @@ maintainer comment of 2026-11-12): *FHP-owned vector subset + pinned-upstream
 full run*. One manifest per purpose:
 
 - `conformance/manifest.json` is FHP-owned, generated by
-  `scripts/make_conformance.py`. It covers **every v0.5.0 `fhp-fasta` vector**
+  `scripts/make_conformance.py`. It covers **every v0.6.0 `fhp-fasta` vector**
   — the 22 already byte-pinned at the issue-#3 sync, the 8 additions the v0.5.0
   manifest made (R15 extension fields, R11 escaped record markers, V1/V2/V4
-  schema selection) and the `fhp-fasta-rich` byte update — verified
-  byte-for-byte against the pinned shared tree (31 files: 13 valid, 18
-  invalid), plus this repository's own `fhp-fasta-author-bad-name-type`
+  schema selection), the `fhp-fasta-rich` byte update and the 5
+  `fhp-fasta-busco-lineage-*` vectors v0.6.0 added for the dotted BUSCO
+  dataset versions (one valid, with the shared `converterResults`, and four
+  invalid near misses) — verified byte-for-byte against the pinned shared tree
+  (36 files: 14 valid, 22 invalid), plus this repository's own `fhp-fasta-author-bad-name-type`
   vector (FHP-owned local addition, invalid, P1) and the shared
   **FASTA-container** vectors (45: 18 valid, 27 invalid) — the R-rule vectors
   the previous local run already executed through the same
   `fhr-fasta-validate` FASTA header reader, keeping the runnable set honest.
-  77 vectors in total; `scripts/check_conformance.py --require-format
-  fhp-fasta` runs them against the pinned `fair-bioheaders==0.9.0`, and the
-  R15/V vectors pass (they shipped with that toolkit release).
+  82 vectors in total; `scripts/check_conformance.py --require-format
+  fhp-fasta` runs them against the pinned `fair-bioheaders==0.12.0`, which
+  bundles the v0.6.0 contracts, and every vector passes.
 - Rules the FHP-owned vectors do not exercise in both directions
-  (microdata M1–M4, JSON-LD J1–J8, FHGFF3 G1–G3, R9, R12–R14, V3, V5, V6 and
-  the valid-only R11/V1/V2) stay listed for the doc-token parity and carry
+  (microdata M1–M4, JSON-LD J1–J8, FHGFF3 G1–G3, R9, R12–R14, V3, V5, V6, V7
+  and the valid-only R11/V1/V2) stay listed for the doc-token parity and carry
   explicit `notApplicable` notes pointing at the family manifest.
 - The **complete family manifest** (GFA, microdata, JSON-LD, FHGFF3 vectors,
-  40 rules) is *not* maintained here. It runs, unchanged and in full, from
+  41 rules at v0.6.0) is *not* maintained here. It runs, unchanged and in full, from
   the pinned shared tree in the `shared-conformance` job of
   `.github/workflows/shared-parity.yml`, against the same toolkit release.
   The remaining pre-v0.5.0 family vector files stay on disk under
   `provenance.json` `legacy` as frozen history; the local regeneration check
   is scoped to the FASTA-container files the FHP-owned generator produces.
 - `docs/FORMAT.md` moved into `copied[]` with the package: the FHP-owned
-  vocabulary needs its v0.5.0 `[R11]`–`[R15]` tokens, and its bytes are
-  byte-identical between the pin and current shared `main`. `docs/JSONLD.md`,
+  vocabulary needs its `[R11]`–`[R15]` tokens, and it is pinned at the
+  v0.6.0 release bytes (shared `main` has since numbered R16, unreleased). `docs/JSONLD.md`,
   `docs/MICRODATA.md` and `docs/FHGFF3.md` remain frozen pre-v0.5.0 copies
   (Q2): their v0.5.0 successors (`[J9]`, `[M5]`, the G1 grammar) are exercised
   by the family manifest upstream.
@@ -274,9 +271,10 @@ this tree on 2026-11-12 (commits "Wire the FHP-owned conformance package per
 Q4. Refs #3" and "Freeze inherited generation per Q2. Refs #2"). Resolved in
 implementation (recorded here for the audit trail):
 
-- **Q1** — the shared-parity workflow pins
-  `fair-bioheaders[jsonld]==0.9.0`, the first verified release that bundles
-  the v0.5.0 schemas (0.8.2 bundles FHP only through v0.4.1).
+- **Q1** — the workflows pin `fair-bioheaders[jsonld]`, first at 0.9.0, the
+  first verified release that bundles the v0.5.0 schemas (0.8.2 bundles FHP
+  only through v0.4.1), and since the v0.6.0 resync at 0.12.0, whose bundled
+  `fhp-1.2.json` is byte-identical to the released v0.6.0 `fhp.json`.
 - **Q2 — decided 2026-11-12: FREEZE; implemented.** FHP CI generates and
   drift-checks `fhp` only; the inherited FHR/FHGFF3 artifacts are `pinned`
   compatibility fixtures in `provenance.json`, byte-verified by

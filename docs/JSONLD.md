@@ -162,12 +162,17 @@ their integration into the shared publication tree is coordinated through
 The FHR context, vocabulary and writer above are unchanged.
 
 The context and fixtures are generated from the synced model and describe the
-**FHP 1.1 line** (shared v0.5.0): `fhp_linkml.yml` imports the vendored core
-snapshot [`schemas/core-v0.5.yaml`](../schemas/core-v0.5.yaml), so its schema
-is the pinned `fhp.json` (`schemaVersion` `"1.1"` — the string contract
-version, the optional author `nameType` and the optional `x-` extension
-fields). The extension fields are deliberately not JSON-LD terms: the writer
-omits them from the canonical document and reports the omission. Released
+**FHP 1.2 line** (shared v0.6.0, release commit `0ae18b00`): `fhp_linkml.yml`
+imports the vendored core snapshot
+[`schemas/core-v0.5.yaml`](../schemas/core-v0.5.yaml) and the v0.6.0 shared
+object-model snapshot [`schemas/shared-v0.6.yaml`](../schemas/shared-v0.6.yaml),
+so its schema is the pinned `fhp.json` (`schemaVersion` `"1.2"` — the string
+contract version, the optional author `nameType`, the optional `x-` extension
+fields of 1.1 and the dotted BUSCO dataset versions of 1.2). The dotted
+`lineageDataset` values are ordinary strings, so 1.2 added no JSON-LD term and
+left the context unchanged. The extension fields are deliberately not JSON-LD
+terms: the writer omits them from the canonical document and reports the
+omission. Released
 FHP 1.0 records stay readable and writable against the immutable release
 fixtures under `tests/fixtures/fhp/`. FHR and FHGFF3 in this development tree
 still use the v0.3-era core (Q2).
@@ -187,10 +192,9 @@ a `PropertyValue` just like the root `accessionID`. The reader rejects a wrong o
 missing nested `@type`. The FHP term table is the generated vocabulary
 [`jsonld/fhp.terms.ttl`](../jsonld/fhp.terms.ttl) (and the field table for the
 microdata form is in [FHP-MICRODATA.md](FHP-MICRODATA.md)); the pinned shared
-[FHP.md](FHP.md) still lists this form as a follow-up under rule token F-01
-because its text predates this repository's serialization work — the shared
-repository corrected that bullet in its PR #218, and the corrected copy lands
-here with the next documented re-pin. The fixtures are `examples/fhp/*.fhp.jsonld`, and
+[FHP.md](FHP.md), at the v0.6.0 release bytes, carries the F-01 bullet as the
+shared repository corrected it in its PR #218: it names these bindings and the
+fair-bioheaders 0.8.2 reader and writer. The fixtures are `examples/fhp/*.fhp.jsonld`, and
 `tests/test_fhp_jsonld.py` checks the typed round trip against the pinned released
 schema, ordered authors, nested objects, unknown-context and unsupported-`@version`
 rejection, wrong nested types, and offline operation.

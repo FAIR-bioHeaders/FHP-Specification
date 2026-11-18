@@ -39,7 +39,9 @@ The schema of version M.N accepts `schemaVersion` values `"M.0"` to `"M.N"`. A r
 an earlier minor is held to that minor: what a later minor allows is invalid in it. For example,
 the FHR 2.1 schema accepts `schemaVersion: '2.0'`, but extension fields
 ([FORMAT.md](FORMAT.md) R15), added in 2.1, are invalid in a record that states `'2.0'`, exactly
-as under the 2.0 schema. A record that uses a feature states the minor that added it, or a later
+as under the 2.0 schema; likewise the FHP and FHGFF3 1.2 schemas accept `schemaVersion: '1.1'`,
+but a dotted BUSCO dataset version (#170), added in 1.2, is invalid in a record that states
+`'1.0'` or `'1.1'`. A record that uses a feature states the minor that added it, or a later
 one.
 
 In YAML headers write the version quoted: `schemaVersion: '2.0'`. Unquoted, `2.0` is the number
@@ -95,7 +97,7 @@ Numbers are covered by rule R13 in [FORMAT.md](FORMAT.md): NaN and infinities ar
 [FORMAT.md](FORMAT.md) says these values should use `http` or `https` (with `ftp`, `urn:`,
 `doi:` and `info:` also accepted). Validators warn about any other scheme, and the JSON-LD
 writers refuse to write it as a link, but such a record stays valid under FHR 2.0 and 2.1 and
-FHP and FHGFF3 1.0 and 1.1. A `pattern` that restricts the schemes is a candidate for the next major
+FHP and FHGFF3 1.0, 1.1 and 1.2. A `pattern` that restricts the schemes is a candidate for the next major
 `schemaVersion` of each type: it would invalidate records that are valid now, so it does not
 belong in a minor or patch release.
 
@@ -108,6 +110,7 @@ The machine-readable form is [`schemas/versions.json`](../schemas/versions.json)
 | v0.3.0, v0.3.1 | `1` (a number) | – | – |
 | v0.4.0, v0.4.1, v0.4.2 | `"2.0"` | `"1.0"` | `"1.0"` |
 | v0.5.0 | `"2.1"` | `"1.1"` | `"1.1"` |
+| v0.6.0 | `"2.1"` | `"1.2"` | `"1.2"` |
 
 v0.4.1 and v0.4.2 changed only format rules (docs/FORMAT.md, docs/JSONLD.md and schema
 selection), not the schemas, so their schemas are the v0.4.0 ones; `current` in
@@ -120,6 +123,19 @@ record that states `'2.0'` or `'1.0'`. A record that cites a v0.4.x schema URL i
 the v0.4.x schema (V2, V3), where an `x-` key is an unknown key, so files with extension fields
 cite v0.5.0 or later and state the new version. Readers that predate v0.5.0 report such files as
 an unsupported schema version (V4), or as invalid if they cite raw-main.
+
+v0.6.0 adds dotted BUSCO dataset versions (#170): the shared `Completeness.lineageDataset`
+pattern widens from `^[a-z0-9_]+_odb[0-9]+$` to `^[a-z0-9_]+_odb[0-9]+(\.[0-9]+)*$`, so dataset
+ids documented by the BUSCO user guide, such as `enterobacterales_odb12.2`, are valid. That is a
+minor change for FHP (`"1.2"`) and FHGFF3 (`"1.2"`) only; FHR (`"2.1"`) has no completeness slot
+and is unchanged. Every record valid under 1.0 or 1.1 stays valid with the same meaning, and the
+new schemas reject a dotted version in a record that states `'1.0'` or `'1.1'`. A record that
+cites a v0.4.x or v0.5.0 schema URL is checked against that release's schema (V2, V3), where a
+dotted version fails the old pattern, so files with dotted dataset versions cite v0.6.0 or later
+and state the new version. Readers that predate v0.6.0 report such files as an unsupported schema
+version (V4), or as invalid if they cite raw-main. v0.6.0 is tagged and released; the
+pre-release exception below (`preRelease` in `schemas/versions.json`) is what let its schema
+bytes sit on `main` while its tag did not yet exist.
 
 FHR 2.0 is a major version because the v0.4 tightening
 ([SCHEMA-CHANGES-v0.4.md](SCHEMA-CHANGES-v0.4.md)) rejects some values v0.3 accepted. The additive
@@ -173,7 +189,7 @@ same; existing files cite the old form, and it keeps serving the same files.
   file is not checked against another schema. The message names the value and the releases the
   reader has, for example
   `FHR: unsupported schema version: https://w3id.org/fair-bioheaders/fhr/v0.0.0 (this tool has FHR
-  schemas for main (v0.5.0), v0.3.0, v0.3.1, v0.4.0, v0.4.1, v0.4.2, v0.5.0)`.
+  schemas for main (v0.6.0), v0.3.0, v0.3.1, v0.4.0, v0.4.1, v0.4.2, v0.5.0, v0.6.0)`.
 - [V5] Any other value, including the w3id path form `…/fhr/v0.4.0/fhr.json`, is **FHR**, checked
   against the current FHR schema. FHR's `schema` field has never been constrained; this keeps that
   behaviour.
@@ -190,6 +206,19 @@ same; existing files cite the old form, and it keeps serving the same files.
   no earlier raw-main contract. For microdata without `data-fhr-type`, `schemaVersion` text that
   reads as the JSON number 1 counts as the number 1 (rule M3 then converts it with the v0.3.1
   schema, whose `schemaVersion` is a number).
+- [V7] **Unreleased draft contracts (opt-in).** A reader may recognise a **draft** contract: a
+  `<file>` outside V1's list, cited as the raw-main URL of the development repository that owns
+  that type, `https://raw.githubusercontent.com/FAIR-bioHeaders/<repo>/main/<file>`. A type may
+  already have a released schema file in V1; its published file remains governed by V1, while a
+  later draft of that type is eligible only under a distinct `<file>` not in V1's list. The lane is
+  never the default: it applies only where the user has explicitly chosen to read that
+  repository's draft. Without that choice, V5 governs such a value and the outcome is exactly what
+  it was before V7 existed. With it, the record is read against the draft at the revision the
+  reader is built with, and the reader warns on every record it reads this way: the warning names
+  the draft, the commit and the digest it is pinned to, and says the result is not a
+  released-contract result, for example `<type>: warning: schema …/<repo>/main/<file> is an
+  unreleased draft (commit <full sha>, sha256 <digest> of those bytes); read against that pinned
+  draft, not a released schema`.
 
 V6 exists because FHR 1 (releases up to v0.3.1) told writers to cite the raw-main URL with
 `schemaVersion: 1`, and FHR 1 writers commonly wrote `1.0`. When raw-main moved to FHR 2.0 in
@@ -204,12 +233,52 @@ current copy is; they do not fetch schemas at run time. Microdata keeps the raw-
 URL as its `itemtype` (rule M1 identifies FHR items by it); the `schema` itemprop carries the
 versioned URL.
 
+V7 opens a lane beside V1 (#221, decision of 2026-11-13); it adds nothing to V1's list, and a draft
+never takes a release form.
+A w3id URL `https://w3id.org/fair-bioheaders/<type>/vX.Y.Z` or a raw tag URL naming a release for a
+type that no release registers stays "any other value" under V5, as it is today, and a reader must
+not read it as the draft: no release number is invented for a draft, and an unpublished type has
+no row in `schemas/versions.json` to select. A reader that reports a near-miss schema URL, as
+fair-bioheaders 0.10.0 does (Tools#125), keeps doing so for such a value: V7 changes neither that
+warning nor the FHR result. Only the raw-main URL of the owning development repository is in the
+lane.
+
+A reader that implements the lane ships the draft bytes it recognises and pins them the way this
+family pins a copied tree: the commit of the development repository and the SHA-256 of the exact
+schema bytes, the pair `header/provenance.json` records for the FHGFF3 development copy and the
+digest `scripts/make_cedar.py` writes into every template's provenance line. Selection runs against
+the pinned bytes, never against `main` at run time, so a rewrite of a draft cannot move a reading
+that claims to be current out of sight; when the bytes a reader holds no longer match the digest it
+states, it says so instead of quietly choosing a newer draft.
+
+Publication moves that file out of the lane. The release adds the type's `<file>` to V1 and its row
+to `schemas/versions.json`; from then on its released bytes are governed by V1 to V4 and its
+`schemaVersion` by the rules above. A later unreleased revision of that type can use V7 only under
+a distinct `<file>` not in V1; V7 never reaches released bytes, and nothing published is rewritten:
+V1 to V6 keep their text and their outcomes, and V7 is additive. Reading an unreleased draft through
+the lane recognises a proposal, it does not adopt one: a record that cites a draft URL is
+experimental, is not a conforming record of a released type, and stays in its own development
+repository rather than in this one's examples or vectors.
+
+Two drafts are in the lane today: the transcriptome contract drafted in
+[FHT-Specification](https://github.com/FAIR-bioHeaders/FHT-Specification), whose conformance suite
+cites `https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/fht.json`, and the
+gene-model records drafted in
+[FHGM-Specification](https://github.com/FAIR-bioHeaders/FHGM-Specification) and described in
+[FHGM.md](FHGM.md). The rule names neither: it describes the shape of the lane, and any type
+repository holding a draft contract is covered the same way. FHGM is the general case worth
+stating, because its records carry no `schema` field at all: they ride inside an FHGFF3 header as
+extension fields ([FORMAT.md](FORMAT.md) R15), so the file is routed by its own FHGFF3 citation
+under V1 to V3 and the lane selects only the contract and the validator that a tool applies to the
+records. For a type whose records name no schema, V7 chooses what validates them; it never chooses
+what they are.
+
 ## Writing files
 
 New files and examples cite the versioned URL of the release they target, preferably the w3id form:
 
 ```yaml
-schema: https://w3id.org/fair-bioheaders/fhr/v0.5.0
+schema: https://w3id.org/fair-bioheaders/fhr/v0.6.0
 schemaVersion: '2.1'
 ```
 

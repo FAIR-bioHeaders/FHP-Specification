@@ -40,6 +40,9 @@ DCT = "http://purl.org/dc/terms/"
 FHP_CONTEXT = ROOT / "jsonld" / "fhp.context.jsonld"
 FHP_TERMS = ROOT / "jsonld" / "fhp.terms.ttl"
 FHP_TERMS_JSONLD = ROOT / "jsonld" / "fhp.terms.jsonld"
+# The FHP contract line this tree serves, read from the pin rather than
+# restated: provenance.json fhpContract (shared release, w3id, schemaVersion).
+CONTRACT = json.loads((ROOT / "provenance.json").read_text(encoding="utf-8"))["fhpContract"]
 # Scope name -> the fhp.json path whose object properties are the scope's keys.
 NESTED = {
     "taxon": ("taxon",),
@@ -517,14 +520,14 @@ class WriterTests(unittest.TestCase):
     def test_scalar_types_are_preserved(self):
         record = self.examples["rich-predicted"]
         document = json.loads(json.dumps(make_jsonld.fhp_to_jsonld(record)))
-        # FHP 1.1 (shared v0.5.0): schemaVersion is the string "1.1"; counts and
-        # the genetic code stay integers (never strings).
-        self.assertEqual(document["schemaVersion"], "1.1")
+        # The pinned FHP line (1.2 at shared v0.6.0): schemaVersion is a
+        # string; counts and the genetic code stay integers (never strings).
+        self.assertEqual(document["schemaVersion"], CONTRACT["schemaVersion"])
         self.assertIsInstance(document["schemaVersion"], str)
         self.assertIsInstance(document["geneticCode"], int)
         self.assertIsInstance(document["sequenceStats"]["sequenceCount"], int)
         back = make_jsonld.fhp_canonical_record(document)
-        self.assertEqual(back["schemaVersion"], "1.1")
+        self.assertEqual(back["schemaVersion"], CONTRACT["schemaVersion"])
         self.assertIsInstance(back["schemaVersion"], str)
         self.assertIsInstance(back["geneticCode"], int)
         self.assertIsInstance(back["sequenceStats"]["totalResidues"], int)
@@ -532,10 +535,10 @@ class WriterTests(unittest.TestCase):
     def test_released_schema_url_is_used(self):
         for name, record in self.examples.items():
             with self.subTest(record=name):
-                self.assertEqual(record["schema"],
-                                 "https://w3id.org/fair-bioheaders/fhp/v0.5.0")
-                self.assertEqual(record["schemaVersion"], "1.1")
-                self.assertEqual(make_jsonld.fhp_to_jsonld(record)["schemaVersion"], "1.1")
+                self.assertEqual(record["schema"], CONTRACT["w3id"])
+                self.assertEqual(record["schemaVersion"], CONTRACT["schemaVersion"])
+                self.assertEqual(make_jsonld.fhp_to_jsonld(record)["schemaVersion"],
+                                 CONTRACT["schemaVersion"])
 
     def test_absent_optional_fields_stay_absent(self):
         minimal = self.examples["minimal-predicted"]
@@ -803,7 +806,10 @@ class ReleasedContractTests(unittest.TestCase):
         contract_commit = "0ae18b00ee4bd71ab2dc28bae706b0f9d195076b"
         for local in ("fhp.json", "tests/fixtures/releases/fhp-v0.6.0.json"):
             entry = by_local[local]
-            self.assertEqual(entry.get("commit"), contract_commit, local)
+            # The full-package resync made v0.6.0 the package commit, so the
+            # entries take source.commit instead of a per-entry override.
+            self.assertEqual(entry.get("commit", prov["source"]["commit"]),
+                             contract_commit, local)
             self.assertEqual(entry["sha256"], hashlib.sha256(data).hexdigest(), local)
 
     def test_pinned_schema_is_the_released_fhp_1_0(self):
@@ -952,15 +958,17 @@ class ProcessorTests(unittest.TestCase):
 class DocumentationTests(unittest.TestCase):
     def test_released_line_and_serialization_status_are_documented(self):
         """docs/FHP.md is the pinned shared publication copy (issue #3): it states
-        the released contract line (FHP 1.1 at shared v0.5.0, FHP 1.0 at v0.4.0).
+        the released contract line (FHP 1.2 at shared v0.6.0, 1.1 at v0.5.0,
+        1.0 at v0.4.0).
         The development-tree serialization status (draft microdata/context,
         FAIR-bioHeaders-Tools#58, the pinned shared vocabulary commit) lives in
         docs/JSONLD.md and CHANGELOG.md."""
         fhp = (ROOT / "docs" / "FHP.md").read_text(encoding="utf-8")
         jsonld = (ROOT / "docs" / "JSONLD.md").read_text(encoding="utf-8")
         changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
-        self.assertIn('"1.1"', fhp)
-        self.assertIn("https://w3id.org/fair-bioheaders/fhp/v0.5.0", fhp)
+        self.assertIn(f'"{CONTRACT["schemaVersion"]}"', fhp)
+        self.assertIn(CONTRACT["w3id"], fhp)
+        self.assertIn(f'"{CONTRACT["previousSchemaVersion"]}"', fhp)
         self.assertIn("released", fhp)
         for text, name in ((jsonld, "docs/JSONLD.md"), (changelog, "CHANGELOG.md")):
             with self.subTest(document=name):

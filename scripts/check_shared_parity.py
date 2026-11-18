@@ -181,6 +181,20 @@ def check_upstream(prov, repo):
         )
         if exists.returncode != 0:
             errors.append(f"pinned commit {commit[:12]}... is not in {repo}")
+    source = prov["source"]
+    if source.get("tag"):
+        # The pin is a release tag (FAIR-bioHeaders-Specification#241): the
+        # recorded tag must resolve to the recorded commit in the checkout.
+        resolved = subprocess.run(
+            ["git", "-C", str(repo), "rev-parse", "--verify", "--quiet",
+             f"refs/tags/{source['tag']}^{{commit}}"],
+            capture_output=True, text=True,
+        )
+        if resolved.returncode != 0:
+            errors.append(f"tag {source['tag']} is not in {repo} (fetch tags)")
+        elif resolved.stdout.strip() != default_commit:
+            errors.append(f"tag {source['tag']} resolves to {resolved.stdout.strip()[:12]}..., "
+                          f"not the pinned {default_commit[:12]}...")
     if errors:
         return errors, 0
     checked = 0

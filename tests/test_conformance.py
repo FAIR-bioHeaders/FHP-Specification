@@ -104,13 +104,13 @@ class ConformanceTests(unittest.TestCase):
 
     def test_pinned_vectors_match_provenance(self):
         # Every fhp-fasta vector the manifest runs at a copied[] path is the
-        # byte-for-byte v0.5.0 shared copy the parity check digests.
+        # byte-for-byte v0.6.0 shared copy the parity check digests.
         import hashlib
         copied = {entry["local"]: entry
                   for entry in json.loads((ROOT / "provenance.json").read_text())["copied"]}
         vectors = [v for v in self.manifest["vectors"] if v["format"] == "fhp-fasta"]
         pinned = [v for v in vectors if f"conformance/{v['file']}" in copied]
-        self.assertEqual(len(pinned), 31)  # the full v0.5.0 set; 32nd is FHP-owned
+        self.assertEqual(len(pinned), 36)  # the full v0.6.0 set; 37th is FHP-owned
         for vector in pinned:
             entry = copied[f"conformance/{vector['file']}"]
             data = (CONFORMANCE / vector["file"]).read_bytes()
@@ -151,10 +151,10 @@ class ConformanceTests(unittest.TestCase):
         """specs/006-protein-header contracts/conformance.md."""
         vectors = {v["id"]: v for v in self.manifest["vectors"] if v["format"] == "fhp-fasta"}
         self.assertEqual(self.manifest["fhpSpecification"], "docs/FHP.md")
-        self.assertEqual(len([v for v in vectors.values() if v["expected"] == "valid"]), 13)
-        self.assertEqual(len([v for v in vectors.values() if v["expected"] == "invalid"]), 19)
+        self.assertEqual(len([v for v in vectors.values() if v["expected"] == "valid"]), 14)
+        self.assertEqual(len([v for v in vectors.values() if v["expected"] == "invalid"]), 23)
         self.assertEqual(vectors["fhp-fasta-author-bad-name-type"]["rule"], "P1")
-        # The Q4 package: the complete v0.5.0 fhp-fasta set is present locally.
+        # The Q4 package: the complete v0.6.0 fhp-fasta set is present locally.
         for vector_id in ("fhp-fasta-escaped-record-markers", "fhp-fasta-extension-fields",
                           "fhp-fasta-extension-nested", "fhp-fasta-extension-older-release",
                           "fhp-fasta-extension-older-version", "fhp-fasta-rich",
@@ -175,6 +175,15 @@ class ConformanceTests(unittest.TestCase):
             if vector["expected"] == "invalid" and vector["rule"] in {"P1", "P2"}:
                 self.assertIn("metadata", vector, vector["id"])
         self.assertEqual(vectors["fhp-fasta-cites-fhr-schema"]["rule"], "P2")
+        # Shared v0.6.0 (#170): the dotted dataset version states "1.2" and
+        # cites v0.6.0; the malformed dot forms are P1 near misses.
+        dotted = vectors["fhp-fasta-busco-lineage-dotted"]
+        self.assertEqual(dotted["expected"], "valid")
+        self.assertEqual(dotted["converterResults"], ["valid", "unsupported-version"])
+        for name in ("trailing-dot", "leading-dot", "letter-component", "uppercase"):
+            self.assertEqual(vectors[f"fhp-fasta-busco-lineage-{name}"]["rule"], "P1")
+        self.assertEqual({v["id"] for v in self.manifest["vectors"] if "converterResults" in v},
+                         {"fhp-fasta-busco-lineage-dotted"})
 
     def test_compressed_vectors_share_the_plain_checksum(self):
         vectors = {vector["id"]: vector for vector in self.manifest["vectors"]}
@@ -245,6 +254,41 @@ class ConformanceTests(unittest.TestCase):
         correct = self.check("--skip-regeneration", "--require-format", "fhp-fasta",
                              "--converter", bin_directory)
         self.assertEqual(correct.returncode, 0, correct.stderr)
+
+    def test_converter_results_allow_only_the_listed_outcomes(self):
+        """A converter that predates v0.6.0 may answer unsupported-version for
+        fhp-fasta-busco-lineage-dotted; a plain rejection still fails."""
+        bin_directory = self.root / "bin"
+        bin_directory.mkdir()
+        vectors = {Path(vector["file"]).name: vector["expected"]
+                   for vector in self.manifest["vectors"]}
+        targets = ("fhp-fasta-busco-lineage-dotted.fhp.fasta",
+                   "fhp-fasta-schema-release-without-type.fhp.fasta")
+
+        def install(message):
+            body = (
+                f"#!{sys.executable}\nimport os, sys\n"
+                f"vectors = {vectors!r}\n"
+                f"if os.path.basename(sys.argv[1]) in {targets!r}:\n"
+                f"    print({message!r}, file=sys.stderr)\n"
+                "    raise SystemExit(1)\n"
+                "raise SystemExit(0 if vectors[os.path.basename(sys.argv[1])] == 'valid' else 1)\n"
+            )
+            for name in ("fhr-fasta-validate", "fhr-gfa-validate", "fhr-convert"):
+                script = bin_directory / name
+                script.write_text(body)
+                script.chmod(0o755)
+
+        install("FHP: unsupported schema version: https://w3id.org/fair-bioheaders/fhp/v0.6.0")
+        older = self.check("--skip-regeneration", "--require-format", "fhp-fasta",
+                           "--converter", bin_directory)
+        self.assertEqual(older.returncode, 0, older.stderr)
+        install("FHP: invalid metadata")
+        wrong = self.check("--skip-regeneration", "--require-format", "fhp-fasta",
+                           "--converter", bin_directory)
+        self.assertEqual(wrong.returncode, 1)
+        self.assertIn("fhp-fasta-busco-lineage-dotted: converter rejected (FHP: invalid "
+                      "metadata); expected one of valid, unsupported-version", wrong.stderr)
 
     def test_converter_without_a_format_is_skipped_unless_required(self):
         # The skip/require mechanism, exercised on a synthetic tree: the
