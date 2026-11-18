@@ -17,6 +17,7 @@
   baselines (#36). AGENTS.md ports the shared "real-data cases" paragraph
   (FAIR-bioHeaders-Specification e11a9bf) and restores the required-fields
   sentence in a form true for this tree.
+
 - **Full-package resync to shared v0.6.0; toolkit pin 0.12.0.** `provenance.json`
   `source` is now the shared v0.6.0 release commit `0ae18b00` (tag `v0.6.0`),
   closing the re-pin task #31 left open: `docs/FHP.md` (FHP `1.2`, the corrected
