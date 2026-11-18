@@ -160,6 +160,35 @@ class FHPMicrodataBindingTests(unittest.TestCase):
         record["schema"] = RELEASE_041
         self.assertTrue(same_json(extract_page(fhp_microdata.write_page(record)), record))
 
+    def test_every_registered_fhp_release_is_supported(self):
+        """L2: the reader carries every release with an FHP row in the pinned
+        registry, each mapped to the bytes of the FHP contract it names."""
+        import hashlib
+        registry = json.loads((ROOT / "schemas" / "versions.json").read_text(encoding="utf-8"))
+        fhp_releases = {tag: row["FHP"] for tag, row in registry["releases"].items()
+                        if "FHP" in row}
+        self.assertEqual(set(fhp_releases), set(fhp_microdata.SUPPORTED_RELEASES))
+        for tag, version in fhp_releases.items():
+            with self.subTest(release=tag):
+                selected = fhp_microdata._release_schema(tag)
+                self.assertEqual(
+                    selected["$defs"]["FHP"]["properties"]["schemaVersion"]["enum"][-1],
+                    version)
+        # v0.4.2 (format rules only) shipped the v0.4.0 fhp.json bytes.
+        self.assertEqual(fhp_microdata.SUPPORTED_RELEASES["v0.4.2"], "fhp-v0.4.0.json")
+        self.assertEqual(hashlib.sha256((ROOT / "tests/fixtures/releases/fhp-v0.4.0.json")
+                                        .read_bytes()).hexdigest(),
+                         "e3f8f45260b833f931644e87ff7530cb9b4151e67094023dd96edde9a1d90366")
+
+    def test_each_release_round_trips_its_own_schema_version(self):
+        for tag, version in (("v0.4.2", "1.0"), ("v0.5.0", "1.1"), ("v0.6.0", "1.2")):
+            with self.subTest(release=tag):
+                record = dict(self.minimal(),
+                              schema=f"https://w3id.org/fair-bioheaders/fhp/{tag}",
+                              schemaVersion=version)
+                self.assertTrue(same_json(extract_page(fhp_microdata.write_page(record)),
+                                          record))
+
     def test_unavailable_release_is_rejected(self):
         record = dict(
             self.minimal(), schema="https://raw.githubusercontent.com/FAIR-bioHeaders/"
@@ -168,13 +197,15 @@ class FHPMicrodataBindingTests(unittest.TestCase):
             fhp_microdata.read_page(fhp_microdata.write_page(record), SCHEMA)
 
     def test_contract_line_follows_the_synced_release(self):
-        # Issue #3 synced the working contract to shared v0.5.0, so raw-main
-        # selects the FHP 1.1 contract and the synced example declares "1.1".
-        # The released FHP 1.0 line stays covered through the v0.4.0/v0.4.1
-        # fixture copies (F2), which are immutable.
+        # The working contract follows the pinned shared release (provenance.json
+        # fhpContract: FHP 1.2 at v0.6.0), so the synced example declares it.
+        # The released FHP 1.0 and 1.1 lines stay covered through the immutable
+        # fixture copies (F2).
+        contract = json.loads((ROOT / "provenance.json").read_text(encoding="utf-8"))[
+            "fhpContract"]
         self.assertEqual(
             extract_page(fhp_microdata.write_page(self.minimal()))["schemaVersion"],
-            "1.1")
+            contract["schemaVersion"])
         release = dict(self.minimal(), schema=RELEASE_040, schemaVersion="1.0")
         self.assertEqual(extract_page(fhp_microdata.write_page(release))["schemaVersion"], "1.0")
         with self.assertRaises(fhp_microdata.MicrodataError):

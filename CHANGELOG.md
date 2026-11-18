@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+- **Full-package resync to shared v0.6.0; toolkit pin 0.12.0.** `provenance.json`
+  `source` is now the shared v0.6.0 release commit `0ae18b00` (tag `v0.6.0`),
+  closing the re-pin task #31 left open: `docs/FHP.md` (FHP `1.2`, the corrected
+  F-01 bullet), `docs/SCHEMA-VERSIONS.md` (the v0.6.0 row, the dotted-version rule
+  and V7), the shared `examples/fhp/` copies (FHP `1.2`) and every `fhp-fasta`
+  vector are the v0.6.0 release bytes. Only the plain `schemas/shared.yaml` (read
+  by the frozen FHGFF3 generation) and the immutable `fhp-v0.5.0.json` release pin
+  keep a per-entry override to v0.5.0; the `e1e5998` companion pin retired. The
+  five `fhp-fasta-busco-lineage-*` vectors joined the FHP-owned package with the
+  shared `converterResults` expectation, which `scripts/check_conformance.py` now
+  honours, and V7 joined its rule list; the package is 82 vectors. CI installs
+  `fair-bioheaders[jsonld]==0.12.0` (its `fhp-1.2.json` is byte-identical to
+  `fhp.json`) instead of 0.9.0, the `shared-conformance` job therefore runs the
+  family manifest at v0.6.0, and the released toolkit now also validates
+  `examples/fhp/dmel-chr4/`. `scripts/check_shared_parity.py --upstream` checks
+  that `source.tag` resolves to `source.commit`, and its tests read the pin
+  instead of restating `v0.5.0`. The FHP JSON-LD and microdata example fixtures
+  were regenerated for FHP `1.2`; the test-only microdata reader gained v0.4.2,
+  and `docs/FHP-MICRODATA.md` lists the releases it carries and the shared M5
+  `x-` rejection. No contract changes.
+
 - Document FHP/PEFF scope, a conditional crosswalk with information loss, and
   pinned placement experiments for #20. Synthetic payload-preserving fixtures
   distinguish reader acceptance from PEFF validity; no contract changes.

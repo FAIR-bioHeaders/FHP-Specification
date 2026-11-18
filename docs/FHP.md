@@ -1,9 +1,10 @@
 # FHP: FAIR header for protein FASTA
 
-**Status: v0.1 (document status; the schema contract is `schemaVersion` `"1.1"`, released in
-FAIR-bioHeaders-Specification v0.5.0; `"1.0"` was first released in v0.4.0).** FHP is the working name (#54), and the
+**Status: v0.1 (document status; the schema contract is `schemaVersion` `"1.2"`, released in
+FAIR-bioHeaders-Specification v0.6.0; `"1.1"` was released in v0.5.0 and
+`"1.0"` was first released in v0.4.0).** FHP is the working name (#54), and the
 fields may still change after curator review, through a new schema version. Its persistent
-schema URL is `https://w3id.org/fair-bioheaders/fhp/v0.5.0` (v0.4.0 for FHP 1.0). The design is in
+schema URL is `https://w3id.org/fair-bioheaders/fhp/v0.6.0` (v0.4.0 for FHP 1.0). The design is in
 [specs/006-protein-header](../specs/006-protein-header/spec.md).
 
 FHP brings the FHR header to protein FASTA files: predicted proteomes, sets taken from protein
@@ -34,8 +35,9 @@ Required are the core's required fields (`schema`, `schemaVersion`, `taxon`, `ve
 | `sourceType` | `predicted`, `database` or `mixed` (see below) |
 
 `schema` must be an FHP schema URL ([SCHEMA-VERSIONS.md](SCHEMA-VERSIONS.md)): preferably the
-versioned `https://w3id.org/fair-bioheaders/fhp/v0.5.0` of the release a file targets, or the raw
-GitHub URL of `fhp.json` on `main` or at a release tag, under either repository name. `schemaVersion` is `'1.1'` (FHP 1.1; `'1.0'` with the v0.4.x schemas), quoted
+versioned `https://w3id.org/fair-bioheaders/fhp/v0.6.0` of the release a file targets, or the raw
+GitHub URL of `fhp.json` on `main` or at a release tag, under either repository name. `schemaVersion` is `'1.2'` (FHP 1.2; `'1.0'` with the v0.4.x schemas, `'1.1'`
+with v0.5.0), quoted
 in YAML.
 
 The following fields are optional. Leave a field out when you do not know its value; tools never
@@ -50,7 +52,7 @@ infer these values from the sequences.
 | `predictionSoftware` | List of `{name, version, uri, commandLineOption}`, with the same shape as FHR's `assemblySoftware` objects |
 | `predictionProtocol` | URI of the prediction or annotation protocol |
 | `sequenceStats` | `sequenceCount`, `geneCount`, `totalResidues` |
-| `completeness` | BUSCO counts: `lineageDataset` with its version suffix (for example `primates_odb10`), `completeSingle`, `completeDuplicated`, `fragmented`, `missing`, `total`, and optional `buscoVersion` and `mode` |
+| `completeness` | BUSCO counts: `lineageDataset` with its version suffix, one or more dot-separated numeric components allowed from FHP 1.2 (for example `primates_odb10` or `enterobacterales_odb12.2`; a record stating `'1.0'` or `'1.1'` keeps the undotted suffix), `completeSingle`, `completeDuplicated`, `fragmented`, `missing`, `total`, and optional `buscoVersion` and `mode` |
 
 The optional core fields (`voucherSpecimen`, `accessionID`, `scholarlyArticle`, `documentation`,
 `identifier`, `relatedLink`, `funding`, `reuseConditions`) mean the same as in FHR. Genome-only
@@ -104,7 +106,7 @@ They add no requirements.
 
 These remain follow-ups in the [plan](../specs/006-protein-header/plan.md):
 
-- JSON-LD and HTML microdata forms (F-01). The model already carries the term annotations.
+- JSON-LD and HTML microdata forms (F-01). A reviewed FHP HTML microdata binding (rules F1–F7 over the shared [MICRODATA.md](MICRODATA.md) M1–M5) lives in [FHP-Specification](https://github.com/FAIR-bioHeaders/FHP-Specification/blob/main/docs/FHP-MICRODATA.md) and is the binding named as authoritative for FHP in that page's [Type-specific bindings](MICRODATA.md#type-specific-bindings) table (#216 reading 1, merged as #217); the FHP canonical JSON-LD context and reading rules live in FHP-Specification as well, still labeled draft there, with shared publication coordinated through #107 ([JSONLD.md](JSONLD.md) documents the FHR form only). The toolkit reader/writer for both forms shipped in fair-bioheaders 0.8.2 (Tools#58, merged in Tools#98): `convert` reads and writes FHP canonical JSON-LD and typed HTML microdata. FHP has no schema.org export profile and no shared conformance vector covers its typed forms; no website support is claimed here.
 - Checking GFF3 parents (F-03, spec 007).
 
 F-05 (the persistent schema alias) and F-07 (the release) are complete: v0.4.0 is tagged,

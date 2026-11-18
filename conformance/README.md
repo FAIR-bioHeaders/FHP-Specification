@@ -5,10 +5,10 @@ This package is **FHP-owned** (the Q4 decision of
 recorded 2026-11-12, in
 [docs/DEVELOPMENT-TREE.md](../docs/DEVELOPMENT-TREE.md)): one manifest for
 this repository's own purposes. It covers the complete `fhp-fasta` vector set
-of the shared v0.5.0 line — protein FASTA files with an FHP header, applying
+of the shared v0.6.0 release — protein FASTA files with an FHP header, applying
 the shared header and checksum rules ([docs/FORMAT.md](../docs/FORMAT.md)) and
-the FHP schema rules P1 and P2 ([docs/FHP.md](../docs/FHP.md#rules)), the
-extension-field rule R15 and the schema-selection rules V1, V2 and V4
+the FHP schema rules P1 and P2 ([docs/FHP.md](../docs/FHP.md#rules)) including
+the dotted BUSCO dataset versions of FHP 1.2, the extension-field rule R15 and the schema-selection rules V1, V2 and V4
 ([docs/SCHEMA-VERSIONS.md](../docs/SCHEMA-VERSIONS.md)) — plus the shared
 `fasta-*.fhr.fasta` vectors, which exercise the R rules on the same FASTA
 header reader this repository's readers must satisfy. Every `fhp-fasta` file
@@ -18,7 +18,7 @@ commit, digested in [`provenance.json`](../provenance.json) and verified by
 `scripts/check_shared_parity.py`.
 
 The **complete family manifest** — the GFA, microdata, JSON-LD and FHGFF3
-vectors and all 40 rules — is not maintained here. It runs in full from the
+vectors and all 41 rules — is not maintained here. It runs in full from the
 pinned shared tree in the `shared-conformance` job of
 [`.github/workflows/shared-parity.yml`](../.github/workflows/shared-parity.yml).
 The remaining non-FASTA vector files in `valid/` and `invalid/` are frozen
@@ -106,7 +106,7 @@ templates. It computes the checksums with Python's `hashlib` (`sha512_256`) and
 `base64`, independently of the converter. It writes gzip and BGZF data as
 stored deflate blocks with mtime 0 and no file name, so the output doesn't
 depend on the local zlib build. Rerunning it reproduces identical bytes. The
-`fhp-fasta` builders follow the shared v0.5.0 generator, so the regenerated
+`fhp-fasta` builders follow the shared v0.6.0 generator, so the regenerated
 bytes stay equal to the pinned shared copies that `provenance.json` digests.
 
 ```bash
@@ -120,6 +120,10 @@ directory and compares the bytes (the frozen legacy family files on disk are
 outside this comparison), checks that the manifest covers every rule in the
 documents of `RULE_DOCUMENTS`, and recomputes each checksum with a separate
 reading of the rules. CI runs these checks and then runs the pinned released
-converter (`fair-bioheaders==0.9.0`) over every vector, requiring the
-`fhp-fasta` format. To add a vector, edit the generator, rerun it, and commit
+converter (`fair-bioheaders==0.12.0`, which bundles the v0.6.0 contracts) over
+every vector, requiring the `fhp-fasta` format. A vector with
+`converterResults` (only `fhp-fasta-busco-lineage-dotted`, as in the shared
+v0.6.0 manifest) accepts any outcome it lists, so a converter that predates
+v0.6.0 may answer `unsupported-version` for it but may not reject it as plain
+invalid. To add a vector, edit the generator, rerun it, and commit
 the script together with its output.

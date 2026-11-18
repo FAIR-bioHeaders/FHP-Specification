@@ -26,30 +26,39 @@ class ProvenanceShapeTests(unittest.TestCase):
     def setUpClass(cls):
         cls.prov = parity.load_provenance()
 
-    def test_pinned_source_is_the_v050_release_commit(self):
+    def test_pinned_source_is_the_generator_default_and_the_fhp_release(self):
+        """The package pin is read, not restated: provenance.json's source must
+        be the commit scripts/make_provenance.py regenerates from by default
+        (the shared-parity workflow compares the two), name its tag as ref,
+        and be the release whose FHP contract this tree serves. The upstream
+        check (check_shared_parity.py --upstream) resolves the tag to the
+        commit."""
+        import make_provenance
         source = self.prov["source"]
-        self.assertEqual(source["commit"],
-                         "170e677fbb6726a3f765373dbe1f214820000be7")
-        self.assertEqual(source["tag"], "v0.5.0")
-        self.assertEqual(self.prov["fhpContract"]["schemaVersion"], "1.2")
-        self.assertEqual(self.prov["fhpContract"]["sharedRelease"], "v0.6.0")
+        self.assertEqual(source["commit"], make_provenance.DEFAULT_COMMIT)
+        self.assertRegex(source["commit"], r"^[0-9a-f]{40}$")
+        self.assertRegex(source["tag"], r"^v\d+\.\d+\.\d+$")
+        self.assertEqual(source["ref"], source["tag"])  # released material: never main
+        self.assertEqual(source["tag"], self.prov["fhpContract"]["sharedRelease"])
+        self.assertEqual(self.prov["fhpContract"]["w3id"],
+                         "https://w3id.org/fair-bioheaders/fhp/" + source["tag"])
 
-    def test_fhp_contract_chain_is_re_pinned_to_the_v060_release_commit(self):
-        """FHP-Specification#31: the FHP contract chain carries per-entry commit
-        overrides to the shared v0.6.0 release commit; the rest of copied[]
-        keeps the package pin."""
-        contract_commit = "0ae18b00ee4bd71ab2dc28bae706b0f9d195076b"
+    def test_only_the_frozen_entries_override_the_package_commit(self):
+        """After the full-package resync every copied entry takes source.commit
+        except the two kept at the previous release: the plain
+        schemas/shared.yaml the frozen FHGFF3 generation reads, and the
+        immutable fhp-v0.5.0.json release pin."""
+        import make_provenance
         by_local = {e["local"]: e for e in self.prov["copied"]}
+        overridden = {local: e["commit"] for local, e in by_local.items() if "commit" in e}
+        self.assertEqual(overridden, {
+            local: make_provenance.V050_COMMIT for local in make_provenance.V050_NOTES})
         for local in ("fhp.json", "fhp_linkml.yml", "schemas/shared-v0.6.yaml",
-                      "schemas/versions.json",
+                      "schemas/versions.json", "docs/FHP.md",
+                      "docs/SCHEMA-VERSIONS.md",
+                      "examples/fhp/rich-predicted.fhp.yaml",
                       "tests/fixtures/releases/fhp-v0.6.0.json"):
-            self.assertEqual(by_local[local].get("commit"), contract_commit, local)
-            self.assertIn("#31", by_local[local]["commitNote"], local)
-        # The v0.5.0 release fixture is immutable history: it stays at the
-        # package pin (no per-entry override), and so does the plain
-        # schemas/shared.yaml the frozen FHGFF3 generation reads.
-        self.assertNotIn("commit", by_local["tests/fixtures/releases/fhp-v0.5.0.json"])
-        self.assertNotIn("commit", by_local["schemas/shared.yaml"])
+            self.assertNotIn("commit", by_local[local], local)
 
     def test_adjusted_entries_record_both_digests(self):
         for entry in self.prov["copied"]:
@@ -64,11 +73,18 @@ class ProvenanceShapeTests(unittest.TestCase):
         self.assertEqual(errors, [], "recorded digests drifted")
         self.assertEqual(parity.check_extras(self.prov, listed), [])
 
-    def test_companion_entry_points_at_the_post_tag_fix(self):
-        by_local = {e["local"]: e for e in self.prov["copied"]}
-        rich = by_local["examples/fhp/rich-predicted.fhp.yaml"]
-        self.assertEqual(rich["commit"],
-                         "e1e5998709a6df922b83bb89e6a2bf5c5d27d87d")
+    def test_every_shared_fhp_fasta_vector_is_copied(self):
+        """M1: the five fhp-fasta-busco-lineage-* vectors of v0.6.0 are copied
+        and listed in the FHP-owned manifest with their converterResults."""
+        copied = {e["local"] for e in self.prov["copied"]}
+        manifest = json.loads((ROOT / "conformance/manifest.json").read_text())
+        ids = {v["id"]: v for v in manifest["vectors"]}
+        for name in ("dotted", "trailing-dot", "leading-dot", "letter-component",
+                     "uppercase"):
+            vector = ids[f"fhp-fasta-busco-lineage-{name}"]
+            self.assertIn("conformance/" + vector["file"], copied)
+        self.assertEqual(ids["fhp-fasta-busco-lineage-dotted"]["converterResults"],
+                         ["valid", "unsupported-version"])
 
 
 class PinnedSectionTests(unittest.TestCase):

@@ -1,13 +1,14 @@
 # FHP HTML microdata (draft binding)
 
-**Status: draft binding proposal; the FHP 1.0 contract it binds is released.** This document defines the type-specific FHP
+**Status: draft binding proposal; the FHP contracts it binds are released (`"1.0"` in shared
+v0.4.0 to v0.4.2, `"1.1"` in v0.5.0, `"1.2"` in v0.6.0).** This document defines the type-specific FHP
 binding for HTML microdata. It is developed in FHP-Specification (#5, feature 006
 follow-up F-02) and must be published through FAIR-bioHeaders-Specification before it is
 adopted. No FHP release, tag or DOI is created here. The toolkit reader and writer are not shipped
-in this repository; they are implemented in
+in this repository; they were implemented in
 [FAIR-bioHeaders-Tools#98](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/pull/98)
 (for [FAIR-bioHeaders-Tools#58](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/issues/58))
-and ship in the first toolkit release that includes that change.
+and shipped in fair-bioheaders 0.8.2.
 The website consumer
 ([fair-bioheaders.github.io#21](https://github.com/FAIR-bioHeaders/fair-bioheaders.github.io/issues/21))
 and the family builder
@@ -51,14 +52,19 @@ shared rules win.
   selects that release's schema. Matching is exact.
 - The reader resolves the selection **before** converting untyped values or
   validating: `main` uses the current schema, a supported release uses that release's
-  schema, and an unavailable release is rejected. The test-only reader carries the
-  released FHP `"1.0"` contract from v0.4.0, also used by v0.4.1 (which changed only format
-  rules); `v999.0.0` and any other release it does not carry are unsupported-version.
+  schema, and an unavailable release is rejected. The test-only reader carries every
+  released FHP contract in the shared
+  [v0.6.0 registry](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/blob/v0.6.0/schemas/versions.json):
+  FHP `"1.0"` from v0.4.0, also selected by v0.4.1 and v0.4.2 (which changed only format
+  rules and kept the same `fhp.json` bytes), FHP `"1.1"` from v0.5.0 and FHP `"1.2"` from
+  v0.6.0, each a byte-pinned copy under `tests/fixtures/releases/`. `v999.0.0` and any
+  other release it does not carry are unsupported-version.
 - A `schema` value that is not an FHP schema URL, a release the reader does not have, or
   a `schemaVersion` the selected schema does not accept is **unsupported-version**. The
   document is rejected; it is not checked against another schema. FHP 1.0 is released
-  in shared v0.4.0 as the string `"1.0"`, and this development tree now carries that
-  released contract; a numeric `1` is not a released FHP contract. A reader uses the
+  in shared v0.4.0 as the string `"1.0"` (then `"1.1"` in v0.5.0 and `"1.2"` in
+  v0.6.0), and this development tree carries those released contracts; a numeric `1`
+  is not a released FHP contract. A reader uses the
   selected schema's own `schemaVersion` rule, and a writer copies the value the record
   already has.
 - The `schema` and `schemaVersion` properties are ordinary properties; they are the same
@@ -74,7 +80,7 @@ gives the FHP shape; the shared rules (M1 to M4, R7, R9) apply unchanged.
 | Field | JSON type | Microdata shape | Notes |
 | --- | --- | --- | --- |
 | `schema` | string | string | An FHP schema URL; selects the version (F2). |
-| `schemaVersion` | string `"1.0"` | typed scalar | The value the selected schema accepts. |
+| `schemaVersion` | string (`"1.0"`, `"1.1"` or `"1.2"`) | typed scalar | The value the selected schema accepts. |
 | `proteome` | string | string | Required. The protein set name. |
 | `sourceType` | enum string | string | Required: `predicted`, `database` or `mixed`. |
 | `taxon` | object | one item scope | `name` and `uri` strings. |
@@ -149,6 +155,20 @@ construction.
   property, and they are excluded from text values. A record wrapped in `<template>` is
   therefore not an FHP item at all, and a property inside one contributes nothing.
 
+## Extension fields
+
+FHP microdata carries no extension fields, exactly as the shared rule
+[M5](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/blob/v0.6.0/docs/MICRODATA.md)
+requires (this tree's `docs/MICRODATA.md` is the frozen pre-v0.5.0 copy and predates M5;
+this section adds no new rule id). From FHP 1.1 a top-level key matching
+`^x-[A-Za-z0-9][A-Za-z0-9_.-]*$` is valid in YAML and JSON ([FORMAT.md](FORMAT.md) R15),
+but a writer leaves every top-level `x-` key out of the HTML, with its value, and reports
+the keys it left out; a reader rejects a document whose FHP item has an `itemprop` starting
+with `x-`, even when the selected schema would accept that key in YAML or JSON. A
+microdata round trip therefore drops extension fields; keep them in YAML or JSON.
+`tests/fhp_microdata.py` implements both sides and `tests/test_fhp_microdata.py` tests
+them.
+
 ## Repeated properties
 
 Repeating a property is read as a list, following M4. A repeated field that takes a single
@@ -212,9 +232,9 @@ the R, M, J, P and G rules.
 
 - **Toolkit reader and writer**: implemented in
   [FAIR-bioHeaders-Tools#98](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/pull/98)
-  (for [FAIR-bioHeaders-Tools#58](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/issues/58)),
-  shipping in the first toolkit release that includes it. Until then, released toolkits
-  still refuse FHP microdata output.
+  (for [FAIR-bioHeaders-Tools#58](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/issues/58))
+  and shipped in fair-bioheaders 0.8.2; toolkits before 0.8.2 refuse FHP microdata
+  output.
 - **Website binding**: fair-bioheaders.github.io#21, with the family builder in #15. The
   released FHP form and readable tables added by website PR #27 stay microdata-free until
   this contract is published and the toolkit reader exists.

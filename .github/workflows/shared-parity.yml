@@ -28,31 +28,29 @@ jobs:
         run: python -m unittest discover -s tests -p "test_make_provenance.py" -v
       - name: Check the pinned copies against their recorded digests
         run: python scripts/check_shared_parity.py --no-upstream
-      - name: Read the pinned shared revision
-        id: pin
-        run: |
-          echo "commit=$(python -c 'import json; print(json.load(open("provenance.json"))["source"]["commit"])')" >> "$GITHUB_OUTPUT"
-      - name: Check out the pinned shared publication revision
-        # Full history, default branch: check_shared_parity.py verifies each
-        # recorded per-entry commit (e.g. the post-v0.5.0 companion fix
-        # e1e5998 for rich-predicted.fhp.yaml) against the object database,
-        # not against one checked-out tree. A depth-1 checkout of the source
-        # commit alone cannot see companion commits that come after the tag.
+      - name: Check out the shared publication history
+        # Full history, default branch: check_shared_parity.py and
+        # make_provenance.py read every recorded commit (source.commit, the
+        # v0.6.0 release, and the per-entry v0.5.0 overrides for
+        # schemas/shared.yaml and the fhp-v0.5.0.json release pin) from the
+        # object database with git show, not from one checked-out tree, so
+        # no ref is checked out by pin here. Tags are fetched because the
+        # parity check resolves provenance.json's source.tag to source.commit.
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: FAIR-bioHeaders/FAIR-bioHeaders-Specification
           path: .upstream/FAIR-bioHeaders-Specification
           fetch-depth: 0
+          fetch-tags: true
           persist-credentials: false
       - name: Check the pinned copies against the pinned bytes
         run: python scripts/check_shared_parity.py --upstream .upstream/FAIR-bioHeaders-Specification
       - name: Regenerate the pinned copies and compare with this tree
         # scripts/make_provenance.py is the single digest source: the recorded
         # copied[] entries must equal what the pinned commit produces today,
-        # including the machine-checkable adjustments. The deferred-vector skip
-        # retired with the Q4 decision (FHP-Specification#2, 2026-11-12): every
-        # fhp-fasta vector the v0.5.0 manifest added or changed is now copied,
-        # digested and run by this repository's own conformance package.
+        # including the machine-checkable adjustments. Every fhp-fasta vector of
+        # the pinned release is copied, digested and run by this repository's
+        # own conformance package (Q4, FHP-Specification#2).
         run: |
           python scripts/make_provenance.py --upstream .upstream/FAIR-bioHeaders-Specification \
             --output "$RUNNER_TEMP/copied.json"
@@ -91,13 +89,14 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
           persist-credentials: false
-      - name: Install the toolkit with the v0.5.0 schemas
-        # fair-bioheaders 0.9.0 bundles schema copies byte-identical to the
-        # pinned v0.5.0 release commit (verified at issue #3 audit; the same
-        # pin and rationale as validate-specification.yml).
+      - name: Install the toolkit with the v0.6.0 schemas
+        # fair-bioheaders 0.12.0 bundles fhr-2.1, fhp-1.2 and fhgff3-1.2 copies
+        # byte-identical to fhr.json, fhp.json and fhgff3.json at the pinned
+        # v0.6.0 release commit (provenance.json source.commit); the same pin
+        # and rationale as validate-specification.yml.
         run: |
           python -m venv "$RUNNER_TEMP/fair-bioheaders"
-          "$RUNNER_TEMP/fair-bioheaders/bin/python" -m pip install "fair-bioheaders[jsonld]==0.9.0"
+          "$RUNNER_TEMP/fair-bioheaders/bin/python" -m pip install "fair-bioheaders[jsonld]==0.12.0"
       - name: Check shared fixture generation and independent checksums
         working-directory: .upstream/FAIR-bioHeaders-Specification
         run: python scripts/check_conformance.py
