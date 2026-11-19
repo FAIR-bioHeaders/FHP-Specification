@@ -62,6 +62,8 @@ def literal_assignments(root, name, wanted):
 
 def declarations(root):
     name = 'provenance.json'; data = load(root, name); source = data['source']
+    if source.get('ref') != source['tag']:
+        raise ValueError('Released provenance source.ref must equal source.tag')
     classification = load(root, 'references/classification.json')
     groups = {}
     for entry in data['copied']:
