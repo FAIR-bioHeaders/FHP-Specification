@@ -71,7 +71,15 @@ The adapter also reads the actual `SUPPORTED_RELEASES` aliases and copy locator 
 The bootstrap disables Git replacement objects, verifies exact committed bytes,
 and executes a private snapshot of those verified bytes until the subprocess
 finishes. A later change to the source checkout cannot change that executable.
-Identifiable missing revision/path/digest declarations remain incomplete data for
+Identifiable missing revision/commit/path/digest declarations remain incomplete data for
 the central engine's ABSENT classification; supplied floating references remain
 DRIFT inputs. Conflicting source authorities or malformed supplied metadata
 refuse normalization, with an observable QUERY_FAILED execution fallback.
+
+The checker-code update selects the independently reviewed shared PR280
+implementation. Consumer merge remains dependent on that central PR merging;
+contract, suite, copied-source and carrier selections are unchanged.
+
+The required synthetic controls also prove missing recorded tag commit, revision,
+path and digest become ABSENT; supplied floating main becomes DRIFT; and a missing
+copied file remains ABSENT through complete source/local set comparisons.

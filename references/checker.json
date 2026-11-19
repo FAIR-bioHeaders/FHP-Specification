@@ -1,7 +1,7 @@
 {
   "repository": "FAIR-bioHeaders/FAIR-bioHeaders-Specification",
-  "commit": "b9d7c92d92a40f02e9ca6ec826b663f2e906a088",
+  "commit": "6dee4c8baba723ec5cad825d521db2dbbc1921ae",
   "path": "scripts/check_references.py",
-  "sha256": "5f34c3372805c9aee3de1abd2de9139d3cdd37f62e809b94bff19d605451f578",
+  "sha256": "d64104ed33de344c18ba93c00575cad8b16024db5b95c34ee02556b6868f543c",
   "note": "Auditing code dependency only, not a contract/suite/base pin; explicit reviewed refresh only."
 }
