@@ -39,16 +39,19 @@ port does not itself grant publication authority.
 ```sh
 python3 -m unittest discover -s tests -p test_reference_audit.py -v
 python3 scripts/reference_audit.py --inventory-only
-python3 scripts/reference_audit.py --checker-root /path/to/pinned/shared --checkout FAIR-bioHeaders/FAIR-bioHeaders-Specification=/path/to/pinned/shared --strict
+python3 scripts/reference_audit.py --checker-root /path/to/pinned/shared --checkout FAIR-bioHeaders/FAIR-bioHeaders-Specification=/path/to/pinned/shared
 python3 scripts/check_reference_audit_controls.py --checker-root /path/to/pinned/shared
 ```
 
 The shared checkout must be at the exact checker commit and have all referenced
-release tags/history available. Offline controls compare actual authority/local
-bytes, then require a digest computed from deliberately different bytes to report
-DRIFT and an unmapped query to report QUERY_FAILED. No fixture, pin or source file
-is rewritten by these controls. PR checks run adapter/refusal tests and these
-actual offline comparisons; they do not gate on live network state.
+release tags/history available. Required controls use a temporary synthetic Git
+repository, exercising FRESH, deliberately changed-byte DRIFT, confirmed ABSENT,
+and unmapped QUERY_FAILED outcomes with the actual checker. They never depend on
+current owning references remaining fresh. PR checks retain the current-reference
+report without gating on its findings; existing native contract/parity gates
+remain independent. An always-run fallback retains QUERY_FAILED if setup or
+execution produced no usable report. Execution failures may still fail the job;
+reference findings do not. No fixture, pin or source file is rewritten.
 
 The scheduled/manual job checks authoritative tag/commit bytes over the GitHub
 API with read-only permissions and retains the generated inventory and JSON

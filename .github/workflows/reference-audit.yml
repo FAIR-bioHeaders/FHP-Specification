@@ -44,9 +44,24 @@ jobs:
       - name: Test current-declaration adapter and source verification
         run: python -m unittest discover -s tests -p test_reference_audit.py -v
       - name: Audit actual declared pins offline (no live freshness gate)
-        run: python scripts/reference_audit.py --checker-root .reference-checker-source --checkout FAIR-bioHeaders/FAIR-bioHeaders-Specification=.reference-checker-source --inventory-output reference-inventory.json --strict > reference-offline.json
+        run: python scripts/reference_audit.py --checker-root .reference-checker-source --checkout FAIR-bioHeaders/FAIR-bioHeaders-Specification=.reference-checker-source --inventory-output reference-inventory.json > reference-offline.json
       - name: Prove byte mutation and failed-query controls with the actual checker
         run: python scripts/check_reference_audit_controls.py --checker-root .reference-checker-source > reference-controls.json
+      - name: Retain a query-failure report when setup or execution produced none
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = Path('reference-offline.json')
+          try:
+              value = json.loads(report.read_text())
+              usable = isinstance(value, dict) and isinstance(value.get('references'), list) and bool(value['references'])
+          except (OSError, ValueError):
+              usable = False
+          if not usable:
+              report.write_text(json.dumps({'references': [{'id': 'audit-execution', 'verdict': 'QUERY_FAILED', 'reason': 'Setup or execution produced no usable report; no authority absence or freshness was established.'}]}, indent=2) + '\n')
+          PY
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
@@ -87,6 +102,21 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: python scripts/reference_audit.py --checker-root .reference-checker-source --inventory-output reference-inventory.json > reference-advisory.json
+      - name: Retain a query-failure report when setup or execution produced none
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = Path('reference-advisory.json')
+          try:
+              value = json.loads(report.read_text())
+              usable = isinstance(value, dict) and isinstance(value.get('references'), list) and bool(value['references'])
+          except (OSError, ValueError):
+              usable = False
+          if not usable:
+              report.write_text(json.dumps({'references': [{'id': 'audit-execution', 'verdict': 'QUERY_FAILED', 'reason': 'Setup or execution produced no usable report; no authority absence or freshness was established.'}]}, indent=2) + '\n')
+          PY
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Actual accepted-engine controls on one current reference; no network or pin writes."""
+"""Required actual-engine controls use only a temporary synthetic git authority."""
 import argparse
 import copy
 import hashlib
@@ -8,7 +8,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
-from reference_audit import ROOT, AUTHORITY, CONSUMER, inventory, verified_checker
+from reference_audit import ROOT, CONSUMER, verified_checker
 
 
 def main():
@@ -16,40 +16,42 @@ def main():
     parser.add_argument('--checker-root', type=Path, required=True)
     args = parser.parse_args()
     script = verified_checker(ROOT, args.checker_root)
-    table = inventory()
-    chosen = next((row, item) for row in table['references'] for item in row['files']
-                  if item.get('local') and not item.get('upstreamSha256'))
-    row, item = copy.deepcopy(chosen)
-    row['files'] = [item]
-    for key in ('sourcePatterns', 'localTree', 'localExclusions'):
-        row.pop(key, None)
-    original = (ROOT / item['local']).read_bytes()
-    changed = original + b'\ncontrolled wrong digest; never written to source\n'
-    if not original or original == changed:
-        raise RuntimeError('Mutation has no actual bytes')
-    outputs = {}
     with tempfile.TemporaryDirectory() as directory:
+        authority = Path(directory) / 'authority'
+        authority.mkdir()
+        original = b'{"synthetic_reference_audit_control":true}\n'
+        (authority / 'fixture.json').write_bytes(original)
+        def git(*values):
+            return subprocess.check_output(['git', '-C', str(authority), *values], stderr=subprocess.DEVNULL)
+        git('init', '-q')
+        git('add', '.')
+        git('-c', 'commit.gpgsign=false', '-c', 'user.name=Advisory fixture',
+            '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'fixture')
+        git('tag', 'v0.0.0-fixture')
+        row = dict(id='unchanged', consumer=CONSUMER, repository='example/authority',
+            revision='v0.0.0-fixture', revisionKind='tag', commit=git('rev-parse', 'HEAD').decode().strip(),
+            files=[dict(path='fixture.json', sha256=hashlib.sha256(original).hexdigest())],
+            **{'class': 'base-carrier'})
+        wrong, absent, failed = (copy.deepcopy(row) for _ in range(3))
+        wrong['id'] = 'wrong-digest'
+        wrong['files'][0]['sha256'] = hashlib.sha256(original + b'actual controlled mutation').hexdigest()
+        absent['id'] = 'absent'
+        absent['files'][0]['path'] = 'missing.json'
+        failed['id'] = 'unmapped-query'
+        failed['repository'] = 'example/unmapped'
         source = Path(directory) / 'control.json'
-        def run(label, control_row, mapping):
-            source.write_text(json.dumps(dict(inventoryVersion=1, references=[control_row])))
-            result = subprocess.run([sys.executable, '-I', str(script), '--inventory', str(source),
-                '--consumer', CONSUMER, '--consumer-root', str(ROOT), '--checkout', mapping,
-                '--exit-on-findings'], capture_output=True, text=True)
-            report = json.loads(result.stdout)
-            outputs[label] = dict(exit=result.returncode, report=report)
-            return result.returncode, report['references'][0]['verdict']
-        mapped = AUTHORITY + '=' + str(args.checker_root)
-        if run('unchanged', row, mapped) != (0, 'FRESH'):
-            raise RuntimeError('Actual unchanged reference is not FRESH')
-        wrong = copy.deepcopy(row)
-        wrong['files'][0]['sha256'] = hashlib.sha256(changed).hexdigest()
-        if wrong['files'][0]['sha256'] == hashlib.sha256(original).hexdigest():
-            raise RuntimeError('Wrong digest mutation did not change the measurement')
-        if run('wrong-digest', wrong, mapped) != (1, 'DRIFT'):
-            raise RuntimeError('Actual wrong recorded digest was not DRIFT')
-        if run('unmapped-query', row, 'unrelated/repository=' + str(args.checker_root)) != (1, 'QUERY_FAILED'):
-            raise RuntimeError('Failed query was confused with a confirmed absence or pass')
-    print(json.dumps(dict(controlledReference=row['id'], wrotePins=[], controls=outputs), indent=2))
+        source.write_text(json.dumps(dict(inventoryVersion=1, references=[row, wrong, absent, failed])))
+        result = subprocess.run([sys.executable, '-I', str(script), '--inventory', str(source),
+            '--consumer', CONSUMER, '--consumer-root', str(authority), '--checkout',
+            'example/authority=' + str(authority), '--exit-on-findings'], capture_output=True, text=True)
+        report = json.loads(result.stdout)
+        actual = {entry['id']: entry['verdict'] for entry in report['references']}
+        wanted = {'unchanged': 'FRESH', 'wrong-digest': 'DRIFT', 'absent': 'ABSENT', 'unmapped-query': 'QUERY_FAILED'}
+        if result.returncode != 1 or actual != wanted:
+            raise RuntimeError('Synthetic actual-engine controls disagreed: ' + str(actual))
+        if (authority / 'fixture.json').read_bytes() != original:
+            raise RuntimeError('Control modified authority bytes')
+    print(json.dumps(dict(wrotePins=[], controls=actual, report=report), indent=2))
     return 0
 
 
