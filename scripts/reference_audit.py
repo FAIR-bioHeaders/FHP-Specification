@@ -65,6 +65,30 @@ def declarations(root):
     if source.get('ref') != source['tag']:
         raise ValueError('Released provenance source.ref must equal source.tag')
     classification = load(root, 'references/classification.json')
+    reader_name = 'tests/fhp_microdata.py'
+    supported_releases = literal_assignments(root, reader_name, {'SUPPORTED_RELEASES'})['SUPPORTED_RELEASES']
+    if not isinstance(supported_releases, dict):
+        raise ValueError(reader_name + ': SUPPORTED_RELEASES must be a mapping')
+    rows = []
+    for tag, filename in supported_releases.items():
+        if not isinstance(tag, str) or not re.fullmatch(r'v[0-9]+\.[0-9]+\.[0-9]+', tag):
+            raise ValueError(reader_name + ': unusable supported release tag')
+        if (not isinstance(filename, str) or not filename or filename in {'.', '..'}
+                or Path(filename).name != filename):
+            raise ValueError(reader_name + ': unusable release fixture filename')
+        local = 'tests/fixtures/releases/' + filename
+        rows.append(reference('reader-release:' + tag, 'released-contract', tag,
+                              [measured_file(local, 'fhp.json', digest((root / local).read_bytes()))]))
+
+    vocabulary_name = 'scripts/make_jsonld.py'
+    vocabulary = literal_assignments(root, vocabulary_name, {
+        'FHP_SHARED_RELEASE', 'FHP_SHARED_COMMIT', 'FHP_SHARED_TERMS_SHA256'})
+    rows.append(reference('fhp-jsonld-shared-terms', 'released-contract',
+                          vocabulary['FHP_SHARED_RELEASE'],
+                          [measured_file('tests/fixtures/fhp/v0.4.0/terms.ttl',
+                                         'jsonld/terms.ttl', vocabulary['FHP_SHARED_TERMS_SHA256'])],
+                          vocabulary['FHP_SHARED_COMMIT']))
+
     groups = {}
     for entry in data['copied']:
         commit = entry.get('commit', source['commit'])
@@ -73,7 +97,6 @@ def declarations(root):
             raise ValueError('Unclassified released-copy override: ' + commit)
         extra = {k: entry[k] for k in ('upstreamSha256', 'adjustment') if k in entry}
         groups.setdefault((release, commit), []).append(measured_file(entry['local'], entry['upstream'], entry['sha256'], **extra))
-    rows = []
     for (release, commit), files in groups.items():
         patterns = sorted({f['path'] for f in files})
         if commit == source['commit']:
@@ -109,8 +132,10 @@ def declarations(root):
                               [measured_file(entry['local'], entry['upstream'], entry['sha256'],
                                              upstreamSha256=entry['upstreamSha256'], adjustment=entry['adjustment'])],
                               entry['commit'], materialStatus='released'))
-    return rows, [name, fixture_name, baseline_name, 'references/classification.json'], [
+    return rows, [name, fixture_name, baseline_name, 'references/classification.json',
+                  reader_name, vocabulary_name], [
         f"All{len(data['copied'])} copied,{len(data['pinned'])} historical pinned and{len(data['imports'])} import entries are read from current provenance, including declared adjustments/overrides.",
+        'The test microdata reader release aliases and FHP JSON-LD shared-vocabulary pin are normalized from their owning source declarations and compared to their declared release authority.',
         'The complete release-owned FHP vector scope is compared against its tag. The local conformance tree also contains intentionally historical/owned material; existing check_shared_parity.py guards local classification and transformations.',
         'The legacy core-v0.4 snapshot is measured against its already-stated release payload, with its unchanged exact comment header separately pinned.',
         'Review-baseline authority claims are audited as source references, not byte-copy claims for canonicalized/retargeted baseline JSON; local baseline semantic guards remain required.',
