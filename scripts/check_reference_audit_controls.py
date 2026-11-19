@@ -8,15 +8,15 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
-from reference_audit import ROOT, CONSUMER, verified_checker
+from reference_audit import ROOT, CONSUMER, checker_snapshot
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--checker-root', type=Path, required=True)
     args = parser.parse_args()
-    script = verified_checker(ROOT, args.checker_root)
     with tempfile.TemporaryDirectory() as directory:
+        script = checker_snapshot(ROOT, args.checker_root, directory)
         authority = Path(directory) / 'authority'
         authority.mkdir()
         original = b'{"synthetic_reference_audit_control":true}\n'

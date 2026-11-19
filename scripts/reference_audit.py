@@ -30,31 +30,66 @@ def load(root, name):
 
 
 def measured_file(local, upstream, sha, **extra):
-    if not isinstance(sha, str) or not re.fullmatch('[0-9a-f]{64}', sha):
+    if sha not in (None, '') and (not isinstance(sha, str) or not re.fullmatch('[0-9a-f]{64}', sha)):
         raise ValueError(str(local or upstream) + ': unusable recorded digest')
     return dict(local=local, path=upstream, sha256=sha, **extra)
 
 
 def reference(identity, cls, revision, files, commit=None, **extra):
-    if not isinstance(revision, str) or not revision:
+    if revision not in (None, '') and not isinstance(revision, str):
         raise ValueError(identity + ': unusable recorded revision')
-    if commit is not None and (not isinstance(commit, str) or not re.fullmatch('[0-9a-f]{40}', commit)):
+    if commit not in (None, '') and (not isinstance(commit, str) or not re.fullmatch('[0-9a-f]{40}', commit)):
         raise ValueError(identity + ': unusable recorded commit')
     row = dict(id=identity, consumer=CONSUMER, repository=AUTHORITY, **{'class': cls},
-               revision=revision, revisionKind='tag' if revision.startswith('v') else 'commit', files=files)
+               revision=revision, revisionKind='tag' if not revision or revision.startswith('v') else 'commit' if re.fullmatch('[0-9a-f]{40}', revision) else 'branch', files=files)
     if commit:
         row['commit'] = commit
     row.update(extra)
     return row
 
 
+def validated_bindings(root, filename, wanted):
+    """Accept each consumed binding/dependency once, as a top-level assignment."""
+    tree = ast.parse((root / filename).read_text())
+    assignments = {}
+    candidates = {}
+    for statement in tree.body:
+        if isinstance(statement, ast.Assign) and len(statement.targets) == 1 and isinstance(statement.targets[0], ast.Name):
+            candidates.setdefault(statement.targets[0].id, []).append(statement)
+    needed = set(wanted)
+    pending = list(wanted)
+    while pending:
+        name = pending.pop()
+        for statement in candidates.get(name, []):
+            for node in ast.walk(statement.value):
+                if isinstance(node, ast.Name) and node.id not in needed:
+                    needed.add(node.id)
+                    pending.append(node.id)
+    for name in needed:
+        entries = candidates.get(name, [])
+        if len(entries) > 1:
+            raise ValueError(filename + ': reassigned source binding ' + name)
+        if entries:
+            assignments[name] = entries[0].value
+    permitted = {id(entries[0].targets[0]) for name, entries in candidates.items() if name in needed and len(entries) == 1}
+    for statement in tree.body:
+        if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            continue
+        for node in ast.walk(statement):
+            if isinstance(node, ast.Name) and isinstance(node.ctx, (ast.Store, ast.Del)) and node.id in needed and id(node) not in permitted:
+                raise ValueError(filename + ': unsupported source binding write ' + node.id)
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                base = node.func.value
+                if isinstance(base, ast.Name) and base.id in needed:
+                    raise ValueError(filename + ': unsupported source binding mutation ' + base.id)
+            if isinstance(node, (ast.Subscript, ast.Attribute)) and isinstance(node.ctx, (ast.Store, ast.Del)):
+                if any(isinstance(part, ast.Name) and part.id in needed for part in ast.walk(node)):
+                    raise ValueError(filename + ': unsupported source binding mutation')
+    return assignments
+
+
 def literal_assignments(root, name, wanted):
-    found = {}
-    for node in ast.parse((root / name).read_text()).body:
-        if isinstance(node, ast.Assign):
-            for target in node.targets:
-                if isinstance(target, ast.Name) and target.id in wanted:
-                    found[target.id] = ast.literal_eval(node.value)
+    found = {key: ast.literal_eval(value) for key, value in validated_bindings(root, name, wanted).items() if key in wanted}
     if set(found) != set(wanted):
         raise ValueError(name + ': missing declared constants')
     return found
@@ -76,12 +111,7 @@ def reject_source_overrides(entry, context):
 
 
 def string_declarations(root, filename, wanted):
-    assignments = {}
-    for node in ast.parse((root / filename).read_text()).body:
-        if isinstance(node, ast.Assign):
-            for target in node.targets:
-                if isinstance(target, ast.Name):
-                    assignments[target.id] = node.value
+    assignments = validated_bindings(root, filename, wanted)
     active = set()
     def evaluate(node):
         if isinstance(node, ast.Constant) and isinstance(node.value, str):
@@ -123,8 +153,9 @@ def require_assignment(root, filename, name, expression):
 def declarations(root):
     name = 'provenance.json'; data = load(root, name); source = data['source']
     require_authority(source, 'provenance source')
-    if source.get('ref') != source['tag']:
+    if source.get('ref') and source.get('tag') and source['ref'] != source['tag']:
         raise ValueError('Released provenance source.ref must equal source.tag')
+    source_release = source.get('ref') if source.get('tag') and source.get('ref') else None
     classification = load(root, 'references/classification.json')
     require_authority(classification.get('authority'), 'classification authority')
     for entry in data['copied'] + data['pinned'] + data['imports'] + classification['legacyImports']:
@@ -134,62 +165,70 @@ def declarations(root):
         raise ValueError('Unexpected FHP contract citation authority')
     groups = {}
     for entry in data['copied']:
-        commit = entry.get('commit', source['commit'])
-        release = source['tag'] if commit == source['commit'] else classification['releaseOverrides'].get(commit)
-        if not release:
-            raise ValueError('Unclassified released-copy override: ' + commit)
+        commit = entry.get('commit', source.get('commit'))
+        release = source_release if commit == source.get('commit') else classification['releaseOverrides'].get(commit)
+        if not release and commit != source.get('commit'):
+            raise ValueError('Unclassified released-copy override: ' + str(commit))
         extra = {k: entry[k] for k in ('upstreamSha256', 'adjustment') if k in entry}
-        groups.setdefault((release, commit), []).append(measured_file(entry['local'], entry['upstream'], entry['sha256'], **extra))
+        groups.setdefault((release, commit), []).append(measured_file(entry['local'], entry.get('upstream'), entry.get('sha256'), **extra))
     rows = []
     for (release, commit), files in groups.items():
-        patterns = sorted({f['path'] for f in files})
-        if commit == source['commit']:
+        patterns = sorted({f['path'] for f in files if f['path']})
+        if commit == source.get('commit'):
             patterns += ['conformance/valid/fhp-fasta-*', 'conformance/invalid/fhp-fasta-*']
-        rows.append(reference('copied:' + release, 'copied-tree', release, files, commit,
+        rows.append(reference('copied:' + str(release), 'copied-tree', release, files, commit,
                               materialStatus='released', sourcePatterns=patterns))
     historical = {}
     for entry in data['pinned']:
-        historical.setdefault(entry['commit'], []).append(measured_file(entry['local'], entry['upstream'], entry['sha256']))
+        historical.setdefault(entry.get('commit'), []).append(measured_file(entry['local'], entry.get('upstream'), entry.get('sha256')))
     for commit, files in historical.items():
-        rows.append(reference('historical:' + commit, 'copied-tree', commit, files, commit, materialStatus='historical'))
+        rows.append(reference('historical:' + str(commit), 'copied-tree', commit, files, commit, materialStatus='historical'))
     for entry in data['imports']:
-        suite = entry['upstream'] == 'conformance/manifest.json'
-        rows.append(reference('import:' + entry['upstream'], 'conformance-suite' if suite else 'released-contract',
-                              source['commit'] if suite else source['tag'],
-                              [measured_file(None, entry['upstream'], entry['sha256'])], source['commit']))
+        suite = entry.get('upstream') == 'conformance/manifest.json'
+        rows.append(reference('import:' + str(entry.get('upstream')), 'conformance-suite' if suite else 'released-contract',
+                              source.get('commit') if suite else source_release,
+                              [measured_file(None, entry.get('upstream'), entry.get('sha256'))], source.get('commit')))
     fixture_name = 'tests/fixtures/fhp/v0.4.0/PROVENANCE.json'; fixture = load(root, fixture_name)
     if fixture.get('repository') != 'https://github.com/' + AUTHORITY:
         raise ValueError('Missing or unexpected fixture source repository')
     for local, entry in fixture['files'].items():
         if any(k in entry for k in ('repository', 'url', 'authority', 'source_repository', 'sourceUrl')):
             raise ValueError('Unsupported fixture source attribution override')
-        prefix = 'https://raw.githubusercontent.com/' + AUTHORITY + '/' + fixture['release_commit'] + '/'
-        if not isinstance(entry.get('source'), str) or not entry['source'].startswith(prefix):
-            raise ValueError('Missing or unexpected fixture source URL')
-        upstream = entry['source'][len(prefix):]
-        if not upstream or '..' in Path(upstream).parts:
-            raise ValueError('Unusable fixture source path')
-        rows.append(reference('v04-fixture:' + local, 'released-contract', fixture['release'],
-                              [measured_file('tests/fixtures/fhp/v0.4.0/' + local, upstream, entry['sha256'])], fixture['release_commit']))
+        url = entry.get('source')
+        upstream = None
+        if url:
+            prefix = 'https://raw.githubusercontent.com/' + AUTHORITY + '/'
+            if not isinstance(url, str) or not url.startswith(prefix) or '/' not in url[len(prefix):]:
+                raise ValueError('Unexpected fixture source URL')
+            url_commit, upstream = url[len(prefix):].split('/', 1)
+            if fixture.get('release_commit') and url_commit != fixture['release_commit']:
+                raise ValueError('Fixture source URL disagrees with recorded commit')
+            if not upstream or '..' in Path(upstream).parts:
+                raise ValueError('Unusable fixture source path')
+        rows.append(reference('v04-fixture:' + local, 'released-contract', fixture.get('release'),
+                              [measured_file('tests/fixtures/fhp/v0.4.0/' + local, upstream, entry.get('sha256'))], fixture.get('release_commit')))
     baseline_name = '.github/schema-baseline-refs.json'; baseline = load(root, baseline_name)
     require_authority(baseline.get('authority'), 'baseline authority')
     for tag, entry in baseline['fhrReleaseLine']['tags'].items():
         reject_source_overrides(entry, 'release evidence')
         rows.append(reference('fhr-release-evidence:' + tag, 'released-contract', tag,
-                              [measured_file(None, entry['path'], entry['sha256'])], entry['commit']))
+                              [measured_file(None, entry.get('path'), entry.get('sha256'))], entry.get('commit')))
     for entry in baseline['baselines']:
         if 'authority' in entry:
             authority = entry['authority']
             reject_source_overrides(authority, 'baseline per-artifact authority')
-            if authority.get('citation') != 'https://w3id.org/fair-bioheaders/' + Path(authority['path']).stem + '/' + authority['ref'] or authority.get('pinnedSourceUrl') != 'https://raw.githubusercontent.com/' + AUTHORITY + '/' + authority['ref'] + '/' + authority['path']:
+            citation, source_url = authority.get('citation'), authority.get('pinnedSourceUrl')
+            if not isinstance(citation, str) or not citation.startswith('https://w3id.org/fair-bioheaders/') or not isinstance(source_url, str) or not source_url.startswith('https://raw.githubusercontent.com/' + AUTHORITY + '/'):
                 raise ValueError('Missing or unexpected baseline citation/source URL')
-            rows.append(reference('baseline-reviewed-schema:' + entry['local'], 'released-contract', authority['ref'],
-                                  [measured_file(entry['reviewedSchema']['local'], authority['path'], authority['sha256'])], authority['commit']))
+            if authority.get('path') and authority.get('ref') and (citation != 'https://w3id.org/fair-bioheaders/' + Path(authority['path']).stem + '/' + authority['ref'] or source_url != 'https://raw.githubusercontent.com/' + AUTHORITY + '/' + authority['ref'] + '/' + authority['path']):
+                raise ValueError('Baseline citation/source URL disagrees with recorded path/ref')
+            rows.append(reference('baseline-reviewed-schema:' + entry['local'], 'released-contract', authority.get('ref'),
+                                  [measured_file(entry['reviewedSchema']['local'], authority.get('path'), authority.get('sha256'))], authority.get('commit')))
     for entry in classification['legacyImports']:
-        rows.append(reference('legacy-import:' + entry['local'], 'copied-tree', entry['release'],
-                              [measured_file(entry['local'], entry['upstream'], entry['sha256'],
+        rows.append(reference('legacy-import:' + entry['local'], 'copied-tree', entry.get('release'),
+                              [measured_file(entry['local'], entry.get('upstream'), entry.get('sha256'),
                                              upstreamSha256=entry['upstreamSha256'], adjustment=entry['adjustment'])],
-                              entry['commit'], materialStatus='released'))
+                              entry.get('commit'), materialStatus='released'))
     reader_name = 'tests/fhp_microdata.py'
     aliases = literal_assignments(root, reader_name, {'SUPPORTED_RELEASES'})['SUPPORTED_RELEASES']
     require_assignment(root, reader_name, 'RELEASES_DIR', "Path(__file__).resolve().parent / 'fixtures' / 'releases'")
@@ -203,14 +242,14 @@ def declarations(root):
         if tag not in baseline['fhrReleaseLine']['tags']:
             raise ValueError('Supported release has no declared tag/commit authority')
         if local == 'tests/fixtures/releases/fhp-v0.4.0.json':
-            sha = fixture['files']['fhp.json']['sha256']
+            sha = fixture['files']['fhp.json'].get('sha256')
         elif local in by_local:
-            sha = by_local[local]['sha256']
+            sha = by_local[local].get('sha256')
         else:
             raise ValueError('Supported reader copy has no recorded digest')
         rows.append(reference('reader-release:' + tag, 'released-contract', tag,
                               [measured_file(local, 'fhp.json', sha)],
-                              baseline['fhrReleaseLine']['tags'][tag]['commit']))
+                              baseline['fhrReleaseLine']['tags'][tag].get('commit')))
     vocabulary_name = 'scripts/make_jsonld.py'
     vocab = string_declarations(root, vocabulary_name, {
         'FHP_SHARED_RELEASE', 'FHP_SHARED_COMMIT', 'FHP_SHARED_TERMS_SHA256',
@@ -254,14 +293,22 @@ def verified_checker(root, source):
     script = (source / pin['path']).resolve()
     if not script.is_relative_to(source.resolve()):
         raise ValueError('Checker path escapes the reviewed source checkout')
-    actual = subprocess.check_output(['git', '-C', str(source), 'rev-parse', 'HEAD'], text=True).strip()
+    actual = subprocess.check_output(['git', '--no-replace-objects', '-C', str(source), 'rev-parse', 'HEAD'], text=True).strip()
     if actual != pin['commit']:
         raise ValueError('Checker checkout HEAD differs from the reviewed source pin')
-    immutable = subprocess.check_output(['git', '-C', str(source), 'show', pin['commit'] + ':' + pin['path']])
+    immutable = subprocess.check_output(['git', '--no-replace-objects', '-C', str(source), 'show', pin['commit'] + ':' + pin['path']])
     if script.read_bytes() != immutable:
         raise ValueError('Checker working bytes differ from the immutable commit')
     if digest(immutable) != pin['sha256']:
         raise ValueError('Checker source digest differs; refusing execution')
+    return immutable
+
+
+def checker_snapshot(root, source, directory):
+    immutable = verified_checker(root, source)
+    script = Path(directory) / 'verified-checker.py'
+    script.write_bytes(immutable)
+    script.chmod(0o400)
     return script
 
 
@@ -282,8 +329,8 @@ def main(argv=None):
             return 0
         if not args.checker_root:
             parser.error('--checker-root is required for execution')
-        script = verified_checker(ROOT, args.checker_root)
         with tempfile.TemporaryDirectory() as directory:
+            script = checker_snapshot(ROOT, args.checker_root, directory)
             table_file = Path(directory) / 'inventory.json'
             table_file.write_text(json.dumps(table))
             command = [sys.executable, '-I', str(script), '--inventory', str(table_file),

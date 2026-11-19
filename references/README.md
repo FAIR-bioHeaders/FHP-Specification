@@ -67,3 +67,11 @@ need their own actual rollout before the federation-wide issue can close.
 Controlling source repository/URL declarations are validated before normalization; missing or unexpected authorities refuse the run instead of being silently replaced with the publication authority. Historical observations and namespace `$id` values are not retrieval inputs.
 
 The adapter also reads the actual `SUPPORTED_RELEASES` aliases and copy locator in `tests/fhp_microdata.py`, plus the release/commit/digest/source URLs of the vocabulary pin in `scripts/make_jsonld.py`. Each alias is compared at its own tag against the reader's actual local copy; canonicalized review baselines are not substituted for those copies. Source ref/tag mismatches and unsupported per-entry source overrides refuse normalization.
+
+The bootstrap disables Git replacement objects, verifies exact committed bytes,
+and executes a private snapshot of those verified bytes until the subprocess
+finishes. A later change to the source checkout cannot change that executable.
+Identifiable missing revision/path/digest declarations remain incomplete data for
+the central engine's ABSENT classification; supplied floating references remain
+DRIFT inputs. Conflicting source authorities or malformed supplied metadata
+refuse normalization, with an observable QUERY_FAILED execution fallback.

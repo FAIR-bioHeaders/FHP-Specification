@@ -119,8 +119,8 @@ class ReferencePortTests(unittest.TestCase):
             source = Path(directory); (source / 'scripts').mkdir()
             (source / 'scripts/check_references.py').write_text('raise RuntimeError("must never execute")')
             pin = json.loads((ROOT / 'references/checker.json').read_text())
-            with patch.object(port.subprocess, 'check_output', return_value=pin['commit'] + '\n'):
-                with self.assertRaisesRegex(ValueError, 'differs|differ'):
+            with patch.object(port.subprocess, 'check_output', side_effect=[pin['commit'] + '\n', (source / 'scripts/check_references.py').read_bytes()]):
+                with self.assertRaisesRegex(ValueError, 'source digest differs'):
                     port.verified_checker(ROOT, source)
             with patch.object(port.subprocess, 'check_output', return_value='f' * 40 + '\n'):
                 with self.assertRaisesRegex(ValueError, 'HEAD differs'):
@@ -156,8 +156,15 @@ class SourceAttributionTests(unittest.TestCase):
                         else:
                             target[keys[-1]] = replacement
                         (root / filename).write_text(json.dumps(value))
-                        with self.assertRaises((ValueError, KeyError)):
-                            port.inventory(root)
+                        if filename == 'provenance.json' and keys == ['source', 'ref'] and remove:
+                            rows = port.inventory(root)['references']
+                            self.assertIsNone(next(r for r in rows if r['id'].startswith('copied:'))['revision'])
+                        elif filename.endswith('/PROVENANCE.json') and keys == ['files', 'fhp.json', 'source'] and remove:
+                            row = next(r for r in port.inventory(root)['references'] if r['id'] == 'v04-fixture:fhp.json')
+                            self.assertIsNone(row['files'][0]['path'])
+                        else:
+                            with self.assertRaises((ValueError, KeyError)):
+                                port.inventory(root)
 
     def fixture(self, root):
         import hashlib
@@ -182,7 +189,7 @@ class SourceAttributionTests(unittest.TestCase):
         import hashlib
         with tempfile.TemporaryDirectory() as directory:
             source, consumer, script, pin = self.fixture(Path(directory))
-            self.assertEqual(port.verified_checker(consumer, source), script.resolve())
+            self.assertEqual(port.verified_checker(consumer, source), script.read_bytes())
             script.write_text('raise RuntimeError("unreviewed code")\n')
             pin['sha256'] = hashlib.sha256(script.read_bytes()).hexdigest()
             (consumer / 'references/checker.json').write_text(json.dumps(pin))
@@ -267,3 +274,102 @@ class ReaderAndVocabularyScopeTests(unittest.TestCase):
             path.write_text(changed)
             with self.assertRaises(ValueError):
                 port.inventory(root)
+
+
+class IncompleteDeclarationTests(unittest.TestCase):
+    def test_missing_recorded_fields_are_preserved_without_fresh_defaults(self):
+        missing = port.reference('incomplete', 'released-contract', None,
+                                 [port.measured_file('known.json', None, None)], None)
+        self.assertIsNone(missing['revision'])
+        self.assertEqual(missing['revisionKind'], 'tag')
+        self.assertNotIn('commit', missing)
+        self.assertIsNone(missing['files'][0]['path'])
+        self.assertIsNone(missing['files'][0]['sha256'])
+        floating = port.reference('floating', 'released-contract', 'main',
+                                  [port.measured_file('known.json', 'known.json', 'a' * 64)], 'b' * 40)
+        self.assertEqual(floating['revision'], 'main')
+        self.assertEqual(floating['revisionKind'], 'branch')
+
+
+class ImmutableExecutionTests(unittest.TestCase):
+    fixture = SourceAttributionTests.fixture
+    copy_records = ReferencePortTests.copy_records
+
+    def test_git_replacement_object_cannot_replace_pinned_bytes(self):
+        import hashlib
+        import subprocess
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, consumer, script, pin = self.fixture(root)
+            original = pin['commit']
+            script.write_text('raise RuntimeError("unreviewed replacement")\n')
+            def git(*args):
+                return subprocess.check_output(['git', '-C', str(source), *args])
+            git('add', '.')
+            git('-c', 'commit.gpgsign=false', '-c', 'user.name=Replacement fixture',
+                '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'replacement')
+            replacement = git('rev-parse', 'HEAD').decode().strip()
+            git('replace', original, replacement)
+            git('update-ref', 'HEAD', original)
+            pin['sha256'] = hashlib.sha256(script.read_bytes()).hexdigest()
+            (consumer / 'references/checker.json').write_text(json.dumps(pin))
+            with self.assertRaisesRegex(ValueError, 'working bytes differ'):
+                port.verified_checker(consumer, source)
+
+    def test_execution_uses_verified_private_bytes_after_source_swap(self):
+        import subprocess
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, consumer, script, pin = self.fixture(root)
+            snapshot = port.checker_snapshot(consumer, source, root)
+            script.write_text('raise RuntimeError("post-verification swap")\n')
+            import sys
+            result = subprocess.run([sys.executable, '-I', str(snapshot)], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue(json.loads(result.stdout)['isolated'])
+
+
+class BindingWriteTests(unittest.TestCase):
+    def test_binding_reassignment_augassign_annotation_and_dependency_writes_refuse(self):
+        for extra in ("RAW_BASE += '/alternate'", "SHARED_REPOSITORY = 'alternate'", "RAW_BASE: str = 'alternate'", "if True:\n    RAW_BASE = 'alternate'"):
+            with self.subTest(extra=extra), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                (root / 'source.py').write_text("SHARED_REPOSITORY = 'approved'\nRAW_BASE = 'https://example/' + SHARED_REPOSITORY\n" + extra + '\n')
+                with self.assertRaisesRegex(ValueError, 'source binding'):
+                    port.string_declarations(root, 'source.py', {'RAW_BASE'})
+
+
+class ActualIncompleteMetadataTests(unittest.TestCase):
+    copy_records = ReferencePortTests.copy_records
+
+    def test_missing_current_source_revision_commit_and_digest_remain_in_inventory(self):
+        import re
+        for missing in ('revision', 'commit', 'digest'):
+            with self.subTest(missing=missing), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                self.copy_records(root)
+                if port.CONSUMER.endswith('/FHR-Specification'):
+                    target = root / 'scripts/check_development_tree.py'
+                    text = target.read_text()
+                    if missing in ('revision', 'commit'):
+                        key = 'SHARED_TAG' if missing == 'revision' else 'SHARED_COMMIT'
+                        text, count = re.subn('^' + key + r'\s*=.*\n', '', text, flags=re.M)
+                    else:
+                        values = port.literal_assignments(root, str(target.relative_to(root)), {'PUBLISHED'})
+                        original = next(iter(values['PUBLISHED'].values()))
+                        text = text.replace(original, '', 1)
+                        count = 1
+                    self.assertEqual(count, 1)
+                    target.write_text(text)
+                else:
+                    target = root / ('provenance.json' if port.CONSUMER.endswith('/FHP-Specification') else 'header/provenance.json')
+                    data = json.loads(target.read_text())
+                    if missing in ('revision', 'commit'):
+                        key = ('tag' if port.CONSUMER.endswith('/FHP-Specification') else 'ref') if missing == 'revision' else 'commit'
+                        data['source'].pop(key)
+                    else:
+                        data['copied'][0].pop('sha256')
+                    target.write_text(json.dumps(data))
+                rows = port.inventory(root)['references']
+                incomplete = [row for row in rows if not row.get('revision') or not row.get('commit') or any(not item.get('sha256') for item in row['files'])]
+                self.assertTrue(incomplete, 'Absent recorded metadata was silently replaced or omitted')
