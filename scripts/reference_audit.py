@@ -217,7 +217,7 @@ def declarations(root):
         'FHP_SHARED_TERMS_URL', 'FHP_SHARED_RELEASE_URL'})
     if vocab['FHP_SHARED_TERMS_URL'] != 'https://raw.githubusercontent.com/' + AUTHORITY + '/' + vocab['FHP_SHARED_COMMIT'] + '/jsonld/terms.ttl' or vocab['FHP_SHARED_RELEASE_URL'] != 'https://github.com/' + AUTHORITY + '/releases/tag/' + vocab['FHP_SHARED_RELEASE']:
         raise ValueError('Missing or unexpected declared vocabulary source URL')
-    rows.append(reference('vocabulary-source-pin', 'released-contract', vocab['FHP_SHARED_RELEASE'],
+    rows.append(reference('fhp-jsonld-shared-terms', 'released-contract', vocab['FHP_SHARED_RELEASE'],
                           [measured_file(None, 'jsonld/terms.ttl', vocab['FHP_SHARED_TERMS_SHA256'])],
                           vocab['FHP_SHARED_COMMIT']))
     return rows, [name, fixture_name, baseline_name, 'references/classification.json', reader_name, vocabulary_name], [
