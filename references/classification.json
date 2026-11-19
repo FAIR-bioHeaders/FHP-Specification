@@ -17,5 +17,9 @@
         "header": "# Pinned snapshot of the shared core for FHP 1.0 (FAIR-bioHeaders-Specification\n# v0.4.0, release commit 84c2f90ab0e97c81d8afbf33eafe80ebade7a009).\n#\n# FHP imports this snapshot because FHP 1.0 is the released contract: it uses the\n# v0.4 core patterns, the string schemaVersion \"1.0\" and the optional author\n# nameType. FHR and FHGFF3 in this development tree still import schemas/core.yaml\n# (the v0.3 core) and their published schemas are unchanged; they are synced to\n# v0.4 separately. Do not edit: replace this file from a release, not by hand.\n"
       }
     }
-  ]
+  ],
+  "authority": {
+    "repository": "FAIR-bioHeaders/FAIR-bioHeaders-Specification",
+    "url": "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification"
+  }
 }

@@ -32,7 +32,7 @@ def main():
         source = Path(directory) / 'control.json'
         def run(label, control_row, mapping):
             source.write_text(json.dumps(dict(inventoryVersion=1, references=[control_row])))
-            result = subprocess.run([sys.executable, str(script), '--inventory', str(source),
+            result = subprocess.run([sys.executable, '-I', str(script), '--inventory', str(source),
                 '--consumer', CONSUMER, '--consumer-root', str(ROOT), '--checkout', mapping,
                 '--exit-on-findings'], capture_output=True, text=True)
             report = json.loads(result.stdout)
