@@ -1,0 +1,96 @@
+name: Declared-reference audit
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: '23 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  controls:
+    name: Reference adapter and offline controls
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.13'
+      - name: Read the explicit checker source pin
+        id: checker
+        run: |
+          python - <<'PY'
+          import json, os
+          pin = json.load(open('references/checker.json'))
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('commit=' + pin['commit'] + '\n')
+          PY
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: FAIR-bioHeaders/FAIR-bioHeaders-Specification
+          ref: ${{ steps.checker.outputs.commit }}
+          path: .reference-checker-source
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+      - name: Test current-declaration adapter and source verification
+        run: python -m unittest discover -s tests -p test_reference_audit.py -v
+      - name: Audit actual declared pins offline (no live freshness gate)
+        run: python scripts/reference_audit.py --checker-root .reference-checker-source --checkout FAIR-bioHeaders/FAIR-bioHeaders-Specification=.reference-checker-source --inventory-output reference-inventory.json --strict > reference-offline.json
+      - name: Prove byte mutation and failed-query controls with the actual checker
+        run: python scripts/check_reference_audit_controls.py --checker-root .reference-checker-source > reference-controls.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: reference-adapter-controls
+          path: |
+            reference-inventory.json
+            reference-offline.json
+            reference-controls.json
+
+  advisory:
+    name: Scheduled advisory authority audit
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.13'
+      - name: Read the explicit checker source pin
+        id: checker
+        run: |
+          python - <<'PY'
+          import json, os
+          pin = json.load(open('references/checker.json'))
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('commit=' + pin['commit'] + '\n')
+          PY
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: FAIR-bioHeaders/FAIR-bioHeaders-Specification
+          ref: ${{ steps.checker.outputs.commit }}
+          path: .reference-checker-source
+          persist-credentials: false
+      - name: Report authority findings without changing pins or gating on drift
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python scripts/reference_audit.py --checker-root .reference-checker-source --inventory-output reference-inventory.json > reference-advisory.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: advisory-declared-reference-audit
+          path: |
+            reference-inventory.json
+            reference-advisory.json

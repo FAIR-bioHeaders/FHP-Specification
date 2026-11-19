@@ -1,0 +1,21 @@
+{
+  "recorded": "2026-11-19",
+  "reason": "Inventory the already-present legacy v0.4.0 snapshot; audited source comment and actual tag payload. No bytes, imports or existing pins are changed.",
+  "releaseOverrides": {
+    "170e677fbb6726a3f765373dbe1f214820000be7": "v0.5.0"
+  },
+  "legacyImports": [
+    {
+      "local": "schemas/core-v0.4.yaml",
+      "upstream": "schemas/core.yaml",
+      "release": "v0.4.0",
+      "commit": "84c2f90ab0e97c81d8afbf33eafe80ebade7a009",
+      "sha256": "2e7f89dc7d058f3adb3fe6067897a52e0efbcf763198ab2b9507360f5b567172",
+      "upstreamSha256": "2bd657ece8c8cbfb4dfbba1f68cb3f708c1ab91baa0fcd50d97ddc58b7e96b5e",
+      "adjustment": {
+        "kind": "provenance-header",
+        "header": "# Pinned snapshot of the shared core for FHP 1.0 (FAIR-bioHeaders-Specification\n# v0.4.0, release commit 84c2f90ab0e97c81d8afbf33eafe80ebade7a009).\n#\n# FHP imports this snapshot because FHP 1.0 is the released contract: it uses the\n# v0.4 core patterns, the string schemaVersion \"1.0\" and the optional author\n# nameType. FHR and FHGFF3 in this development tree still import schemas/core.yaml\n# (the v0.3 core) and their published schemas are unchanged; they are synced to\n# v0.4 separately. Do not edit: replace this file from a release, not by hand.\n"
+      }
+    }
+  ]
+}
