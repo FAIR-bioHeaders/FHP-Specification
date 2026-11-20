@@ -22,10 +22,11 @@ note pointing at the family manifest.
 ``--schema`` also validates valid vectors' metadata against fhr.json (needs
 PyYAML and jsonschema); JSON-LD vectors are read by rule J1 first.
 ``--converter`` runs fhr-fasta-validate on every FASTA and FHP-FASTA vector:
-valid vectors must exit 0 and invalid vectors nonzero, except that a vector
-with ``converterResults`` accepts any outcome it lists (the shared v0.6.0
-manifest allows ``unsupported-version`` for a vector citing a release the
-converter predates). A converter that
+valid vectors must exit 0 and invalid vectors must exit 1 with a diagnostic
+(tracebacks/process failures do not count). A vector with ``converterResults``
+accepts the outcomes it lists, not execution failures (the shared v0.6.0 manifest
+allows ``unsupported-version`` for a vector citing a release the converter
+predates). A converter that
 rejects every vector of a format as an unsupported file extension predates
 that format; those vectors are left out and reported, unless
 ``--require-format`` names the format. ``--skip-format`` leaves out a format
