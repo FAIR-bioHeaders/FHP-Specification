@@ -77,7 +77,6 @@ The PR handoff records actual test skips and CI. Browser, installed-package,
 network and external-owner checks are not silently credited by local Python
 checks. A human must merge; no release or website publication occurs here.
 
-
 ## General-source review followup
 
 Independent runtime review confirmed that mismatched import-retarget lists could
