@@ -13,8 +13,9 @@ entire unrelated repository history for a guidance update.
 | FAIR-bioHeaders-Specification | Shared core, format rules, released schemas for all adopted types, version registry, vocabulary, mappings and cross-type conformance. |
 | FHR-Specification | FHR development; preserve compatibility files serving established raw URLs and historical tags. |
 | FHP-Specification | Protein-header development; inherited FHR/family files are compatibility/history, not evidence of FHP ownership of those types. |
-| FHT-Specification | Transcriptome-header development; reconcile the legacy draft with the reviewed family contract before claiming toolkit support. |
+| FHT-Specification | Transcriptome-header development with CI, generated model/schema, conformance vectors and typed HTML; shared FHT 1.0 is published in v0.7.0, distinct from the retained legacy V7 snapshot. |
 | FHGFF3 | Annotation-header development; inherited biodatamodels/gff-schema feature models are distinct from the FAIR header contract, and the pinned `header/` tree mirrors the shared publication copy under a parity check. |
+| FHGM-Specification | FHGM native gene-model development (`development/`), carried inside FHGFF3 under `x-fhgm-models`; distinct from header contracts. Check the actual native publication record for model contract 0.1; inherited feature models and pinned `header/` copies are baseline material. |
 
 David and Adam jointly hold schema and release authority. Read the shared
 GOVERNANCE.md; its optional steering group is not active. Read the local README,
@@ -86,8 +87,8 @@ assessment, [`docs/insdc-coverage.md`](https://github.com/FAIR-bioHeaders/FAIR-b
 in the shared specification (FAIR-bioHeaders-Specification#157). Name the matrix
 rows the change affects and update their coverage and disposition with it; a new
 `schemaVersion` fails `tests/test_insdc_coverage.py` there until the assessment is
-re-pinned. Keep FHT rows marked draft until FHT is released. A profile or an optional
-field is not evidence that a file is ready for INSDC deposit.
+re-pinned. Keep released FHT rows aligned with their actual publication record.
+A profile or an optional field is not evidence that a file is ready for INSDC deposit.
 
 ## Models, generated artifacts and compatibility
 
@@ -106,8 +107,9 @@ report conditions, unsupported fields and losses rather than invent equivalence.
 Generate contexts/vocabulary via `scripts/make_jsonld.py`, where present.
 
 Only use paths and commands present in the checkout, and fetch before relying on
-it: a checkout can lag origin. FHT currently has a legacy `fht.json` and
-examples, without repository CI or the shared build/test machinery; FHGFF3 has
+it: a checkout can lag origin. FHT has its own `fht_linkml.yml`, generated
+`fht.json`, examples, 93-vector accepted suite, typed HTML checks and GitHub
+workflows; shared publication remains a separate authority. FHGFF3 has
 inherited feature-model sources plus a separate `header/` development tree
 copied byte-for-byte from a pinned shared-publication revision
 (`header/provenance.json`), checked by `scripts/check_header_parity.py` under
@@ -202,8 +204,14 @@ sentences decay faster than the guidance around them:** this line originally sai
 promotion was "still in progress" and was contradicted by a merge about 3 hours 35 minutes
 later, the second such event in two days. So the durable form is *where to look*,
 not *what was true when written* - every byte count and digest quoted above is a
-dated measurement, not a live value. FHGM remains a draft under rule V7 and is not a
-header type: no `schemaVersion`, no `schemas/versions.json` row, no w3id URL.
+dated measurement, not a live value. FHGM native model contract 0.1 is distinct
+from header contracts: no in-record
+`schema` or `schemaVersion`, and no header `schemas/versions.json` row. Check the
+actual native publication record for
+`model-contracts/fhgm/0.1/fhgm-model.schema.json` and the selected identity
+`https://w3id.org/fair-bioheaders/model-contracts/fhgm/0.1`; do not infer alias
+resolution or publication from a draft merge. Historical V7 receipts stay pinned
+to their owning draft bytes.
 
 ## Using FAIR-bioHeaders in another project
 
@@ -353,23 +361,43 @@ from the presence of protein sequences. Follow the adopted rules for `sourceType
 absent where allowed. Published FHP contracts remain versioned even while newer
 draft fields are iterated with curators.
 
-### FHT legacy draft and adoption
+### FHT development, publication and legacy snapshot
 
-FHT-Specification currently has `fht.json` and `examples/`, without the shared
-generator/test suite. Inspect the schema's declared JSON Schema dialect and use
-a matching validator with format checks when validating its JSON/YAML examples;
-report the validator/version, parsed value types and validation failures. JSON
-syntax checking alone is not schema validation. No adopted local automated test
-command is implied here; document the chosen reproducible procedure in an FHT
-implementation PR rather than claiming the shared scripts ran in this tree.
+FHT-Specification keeps the FHT 1.0 development contract (`fht_linkml.yml`,
+generated `fht.json`), `examples/`, `conformance/` fixtures and the preserved
+legacy draft `legacy/fht-v0.1.json`. Its own GitHub workflows, described in its
+`docs/CI.md`, are the check list there: `validate-specification.yml` runs
+`python -m unittest discover -s tests -v`, regenerates `fht.json` with
+`json-schema-generator.py` and rejects drift, and runs
+`scripts/check_provenance.py` on the pinned shared imports; `fht-fixtures.yml`
+runs `scripts/check_fht_fixtures.py`, a scratch rerun of
+`scripts/make_fht_fixtures.py`, and a separate job that exercises a named
+released toolkit through the rule V7 draft lane (`scripts/run_toolkit_lane.py`);
+`legacy-draft-checks.yml` runs `scripts/check_legacy_schema.py` and
+`scripts/check_legacy_examples.py`; `docs-checks.yml` runs Markdownlint and
+`scripts/check_docs.py`; and `external-links.yml` checks cited URLs on a
+schedule or manual dispatch only. Run the commands from those workflows rather
+than claiming the shared repository's scripts ran in that tree. When validating
+the legacy draft directly, use a validator for its declared JSON Schema dialect
+with format checks, and report the validator/version, parsed value types and
+validation failures; JSON syntax checking alone is not schema validation.
 
 Reconcile legacy draft field names, author roles, `license`/reuse conditions,
 statistics/units, checksum coverage, schema versions and parent relationships
-against the proposed transcriptome contract. Each semantic or acceptance change
+against the published FHT 1.0 contract. Each semantic or acceptance change
 is explicit draft/schema work, not a spelling fix. Keep RNA/cDNA and de novo versus
 reference-derived use cases distinct; do not invent pooled sources, expression
 measurements or parents. Retired converter behavior and legacy README examples
 are review inputs, not proof of current family-toolkit support.
+
+FHT 1.0 is published in shared specification v0.7.0 (tag commit
+`623c79fe58edeb238a20fb6de518c62dd69b92bc`,
+[GitHub Release](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/releases/tag/v0.7.0),
+[DOI 10.5281/zenodo.24385024](https://doi.org/10.5281/zenodo.24385024)).
+The accepted owning suite has 93 vectors and typed HTML checks; inspect its
+current manifest and workflows for exact expectations. The retained raw-owning
+V7 snapshot is a separate legacy opt-in, not the published identity. Publication
+does not upgrade approved consumer pins or establish support in older packages.
 
 ### FHGFF3 feature model versus FAIR header
 
