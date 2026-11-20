@@ -370,6 +370,17 @@ def check_converter(conformance, manifest, location, skip=(), require=(), unsupp
                     capture_output=True, text=True, timeout=120, cwd=temporary,
                     env={**os.environ, "PYTHONSAFEPATH": "1"},
                 )
+            diagnostic = (result.stderr + result.stdout).strip()
+            if result.returncode != 0 and (result.returncode != 1 or not diagnostic
+                    or "Traceback (most recent call last)" in diagnostic):
+                # A process failure is not evidence that the converter judged
+                # this vector invalid. Never hide it as a known gap or an
+                # unsupported format, even when its output includes that text.
+                by_format.setdefault(vector["format"], []).append(False)
+                detail = diagnostic.splitlines()[-1] if diagnostic else "no diagnostic"
+                problems.append(f"{vector['id']}: converter execution failure "
+                                f"(exit {result.returncode}: {detail})")
+                continue
             accepted = result.returncode == 0
             by_format.setdefault(vector["format"], []).append(
                 not accepted and UNSUPPORTED in (result.stderr + result.stdout))

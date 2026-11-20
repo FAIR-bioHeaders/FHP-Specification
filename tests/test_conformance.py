@@ -319,6 +319,7 @@ class ConformanceTests(unittest.TestCase):
             "    print('FHR: Unsupported file extension: ' + sys.argv[1], file=sys.stderr)\n"
             "    raise SystemExit(1)\n"
             "if vector['expected'] != 'valid':\n"
+            "    print('FHR: invalid metadata: ' + sys.argv[1], file=sys.stderr)\n"
             "    raise SystemExit(1)\n"
             "if len(sys.argv) > 2:\n"
             "    json.dump(vector['metadata'], open(sys.argv[2], 'w'))\n"
