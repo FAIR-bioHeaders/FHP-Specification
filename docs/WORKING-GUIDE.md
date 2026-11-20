@@ -92,3 +92,10 @@ where present for sensitive reports; do not put credentials in an issue.
 
 The [November 20 maintenance record](MAINTENANCE-2026-11-20.md) records
 scan scope, source review, findings and retained work.
+
+
+Parity checks validate provenance/adjustment shapes before reading entries.
+`import-retarget` requires equal nonempty lists of string pairs (or one string
+pair), and every old line must occur exactly once. Git object replacement refs
+are disabled for immutable upstream comparisons. Invalid provenance/adjustments
+fail; use the actual pinned checkout and never regenerate pins to hide a failure.

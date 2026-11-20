@@ -76,3 +76,14 @@ PR branch stay active through human review.
 The PR handoff records actual test skips and CI. Browser, installed-package,
 network and external-owner checks are not silently credited by local Python
 checks. A human must merge; no release or website publication occurs here.
+
+
+## General-source review followup
+
+Independent runtime review confirmed that mismatched import-retarget lists could
+be silently truncated by zip. Adjustment grammar now rejects malformed or unequal
+pairs before applying replacements. Provenance shape, digest/commit forms, relative
+paths and sizes are checked before CLI field access; malformed records give named
+errors rather than tracebacks. Git reads ignore replacement objects, proved by a
+real temporary git replacement-object regression. Current recorded digests and
+actual pinned upstream comparisons pass; no provenance bytes or pins changed.

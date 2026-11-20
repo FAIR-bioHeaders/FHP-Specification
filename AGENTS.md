@@ -334,8 +334,11 @@ or establish that release artifacts have been published.
 
 FHR-Specification development happens on branches. Reviewed schema changes publish
 in FAIR-bioHeaders-Specification first; then synchronize the compatibility files
-on FHR main. `.github/workflows/published-files.yml` checks `fhr.json`, `fhp.json`,
-`fhgff3.json` and `jsonld/*` against shared main. Do not merge an independent schema
+on FHR main. `.github/workflows/published-files.yml` runs
+`scripts/check_development_tree.py --remote`, which checks local frozen digests
+and classification as well as every published copy against the pinned shared
+release tag. External agreement never replaces the local frozen gate; shared
+main is an explicitly advisory observation. Do not merge an independent schema
 change into FHR main that makes those public raw URLs diverge. Preserve historical
 tags and file-bound examples; schema addition review still follows its own cycle.
 
