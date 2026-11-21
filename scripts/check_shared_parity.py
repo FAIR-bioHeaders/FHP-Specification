@@ -40,6 +40,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 
@@ -55,22 +56,99 @@ def sha256(data):
 def load_provenance():
     try:
         data = json.loads(PROVENANCE.read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        sys.exit(f"error: {PROVENANCE} is missing")
-    except json.JSONDecodeError as exc:
-        sys.exit(f"error: {PROVENANCE} is not valid JSON: {exc}")
+        validate_provenance(data)
+    except (OSError, ValueError, UnicodeError) as exc:
+        sys.exit(f"error: cannot read valid provenance from {PROVENANCE}: {exc}")
     return data
+
+
+def adjustment_parts(adjustment):
+    """Validate the adjustment grammar before applying any replacement."""
+    if not isinstance(adjustment, dict):
+        raise ValueError("adjustment must be an object")
+    kind = adjustment.get("kind")
+    if kind == "provenance-header":
+        if not isinstance(adjustment.get("header"), str):
+            raise ValueError("provenance-header requires a string header")
+        return kind, adjustment["header"], None
+    if kind == "import-retarget":
+        olds, news = adjustment.get("from"), adjustment.get("to")
+        if isinstance(olds, str) and isinstance(news, str):
+            olds, news = [olds], [news]
+        if (not isinstance(olds, list) or not isinstance(news, list)
+                or not olds or len(olds) != len(news)
+                or any(not isinstance(item, str) or not item for item in olds)
+                or any(not isinstance(item, str) for item in news)):
+            raise ValueError("import-retarget requires equally sized nonempty string pairs")
+        return kind, olds, news
+    raise ValueError(f"unknown adjustment kind {kind}")
+
+
+def validate_provenance(prov):
+    """Reject malformed declarations before indexing fields or reading paths."""
+    def text(value, label):
+        if not isinstance(value, str) or not value:
+            raise ValueError(f"{label} must be a nonempty string")
+
+    def path(value, label, prefix=False):
+        text(value, label)
+        clean = value[:-1] if prefix and value.endswith("/") else value
+        if ("\\" in clean or "\0" in clean
+                or any(part in {"", ".", ".."} for part in clean.split("/"))):
+            raise ValueError(f"{label} must be a repository-relative path")
+
+    def hexadecimal(value, length, label):
+        if not isinstance(value, str) or not re.fullmatch(f"[0-9a-f]{{{length}}}", value):
+            raise ValueError(f"{label} must be {length} lowercase hexadecimal characters")
+
+    if not isinstance(prov, dict) or not isinstance(prov.get("source"), dict):
+        raise ValueError("provenance and source must be objects")
+    source = prov["source"]
+    text(source.get("repository"), "source.repository")
+    hexadecimal(source.get("commit"), 40, "source.commit")
+    if "tag" in source:
+        text(source["tag"], "source.tag")
+        if source.get("ref", source["tag"]) != source["tag"]:
+            raise ValueError("source.ref must match source.tag")
+    seen = set()
+    for section in ("copied", "pinned", "imports"):
+        rows = prov.get(section, [])
+        if not isinstance(rows, list):
+            raise ValueError(f"{section} must be an array")
+        for index, entry in enumerate(rows):
+            label = f"{section}[{index}]"
+            if not isinstance(entry, dict):
+                raise ValueError(f"{label} must be an object")
+            path(entry.get("upstream"), label + ".upstream")
+            hexadecimal(entry.get("sha256"), 64, label + ".sha256")
+            if "commit" in entry:
+                hexadecimal(entry["commit"], 40, label + ".commit")
+            if "upstreamSha256" in entry:
+                hexadecimal(entry["upstreamSha256"], 64, label + ".upstreamSha256")
+            if section != "imports" or "local" in entry:
+                path(entry.get("local"), label + ".local")
+                if entry["local"] in seen:
+                    raise ValueError(f"duplicate local path: {entry['local']}")
+                seen.add(entry["local"])
+                if type(entry.get("size")) is not int or entry["size"] < 0:
+                    raise ValueError(f"{label}.size must be a nonnegative integer")
+            if "adjustment" in entry:
+                adjustment_parts(entry["adjustment"])
+    for group in ("strictDirs", "legacy", "owned"):
+        if not isinstance(prov.get(group, []), list):
+            raise ValueError(f"{group} must be an array")
+        for item in prov.get(group, []):
+            value = item.get("path") if isinstance(item, dict) else item
+            path(value, group, prefix=group != "strictDirs")
 
 
 def apply_adjustment(contents, adjustment):
     """The local bytes implied by an adjusted upstream copy; loud on mismatch."""
-    kind = adjustment["kind"]
+    kind, first, second = adjustment_parts(adjustment)
     if kind == "provenance-header":
-        return adjustment["header"].encode("utf-8") + contents
+        return first.encode("utf-8") + contents
     if kind == "import-retarget":
-        olds, news = adjustment["from"], adjustment["to"]
-        if isinstance(olds, str):
-            olds, news = [olds], [news]
+        olds, news = first, second
         for old, new in zip(olds, news):
             old, new = old.encode("utf-8"), new.encode("utf-8")
             if contents.count(old) != 1:
@@ -163,7 +241,7 @@ def find_upstream(explicit):
 
 def git_show(repo, commit, path):
     result = subprocess.run(
-        ["git", "-C", str(repo), "show", f"{commit}:{path}"],
+        ["git", "--no-replace-objects", "-C", str(repo), "show", f"{commit}:{path}"],
         capture_output=True,
     )
     return result.stdout if result.returncode == 0 else None
@@ -176,7 +254,7 @@ def check_upstream(prov, repo):
     sections = prov.get("copied", []) + prov.get("imports", []) + prov.get("pinned", [])
     for commit in dict.fromkeys(e.get("commit", default_commit) for e in sections):
         exists = subprocess.run(
-            ["git", "-C", str(repo), "cat-file", "-e", f"{commit}^{{commit}}"],
+            ["git", "--no-replace-objects", "-C", str(repo), "cat-file", "-e", f"{commit}^{{commit}}"],
             capture_output=True,
         )
         if exists.returncode != 0:
@@ -186,7 +264,7 @@ def check_upstream(prov, repo):
         # The pin is a release tag (FAIR-bioHeaders-Specification#241): the
         # recorded tag must resolve to the recorded commit in the checkout.
         resolved = subprocess.run(
-            ["git", "-C", str(repo), "rev-parse", "--verify", "--quiet",
+            ["git", "--no-replace-objects", "-C", str(repo), "rev-parse", "--verify", "--quiet",
              f"refs/tags/{source['tag']}^{{commit}}"],
             capture_output=True, text=True,
         )
@@ -211,7 +289,11 @@ def check_upstream(prov, repo):
                           "recorded upstream digest")
         if "local" in entry:
             local = ROOT / entry["local"]
-            want = expected_local(data, entry)
+            try:
+                want = expected_local(data, entry)
+            except ValueError as exc:
+                errors.append(f"invalid adjustment for {entry['local']}: {exc}")
+                continue
             if local.is_file() and local.read_bytes() != want:
                 errors.append(f"local {entry['local']} differs from pinned "
                               f"{entry['upstream']} (adjustment re-applied)")
@@ -221,10 +303,11 @@ def check_upstream(prov, repo):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument(
+    comparison = parser.add_mutually_exclusive_group()
+    comparison.add_argument(
         "--upstream", metavar="PATH",
         help="FAIR-bioHeaders-Specification checkout to compare against")
-    parser.add_argument(
+    comparison.add_argument(
         "--no-upstream", action="store_true",
         help="only check the recorded digests, even if a checkout is available")
     args = parser.parse_args(argv)

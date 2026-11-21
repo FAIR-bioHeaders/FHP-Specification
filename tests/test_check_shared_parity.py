@@ -4,9 +4,11 @@
 """Tests for scripts/check_shared_parity.py (standard library only)."""
 
 import hashlib
+import copy
 import json
 from pathlib import Path
 import sys
+import subprocess
 import tempfile
 import unittest
 from unittest import mock
@@ -87,6 +89,53 @@ class ProvenanceShapeTests(unittest.TestCase):
                          ["valid", "unsupported-version"])
 
 
+class MalformedProvenanceTests(unittest.TestCase):
+    def test_bad_declarations_are_reported_before_file_access(self):
+        original = parity.load_provenance()
+        cases = []
+        for key, value in [('copied', {}), ('source', None), ('owned', 4)]:
+            changed = copy.deepcopy(original)
+            changed[key] = value
+            cases.append(changed)
+        for key, value in [('local', '../outside'), ('size', True), ('sha256', 'bad'),
+                           ('upstream', '/absolute'), ('commit', 'main')]:
+            changed = copy.deepcopy(original)
+            changed['copied'][0][key] = value
+            cases.append(changed)
+        for changed in cases:
+            with self.subTest(changed=changed.get('source')):
+                with self.assertRaises(ValueError):
+                    parity.validate_provenance(changed)
+
+    def test_cli_load_failure_has_a_named_provenance_diagnostic(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            file = Path(temporary) / 'provenance.json'
+            file.write_text('{"source": null}')
+            with mock.patch.object(parity, 'PROVENANCE', file):
+                with self.assertRaisesRegex(SystemExit, 'cannot read valid provenance'):
+                    parity.load_provenance()
+
+    def test_upstream_blob_reads_ignore_replacement_objects(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            repo = Path(temporary)
+            def git(*args):
+                return subprocess.check_output(['git', '-c', 'user.name=Fixture',
+                    '-c', 'user.email=fixture@example.invalid', '-C', str(repo), *args],
+                    stderr=subprocess.DEVNULL)
+            git('init', '-q')
+            file = repo / 'payload'
+            file.write_bytes(b'original')
+            git('add', 'payload')
+            git('commit', '-q', '-m', 'original')
+            original = git('rev-parse', 'HEAD').decode().strip()
+            file.write_bytes(b'replaced')
+            git('commit', '-qam', 'replacement')
+            replacement = git('rev-parse', 'HEAD').decode().strip()
+            git('replace', original, replacement)
+            self.assertEqual(git('show', original + ':payload'), b'replaced')
+            self.assertEqual(parity.git_show(repo, original, 'payload'), b'original')
+
+
 class PinnedSectionTests(unittest.TestCase):
     """The Q2 freeze: inherited FHR/FHGFF3 artifacts are digest-pinned fixtures."""
 
@@ -138,6 +187,18 @@ class PinnedSectionTests(unittest.TestCase):
 
 
 class AdjustmentTests(unittest.TestCase):
+    def test_malformed_adjustment_cannot_silently_drop_replacements(self):
+        for adjustment in [
+            {"kind": "import-retarget", "from": ["a", "b"], "to": ["A"]},
+            {"kind": "import-retarget", "from": "a", "to": ["A"]},
+            {"kind": "import-retarget", "from": [], "to": []},
+            {"kind": "import-retarget", "from": ["a"], "to": [None]},
+            {"kind": "provenance-header", "header": None},
+            None,
+        ]:
+            with self.subTest(adjustment=adjustment), self.assertRaises(ValueError):
+                parity.apply_adjustment(b"a b", adjustment)
+
     def test_provenance_header_is_prepended(self):
         adjustment = {"kind": "provenance-header", "header": "# pin\n"}
         self.assertEqual(parity.apply_adjustment(b"payload\n", adjustment),

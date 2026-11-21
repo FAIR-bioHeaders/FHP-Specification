@@ -235,7 +235,10 @@ class ConformanceTests(unittest.TestCase):
                 f"if os.path.basename(sys.argv[1]) == {target!r}:\n"
                 f"    print({outcome!r}, file=sys.stderr)\n"
                 "    raise SystemExit(1)\n"
-                "raise SystemExit(0 if vectors[os.path.basename(sys.argv[1])] == 'valid' else 1)\n"
+                "if vectors[os.path.basename(sys.argv[1])] != 'valid':\n"
+                "    print('invalid fixture', file=sys.stderr)\n"
+                "    raise SystemExit(1)\n"
+                "raise SystemExit(0)\n"
             )
             for name in ("fhr-fasta-validate", "fhr-gfa-validate", "fhr-convert"):
                 script = bin_directory / name
@@ -272,7 +275,10 @@ class ConformanceTests(unittest.TestCase):
                 f"if os.path.basename(sys.argv[1]) in {targets!r}:\n"
                 f"    print({message!r}, file=sys.stderr)\n"
                 "    raise SystemExit(1)\n"
-                "raise SystemExit(0 if vectors[os.path.basename(sys.argv[1])] == 'valid' else 1)\n"
+                "if vectors[os.path.basename(sys.argv[1])] != 'valid':\n"
+                "    print('invalid fixture', file=sys.stderr)\n"
+                "    raise SystemExit(1)\n"
+                "raise SystemExit(0)\n"
             )
             for name in ("fhr-fasta-validate", "fhr-gfa-validate", "fhr-convert"):
                 script = bin_directory / name
@@ -319,6 +325,7 @@ class ConformanceTests(unittest.TestCase):
             "    print('FHR: Unsupported file extension: ' + sys.argv[1], file=sys.stderr)\n"
             "    raise SystemExit(1)\n"
             "if vector['expected'] != 'valid':\n"
+            "    print('FHR: invalid metadata: ' + sys.argv[1], file=sys.stderr)\n"
             "    raise SystemExit(1)\n"
             "if len(sys.argv) > 2:\n"
             "    json.dump(vector['metadata'], open(sys.argv[2], 'w'))\n"

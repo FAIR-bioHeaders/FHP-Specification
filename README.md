@@ -1,5 +1,8 @@
 # FHP-Specification (FHP development)
 
+Start with the [reader and maintainer guide](docs/WORKING-GUIDE.md) for
+setup, runnable checks, generator options and interpretation of results.
+
 [![Specification checks](https://github.com/FAIR-bioHeaders/FHP-Specification/actions/workflows/validate-specification.yml/badge.svg?branch=main)](https://github.com/FAIR-bioHeaders/FHP-Specification/actions/workflows/validate-specification.yml)
 [![Schema drift checks](https://github.com/FAIR-bioHeaders/FHP-Specification/actions/workflows/check-schema-drift.yml/badge.svg?branch=main)](https://github.com/FAIR-bioHeaders/FHP-Specification/actions/workflows/check-schema-drift.yml)
 

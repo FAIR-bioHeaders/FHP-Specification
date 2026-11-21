@@ -22,10 +22,11 @@ note pointing at the family manifest.
 ``--schema`` also validates valid vectors' metadata against fhr.json (needs
 PyYAML and jsonschema); JSON-LD vectors are read by rule J1 first.
 ``--converter`` runs fhr-fasta-validate on every FASTA and FHP-FASTA vector:
-valid vectors must exit 0 and invalid vectors nonzero, except that a vector
-with ``converterResults`` accepts any outcome it lists (the shared v0.6.0
-manifest allows ``unsupported-version`` for a vector citing a release the
-converter predates). A converter that
+valid vectors must exit 0 and invalid vectors must exit 1 with a diagnostic
+(tracebacks/process failures do not count). A vector with ``converterResults``
+accepts the outcomes it lists, not execution failures (the shared v0.6.0 manifest
+allows ``unsupported-version`` for a vector citing a release the converter
+predates). A converter that
 rejects every vector of a format as an unsupported file extension predates
 that format; those vectors are left out and reported, unless
 ``--require-format`` names the format. ``--skip-format`` leaves out a format
@@ -370,6 +371,17 @@ def check_converter(conformance, manifest, location, skip=(), require=(), unsupp
                     capture_output=True, text=True, timeout=120, cwd=temporary,
                     env={**os.environ, "PYTHONSAFEPATH": "1"},
                 )
+            diagnostic = (result.stderr + result.stdout).strip()
+            if result.returncode != 0 and (result.returncode != 1 or not diagnostic
+                    or "Traceback (most recent call last)" in diagnostic):
+                # A process failure is not evidence that the converter judged
+                # this vector invalid. Never hide it as a known gap or an
+                # unsupported format, even when its output includes that text.
+                by_format.setdefault(vector["format"], []).append(False)
+                detail = diagnostic.splitlines()[-1] if diagnostic else "no diagnostic"
+                problems.append(f"{vector['id']}: converter execution failure "
+                                f"(exit {result.returncode}: {detail})")
+                continue
             accepted = result.returncode == 0
             by_format.setdefault(vector["format"], []).append(
                 not accepted and UNSUPPORTED in (result.stderr + result.stdout))
